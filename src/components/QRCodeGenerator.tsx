@@ -109,14 +109,14 @@ export default function QRCodeGenerator({
   const [dotsGradient, setDotsGradient] = useState(false);
   const [dotsGradientColor1, setDotsGradientColor1] = useState('#000000');
   const [dotsGradientColor2, setDotsGradientColor2] = useState('#7c3aed');
-  const [dotsGradientType, setDotsGradientType] = useState<'linear' | 'radial'>('linear');
+  const dotsGradientType: 'linear' | 'radial' = 'linear';
 
   // Background
   const [bgColor, setBgColor] = useState('#FFFFFF');
-  const [bgGradient, setBgGradient] = useState(false);
-  const [bgGradientColor1, setBgGradientColor1] = useState('#FFFFFF');
-  const [bgGradientColor2, setBgGradientColor2] = useState('#e0e7ff');
-  const [bgGradientType, setBgGradientType] = useState<'linear' | 'radial'>('linear');
+  const bgGradient = false;
+  const bgGradientColor1 = '#FFFFFF';
+  const bgGradientColor2 = '#e0e7ff';
+  const bgGradientType: 'linear' | 'radial' = 'linear';
 
   // Corner Squares
   const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('extra-rounded');
@@ -126,7 +126,7 @@ export default function QRCodeGenerator({
   const [cornerSquareGradientColor2, setCornerSquareGradientColor2] = useState('#7c3aed');
 
   // Corner Dots
-  const [cornerDotType, setCornerDotType] = useState<CornerDotType>('dot');
+  const cornerDotType: CornerDotType = 'dot';
   const [cornerDotColor, setCornerDotColor] = useState('#000000');
   const [cornerDotGradient, setCornerDotGradient] = useState(false);
   const [cornerDotGradientColor1, setCornerDotGradientColor1] = useState('#000000');

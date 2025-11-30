@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ImageIcon, ExternalLink } from 'lucide-react';
 
 interface LogoThumbnailProps {

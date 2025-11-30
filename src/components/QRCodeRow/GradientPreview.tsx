@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface GradientPreviewProps {
   type: 'linear' | 'radial';
   color1: string;

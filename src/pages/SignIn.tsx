@@ -1,6 +1,6 @@
 import { Zap, Mail, Lock, AlertCircle } from 'lucide-react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { login as loginService } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 

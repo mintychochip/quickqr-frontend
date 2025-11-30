@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Zap, QrCode, Download, Eye, Settings, Plus, TrendingUp, BarChart3, User, Search, ArrowUpDown, ChevronDown, CreditCard, RefreshCw } from 'lucide-react';
+import { QrCode, Download, Settings, Plus, BarChart3, Search, ArrowUpDown, CreditCard, RefreshCw } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import QRCodeRow from '../components/QRCodeRow';
 import StatsCharts from '../components/StatsCharts';
@@ -44,10 +44,10 @@ export default function Dashboard() {
   };
 
   // Handle QR code deletion
-  const handleDeleteQRCode = async (qrId: string) => {
+  const handleDeleteQRCode = async (qrId: string | number) => {
     try {
       // Call the actual API to delete from backend
-      const result = await deleteQRCode(qrId);
+      const result = await deleteQRCode(String(qrId));
 
       if (result.success) {
         // Remove from local state on successful deletion
@@ -143,12 +143,6 @@ export default function Dashboard() {
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     return date.toLocaleDateString();
   };
-
-  const stats = [
-    { label: 'Total QR Codes', value: '24', icon: QrCode, color: 'from-purple-600 to-blue-600' },
-    { label: 'Total Scans', value: '12.4K', icon: Eye, color: 'from-blue-600 to-cyan-600' },
-    { label: 'This Month', value: '3.2K', icon: TrendingUp, color: 'from-cyan-600 to-teal-600' },
-  ];
 
   return (
     <div className="min-h-screen bg-black pt-16">
@@ -543,7 +537,7 @@ export default function Dashboard() {
 
           {activeView === 'stats' && (
             <div className="space-y-8">
-              <StatsCharts qrCodes={qrCodes} />
+              <StatsCharts />
             </div>
           )}
 

@@ -25,11 +25,7 @@ ChartJS.register(
   ArcElement
 );
 
-interface StatsChartsProps {
-  qrCodes: any[];
-}
-
-export default function StatsCharts({ qrCodes }: StatsChartsProps) {
+export default function StatsCharts() {
   // Sample data for demonstration
   const lineData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],

@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ColorSwatchProps {
   color: string;
   label?: string;

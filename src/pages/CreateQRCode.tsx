@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Zap, Sparkles, FileText, Palette, Save } from 'lucide-react';
+import { ArrowLeft, Zap, FileText, Palette } from 'lucide-react';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import { useAuth } from '../contexts/AuthContext';
 import { createQRCode, type QRCodeData } from '../services/qrCodeCreateService';
@@ -9,49 +9,13 @@ type Step = 1 | 2 | 3 | 4;
 
 export default function CreateQRCode() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [qrName, setQrName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const generateContentString = (qrData: QRCodeData): string => {
-    const { type, content } = qrData;
-
-    switch (type) {
-      case 'url':
-        return content.url || '';
-      case 'text':
-        return content.text || '';
-      case 'email':
-        let emailStr = `mailto:${content.email || ''}`;
-        const params = [];
-        if (content.subject) params.push(`subject=${encodeURIComponent(content.subject)}`);
-        if (content.body) params.push(`body=${encodeURIComponent(content.body)}`);
-        if (params.length > 0) emailStr += '?' + params.join('&');
-        return emailStr;
-      case 'phone':
-        return `tel:${content.phone || ''}`;
-      case 'sms':
-        let smsStr = `sms:${content.number || ''}`;
-        if (content.message) smsStr += `?body=${encodeURIComponent(content.message)}`;
-        return smsStr;
-      case 'vcard':
-        return `BEGIN:VCARD\nVERSION:3.0\nFN:${content.name || ''}\nORG:${content.org || ''}\nTEL:${content.phone || ''}\nEMAIL:${content.email || ''}\nURL:${content.url || ''}\nEND:VCARD`;
-      case 'mecard':
-        return `MECARD:N:${content.name || ''};TEL:${content.phone || ''};EMAIL:${content.email || ''};;`;
-      case 'location':
-        return `geo:${content.latitude || ''},${content.longitude || ''}`;
-      case 'facebook':
-      case 'twitter':
-      case 'youtube':
-        return content.url || '';
-      case 'wifi':
-        return `WIFI:T:${content.encryption || ''};S:${content.ssid || ''};P:${content.password || ''};;`;
-      case 'event':
-        return `BEGIN:VEVENT\nSUMMARY:${content.title || ''}\nLOCATION:${content.location || ''}\nDTSTART:${content.start || ''}\nDTEND:${content.end || ''}\nEND:VEVENT`;
-      default:
-        return '';
-    }
+  const handleStepChange = (step: number) => {
+    setCurrentStep(step as Step);
   };
 
   const handleSave = async (qrData: QRCodeData) => {
@@ -187,7 +151,7 @@ export default function CreateQRCode() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <QRCodeGenerator
             currentStep={currentStep}
-            onStepChange={setCurrentStep}
+            onStepChange={handleStepChange}
             onSave={handleSave}
             saving={saving}
             qrName={qrName}

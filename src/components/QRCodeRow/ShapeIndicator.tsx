@@ -1,5 +1,4 @@
-import React from 'react';
-import { Circle, Square, Diamond } from 'lucide-react';
+import { Circle, Square } from 'lucide-react';
 
 interface ShapeIndicatorProps {
   type: 'dots' | 'corners';

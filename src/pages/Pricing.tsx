@@ -1,4 +1,4 @@
-import { Check, Zap, ArrowRight, ChevronDown } from 'lucide-react';
+import { Zap, ArrowRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
