@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [sessionCheckCount]);
+  }, []);
 
   // Periodic session refresh to maintain activity
   useEffect(() => {
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 5 * 60 * 1000); // Every 5 minutes
 
     return () => clearInterval(interval);
-  }, [user, checkSession]);
+  }, [user]);
 
   // Activity tracking to prevent session timeouts
   useEffect(() => {
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, checkSession]);
+  }, [user]);
 
   const login = (userData: User) => {
     setUser(userData);
@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     setLoading(true);
     await checkSession();
+    // checkSession already sets loading to false in its finally block
   };
 
   const value: AuthContextType = {
