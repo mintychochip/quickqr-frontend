@@ -161,9 +161,6 @@ export default function InteractiveQRGenerator() {
   useEffect(() => {
     if (!qrRef.current) return;
 
-    console.log('Initializing QR Code...');
-    console.log('qrValue:', qrValue);
-
     try {
       const options: any = {
         width: qrSize,
@@ -229,7 +226,6 @@ export default function InteractiveQRGenerator() {
       qrCodeRef.current = new QRCodeStyling(options);
 
       qrCodeRef.current.append(qrRef.current);
-      console.log('QR Code initialized and appended successfully');
     } catch (error) {
       console.error('Error initializing QR Code:', error);
     }
@@ -238,8 +234,6 @@ export default function InteractiveQRGenerator() {
   // Update QR Code when settings change
   useEffect(() => {
     if (!qrCodeRef.current) return;
-
-    console.log('Updating QR Code with value:', qrValue);
 
     try {
       const updateOptions: any = {
@@ -299,7 +293,6 @@ export default function InteractiveQRGenerator() {
       }
 
       qrCodeRef.current.update(updateOptions);
-      console.log('QR Code updated successfully');
     } catch (error) {
       console.error('Error updating QR Code:', error);
     }

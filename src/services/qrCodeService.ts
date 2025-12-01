@@ -24,13 +24,10 @@ export interface FetchCodesResponse {
 }
 
 /**
- * Fetches all QR codes for a specific user
- * @param userid - The user ID to fetch codes for
+ * Fetches all QR codes for the current user
  */
-export async function fetchUserQRCodes(userid: number): Promise<FetchCodesResponse> {
+export async function fetchUserQRCodes(): Promise<FetchCodesResponse> {
   try {
-    console.log('Fetching QR codes for user:', userid);
-
     const response = await fetch(`${API_BASE_URL}/qrcode_handler.php?action=list&limit=100`, {
       method: 'GET',
       credentials: 'include',
@@ -42,9 +39,6 @@ export async function fetchUserQRCodes(userid: number): Promise<FetchCodesRespon
     }
 
     const result = await response.json();
-    console.log('Fetch codes response:', result);
-    console.log('Response type:', typeof result);
-    console.log('Is array?', Array.isArray(result));
 
     // Handle different response formats
     let codes: QRCode[] = [];
@@ -59,19 +53,11 @@ export async function fetchUserQRCodes(userid: number): Promise<FetchCodesRespon
       codes = result.codes;
     }
 
-    console.log('Parsed codes:', codes);
-
-    // Debug: Check if styling field is present
-    codes.forEach((code, index) => {
-      console.log(`QR Code ${index} styling:`, code.styling, typeof code.styling);
-    });
-
     return {
       success: true,
       codes: codes,
     };
   } catch (error) {
-    console.error('Error fetching QR codes:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch QR codes',
@@ -120,7 +106,6 @@ export function getQRCodeDisplayUrl(qrCode: QRCode): string {
         return qrCode.type;
     }
   } catch (e) {
-    console.error('Error parsing QR code content:', e, qrCode);
     return qrCode.content?.substring(0, 50) || 'N/A';
   }
 }
@@ -131,8 +116,6 @@ export function getQRCodeDisplayUrl(qrCode: QRCode): string {
  */
 export async function deleteQRCode(qrcodeId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('Deleting QR code:', qrcodeId);
-
     const response = await fetch(`https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=delete`, {
       method: 'POST',
       credentials: 'include',
@@ -151,7 +134,6 @@ export async function deleteQRCode(qrcodeId: string): Promise<{ success: boolean
     }
 
     const result = await response.json();
-    console.log('Delete response:', result);
 
     if (result.success) {
       return {
@@ -164,7 +146,6 @@ export async function deleteQRCode(qrcodeId: string): Promise<{ success: boolean
       };
     }
   } catch (error) {
-    console.error('Error deleting QR code:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete QR code',

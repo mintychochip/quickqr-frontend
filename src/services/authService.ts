@@ -70,7 +70,6 @@ async function retryWithBackoff<T>(
     }
 
     const delayMs = RETRY_DELAY_BASE * Math.pow(2, MAX_RETRIES - retries);
-    console.warn(`Retrying after ${delayMs}ms... (${retries} retries left)`);
 
     await delay(delayMs);
     return retryWithBackoff(fn, retries - 1);
@@ -124,9 +123,6 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
     formData.append('email', data.email);
     formData.append('password', data.password);
 
-    console.log('Attempting registration to:', `${API_BASE_URL}/auth_handler.php`);
-    console.log('Registration data:', { email: data.email, password: '***' });
-
     const response = await enhancedFetch(`${API_BASE_URL}/auth_handler.php`, {
       method: 'POST',
       headers: {
@@ -142,10 +138,8 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
     }
 
     const result = await response.json();
-    console.log('Registration response:', result);
     return result;
   } catch (error) {
-    console.error('Registration error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Registration failed. Please check your connection.',
@@ -164,9 +158,6 @@ export async function login(data: LoginData): Promise<AuthResponse> {
     formData.append('email', data.email);
     formData.append('password', data.password);
 
-    console.log('Attempting login to:', `${API_BASE_URL}/auth_handler.php`);
-    console.log('Login data:', { email: data.email, password: '***' });
-
     const response = await enhancedFetch(`${API_BASE_URL}/auth_handler.php`, {
       method: 'POST',
       headers: {
@@ -177,17 +168,13 @@ export async function login(data: LoginData): Promise<AuthResponse> {
       mode: 'cors',
     });
 
-    console.log('Response status:', response.status);
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
-    console.log('Login response:', result);
     return result;
   } catch (error) {
-    console.error('Login error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Login failed. Please check your connection.',
@@ -214,7 +201,6 @@ export async function logout(): Promise<AuthResponse> {
     const result = await response.json();
     return result;
   } catch (error) {
-    console.error('Logout error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Logout failed',
@@ -237,12 +223,10 @@ export async function getCurrentUser(): Promise<AuthResponse> {
 
     // Handle different response statuses appropriately
     if (response.status === 401) {
-      console.warn('Session expired, user will need to login again');
       return { success: false, error: 'Session expired' };
     }
 
     if (response.status === 403) {
-      console.warn('Access forbidden - possible CSRF issue');
       return { success: false, error: 'Access forbidden' };
     }
 
@@ -252,7 +236,6 @@ export async function getCurrentUser(): Promise<AuthResponse> {
 
     try {
       const result = await response.json();
-      console.log('Session validation successful');
       return result;
     } catch (jsonError) {
       throw new Error('Invalid response format from server');
@@ -262,7 +245,6 @@ export async function getCurrentUser(): Promise<AuthResponse> {
   try {
     return await retryWithBackoff(fetchWithRetry);
   } catch (error) {
-    console.error('Session check failed:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('Session expired')) {
@@ -299,10 +281,8 @@ export async function refreshSession(): Promise<AuthResponse> {
     }
 
     const result = await response.json();
-    console.log('Session refresh successful');
     return result;
   } catch (error) {
-    console.error('Session refresh failed:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to refresh session',

@@ -29,7 +29,7 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const result = await fetchUserQRCodes(Number(userId));
+      const result = await fetchUserQRCodes();
 
       if (result.success && result.codes) {
         setQrCodes(result.codes);
@@ -69,11 +69,9 @@ export default function Dashboard() {
 
   // Transform API data to component format
   const allQRCodes = useMemo(() => {
-    console.log('Transforming QR codes:', qrCodes);
     const transformed = qrCodes.map((qr, index) => {
       const name = getQRCodeName(qr);
       const url = getQRCodeDisplayUrl(qr);
-      console.log('Transformed QR:', { name, url, qr });
       return {
         id: index + 1,
         qrcodeid: qr.qrcodeid,
@@ -88,20 +86,14 @@ export default function Dashboard() {
         styling: qr.styling,
       };
     });
-    console.log('All transformed QR codes:', transformed);
     return transformed;
   }, [qrCodes]);
 
   // Filter and sort QR codes
   const filteredAndSortedQRCodes = useMemo(() => {
-    console.log('Filtering QR codes, allQRCodes:', allQRCodes);
-    console.log('Search query:', searchQuery);
-
     let filtered = allQRCodes.filter(qr =>
       qr.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    console.log('Filtered QR codes:', filtered);
 
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -117,7 +109,6 @@ export default function Dashboard() {
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-    console.log('Final filtered and sorted:', filtered);
     return filtered;
   }, [allQRCodes, searchQuery, sortBy, sortOrder]);
 

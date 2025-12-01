@@ -3,7 +3,7 @@ interface GradientPreviewProps {
   color1: string;
   color2: string;
   label?: string;
-  size?: 'small' | 'medium';
+  size?: 'tiny' | 'small' | 'medium';
   showColors?: boolean;
   className?: string;
 }
@@ -18,6 +18,7 @@ export default function GradientPreview({
   className = '',
 }: GradientPreviewProps) {
   const sizeClasses = {
+    tiny: 'w-8 h-3 text-xs',
     small: 'w-4 h-4 text-xs',
     medium: 'w-6 h-6 text-sm',
   };

@@ -31,28 +31,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Enhanced session checking with retry logic and graceful degradation
-  const checkSession = useCallback(async (isRetry: boolean = false) => {
+  const checkSession = useCallback(async () => {
     try {
-      console.log(`Checking session... ${isRetry ? '(retry)' : '(initial)'}`);
-
       const result = await getCurrentUser();
 
       if (result.success && result.user) {
         setUser(result.user);
         setLastActivity(Date.now());
         setSessionCheckCount(0); // Reset on success
-        console.log('Session validation successful for user:', result.user.email);
       } else {
         // Clear user immediately on session failure - no retries for expired sessions
-        console.warn('Session validation failed, logging out user:', result.error);
         setUser(null);
         setSessionCheckCount(0);
       }
     } catch (error) {
-      console.error('Session check error:', error);
-
       // Clear user immediately on session errors
-      console.error('Session check failed, logging out user');
       setUser(null);
       setSessionCheckCount(0);
     } finally {
@@ -68,14 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const result = await refreshSession();
         if (!result.success) {
-          console.warn('Session refresh failed, checking full session...');
           await checkSession();
         } else {
           setLastActivity(Date.now());
-          console.log('Session refreshed successfully');
         }
       } catch (error) {
-        console.error('Periodic session refresh failed:', error);
         await checkSession();
       }
     }, 5 * 60 * 1000); // Every 5 minutes
@@ -104,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initial session check on component mount
   useEffect(() => {
-    console.log('AuthProvider mounted - checking initial session');
     checkSession();
   }, []); // Only run on mount
 
@@ -113,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleVisibilityChange = () => {
       if (!document.hidden && user) {
         // Page became visible again, check session
-        console.log('Page became visible, checking session...');
         checkSession();
       }
     };
@@ -123,19 +111,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, checkSession]);
 
   const login = (userData: User) => {
-    console.log('User logged in:', userData.email);
     setUser(userData);
     setLastActivity(Date.now());
     setSessionCheckCount(0); // Reset failure count on successful login
   };
 
   const logout = async () => {
-    console.log('User logging out...');
     try {
       await logoutService();
-      console.log('Logout service completed');
     } catch (error) {
-      console.error('Logout service failed:', error);
       // Still clear local state even if server logout fails
     } finally {
       setUser(null);
@@ -145,7 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshUser = async () => {
-    console.log('Manual user refresh requested');
     setLoading(true);
     await checkSession();
   };

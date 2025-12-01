@@ -39,15 +39,6 @@ export async function createQRCode(
       };
     }
 
-    console.log('Sending QR Code creation request:', {
-      action: 'create',
-      name: name,
-      content: contentObject,
-      type: type,
-      styling: styling,
-      authenticatedUser: authCheck.user
-    });
-
     // Prepare the request body - backend gets user ID from session
     const requestBody = {
       action: 'create',
@@ -56,9 +47,6 @@ export async function createQRCode(
       type: type,
       styling: styling ? JSON.stringify(styling) : null
     };
-
-    // Debug: Show what's being sent in the request body
-    console.log('DEBUG - Request body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch('https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=create', {
       method: 'POST',
@@ -79,7 +67,6 @@ export async function createQRCode(
     }
 
     const data = await response.json();
-    console.log('API Response:', data);
 
     // Handle response format differences
     if (data.success && data.data) {
@@ -106,8 +93,6 @@ export async function createQRCode(
 
     return data;
   } catch (error) {
-    console.error('Error creating QR code:', error);
-
     // Handle specific authentication errors
     if (error instanceof Error && error.message.includes('401')) {
       return {

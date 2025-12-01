@@ -4,6 +4,7 @@ interface ShapeIndicatorProps {
   type: 'dots' | 'corners';
   shape: string;
   label?: string;
+  size?: 'tiny' | 'small' | 'medium';
   className?: string;
 }
 
@@ -72,17 +73,30 @@ export default function ShapeIndicator({
   type,
   shape,
   label,
+  size = 'medium',
   className = '',
 }: ShapeIndicatorProps) {
+  const sizeClasses = {
+    tiny: 'w-5 h-5 p-0.5',
+    small: 'w-5.5 h-5.5 p-0.5',
+    medium: 'w-6 h-6 p-1',
+  };
+
+  const textClasses = {
+    tiny: 'text-xs',
+    small: 'text-xs',
+    medium: 'text-sm',
+  };
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="w-6 h-6 text-purple-400 flex items-center justify-center border border-white/20 rounded p-1 bg-black/30">
+      <div className={`${sizeClasses[size]} text-purple-400 flex items-center justify-center border border-white/20 rounded bg-black/30`}>
         {getShapeVisual(type, shape)}
       </div>
       {label && (
         <span className="text-gray-400 text-xs">{label}:</span>
       )}
-      <span className="text-white text-sm font-medium">
+      <span className={`text-white font-medium ${textClasses[size]}`}>
         {getShapeName(shape)}
       </span>
     </div>

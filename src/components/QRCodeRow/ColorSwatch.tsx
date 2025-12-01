@@ -1,7 +1,7 @@
 interface ColorSwatchProps {
   color: string;
   label?: string;
-  size?: 'small' | 'medium';
+  size?: 'tiny' | 'small' | 'medium';
   showHex?: boolean;
   className?: string;
 }
@@ -14,6 +14,7 @@ export default function ColorSwatch({
   className = '',
 }: ColorSwatchProps) {
   const sizeClasses = {
+    tiny: 'w-3 h-3 text-xs',
     small: 'w-4 h-4 text-xs',
     medium: 'w-6 h-6 text-sm',
   };
