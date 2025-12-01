@@ -202,7 +202,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   const qrCodeRefMobile = useRef<any>(null);
 
   // Parse QR styling properties from the database or use defaults
-  const qrStylingProps = (() => {
+  const qrStylingProps = useMemo(() => {
     const defaults = {
       dotsType: 'rounded' as const,
       dotsColor: '#8b5cf6',
@@ -221,19 +221,17 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       logoUrl: '',
     };
 
-    console.log('QR Code styling raw data:', qr.styling, typeof qr.styling);
 
     if (!qr.styling) return defaults;
 
     try {
       const parsed = JSON.parse(qr.styling);
-      console.log('QR Code styling parsed:', parsed);
-      return { ...defaults, ...parsed };
+            return { ...defaults, ...parsed };
     } catch (e) {
       console.error('Error parsing styling:', e, 'Raw styling:', qr.styling);
       return defaults;
     }
-  })();
+  }, [qr.styling]);
 
   // Smart section expansion logic based on styling complexity and usage
   // Memoized for performance - only recalculates when styling props change
@@ -387,8 +385,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   // Update local styling when qr changes (but only if user hasn't made local changes)
   useEffect(() => {
     if (!hasLocalModifications) {
-      console.log('🔄 Resetting localStylingProps from qrStylingProps (no local modifications)');
-      setLocalStylingProps(qrStylingProps);
+            setLocalStylingProps(qrStylingProps);
     }
   }, [qrStylingProps, hasLocalModifications]);
 
@@ -396,8 +393,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   const updateStylingField = useCallback((fieldKey: string, value: any) => {
     const stylingKey = fieldKey.replace('styling.', '');
 
-    console.log('🎨 Updating styling field:', stylingKey, 'to:', value);
-
+    
     // Mark that we have local modifications to prevent auto-reset
     setHasLocalModifications(true);
 
@@ -406,8 +402,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     if (stylingKey.includes('Color') && typeof value === 'string') {
       if (!value.startsWith('#')) {
         normalizedValue = '#' + value;
-        console.log('🎨 Normalized color from', value, 'to', normalizedValue);
-      }
+              }
     }
 
     // Use functional update to get the latest state and avoid dependency cycles
@@ -420,15 +415,12 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       // Auto-disable gradient when changing solid colors
       if (stylingKey === 'dotsColor' && prev.dotsGradient) {
         newStyling.dotsGradient = false;
-        console.log('🎨 Auto-disabled dots gradient to apply solid color');
-      }
+              }
       if (stylingKey === 'cornerSquareColor' && prev.cornersGradient) {
         newStyling.cornersGradient = false;
-        console.log('🎨 Auto-disabled corners gradient to apply solid color');
-      }
+              }
 
-      console.log('🎨 New localStylingProps:', newStyling);
-      return newStyling;
+            return newStyling;
     });
 
     // Also update fieldValues for input state
@@ -440,8 +432,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     // Force QR code regeneration by incrementing the key
     setQrRegenerationKey(prev => {
       const newKey = prev + 1;
-      console.log('🔄 Triggered QR code regeneration, key:', newKey);
-      return newKey;
+            return newKey;
     });
   }, []); // No dependencies to prevent infinite loops
 
@@ -1298,8 +1289,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
           }
         });
 
-        console.log('🆕 Creating new QR codes with options:', qrCodeOptions);
-
+        
         // Create QR codes using consistent size
         try {
           if (qrRefDesktop.current) {
@@ -1337,17 +1327,10 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   useEffect(() => {
     if (!isExpanded) return;
 
-    console.log('🔄 QR Code regeneration effect triggered, regenerationKey:', qrRegenerationKey);
-    console.log('🔄 Complete localStylingProps:', JSON.stringify(localStylingProps, null, 2));
-    console.log('🔄 localStylingProps.dotsColor:', localStylingProps.dotsColor);
-    console.log('🔄 localStylingProps.cornerSquareColor:', localStylingProps.cornerSquareColor);
-    console.log('🔄 localStylingProps.dotsGradient:', localStylingProps.dotsGradient);
-    console.log('🔄 localStylingProps.cornersGradient:', localStylingProps.cornersGradient);
-
+    
     const timeoutId = setTimeout(() => {
       try {
-        console.log('🔄 About to regenerate QR codes...');
-
+        
         // Force recreation by clearing and recreating
         [qrRefDesktop, qrRefTablet, qrRefMobile].forEach(ref => {
           if (ref.current) {
@@ -1356,22 +1339,18 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         });
 
         if (qrRefDesktop.current) {
-          console.log('🔄 Creating new desktop QR code...');
-          qrCodeRefDesktop.current = new QRCodeStyling(qrCodeOptions);
+                    qrCodeRefDesktop.current = new QRCodeStyling(qrCodeOptions);
           qrCodeRefDesktop.current.append(qrRefDesktop.current);
         }
         if (qrRefTablet.current) {
-          console.log('🔄 Creating new tablet QR code...');
-          qrCodeRefTablet.current = new QRCodeStyling(qrCodeOptions);
+                    qrCodeRefTablet.current = new QRCodeStyling(qrCodeOptions);
           qrCodeRefTablet.current.append(qrRefTablet.current);
         }
         if (qrRefMobile.current) {
-          console.log('🔄 Creating new mobile QR code...');
-          qrCodeRefMobile.current = new QRCodeStyling(qrCodeOptions);
+                    qrCodeRefMobile.current = new QRCodeStyling(qrCodeOptions);
           qrCodeRefMobile.current.append(qrRefMobile.current);
         }
-        console.log('✅ QR codes regenerated successfully!');
-      } catch (error) {
+              } catch (error) {
         console.error('❌ Error regenerating QR codes:', error);
       }
     }, 100); // Slightly longer delay for regeneration

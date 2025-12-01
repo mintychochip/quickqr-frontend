@@ -1,4 +1,5 @@
 import { ArrowRight, Zap, BarChart3, RefreshCw, QrCode } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function DynamicStaticComparison() {
   return (
@@ -166,21 +167,21 @@ export default function DynamicStaticComparison() {
               Create both static and dynamic QR codes with QuickQR. Start with our free plan and upgrade as your needs grow.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/create"
+              <Link
+                to="/create"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-semibold text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Zap className="w-5 h-5" />
                 Create QR Code
                 <ArrowRight className="w-5 h-5" />
-              </a>
-              <a
-                href="/pricing"
+              </Link>
+              <Link
+                to="/pricing"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 border border-white/20 rounded-lg font-semibold text-white hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <BarChart3 className="w-5 h-5" />
                 View Pricing
-              </a>
+              </Link>
             </div>
           </div>
         </div>

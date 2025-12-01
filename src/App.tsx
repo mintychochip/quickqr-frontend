@@ -223,16 +223,16 @@ function Footer() {
             <h4 className="font-semibold text-white mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+              <li><span className="text-gray-500">Blog</span></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold text-white mb-3">Legal</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+              <li><span className="text-gray-500">Privacy</span></li>
+              <li><span className="text-gray-500">Terms</span></li>
+              <li><span className="text-gray-500">Security</span></li>
             </ul>
           </div>
         </div>

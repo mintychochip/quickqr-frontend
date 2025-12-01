@@ -1,4 +1,5 @@
 import { CheckCircle, Zap, TrendingUp, Shield, DollarSign, Users, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function SolutionSection() {
   return (
@@ -203,21 +204,21 @@ export default function SolutionSection() {
             Join thousands of businesses that have switched to fair, transparent pricing. Your first 1,000 scans are on us.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/create"
+            <Link
+              to="/create"
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-semibold text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all"
             >
               <Zap className="w-5 h-5" />
               Start Free
               <ArrowRight className="w-4 h-4" />
-            </a>
-            <a
-              href="/pricing"
+            </Link>
+            <Link
+              to="/pricing"
               className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-lg font-semibold text-white hover:bg-white/20 transition-all"
             >
               <DollarSign className="w-5 h-5" />
               View Pricing
-            </a>
+            </Link>
           </div>
         </div>
       </div>
