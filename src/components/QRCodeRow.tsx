@@ -19,10 +19,20 @@ function SelectDropdown({ value, onChange, options, className = '' }: SelectDrop
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent ${className}`}
+      className={`bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent appearance-none cursor-pointer max-w-full ${className}`}
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+        backgroundPosition: 'right 8px center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '16px'
+      }}
     >
       {options.map(option => (
-        <option key={option.value} value={option.value}>
+        <option
+          key={option.value}
+          value={option.value}
+          className="bg-gray-900 text-gray-100"
+        >
           {option.label}
         </option>
       ))}
@@ -39,19 +49,19 @@ interface ColorPickerProps {
 
 function ColorPicker({ value, onChange, label }: ColorPickerProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 min-w-0 flex-1">
       <input
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded border border-white/20 cursor-pointer bg-transparent"
+        className="w-8 h-8 rounded border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
         title={label}
       />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+        className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent min-w-0"
         placeholder="#000000"
       />
     </div>
@@ -814,13 +824,13 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
 
           {/* Colors Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2">
+          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2 min-w-0 overflow-hidden">
             <h6 className="text-xs font-medium text-white mb-2">Colors</h6>
 
             {/* Dots Color */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Dots:</span>
-              <div className="flex items-center gap-1 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Dots:</span>
+              <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
                 <ColorPicker
                   value={fieldValues['styling.dotsColor'] || localStylingProps.dotsColor || '#8b5cf6'}
                   onChange={(value) => updateStylingField('styling.dotsColor', value)}
@@ -828,7 +838,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 />
                 <button
                   onClick={() => updateStylingField('styling.dotsGradient', false)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                     !localStylingProps.dotsGradient
                       ? 'bg-purple-600 text-white'
                       : 'bg-white/10 text-gray-400 hover:bg-white/20'
@@ -839,7 +849,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 </button>
                 <button
                   onClick={() => updateStylingField('styling.dotsGradient', true)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                     localStylingProps.dotsGradient
                       ? 'bg-purple-600 text-white'
                       : 'bg-white/10 text-gray-400 hover:bg-white/20'
@@ -852,9 +862,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
             </div>
 
             {/* Corners Color */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Corners:</span>
-              <div className="flex items-center gap-1 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Corners:</span>
+              <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
                 <ColorPicker
                   value={fieldValues['styling.cornerSquareColor'] || localStylingProps.cornerSquareColor || '#8b5cf6'}
                   onChange={(value) => updateStylingField('styling.cornerSquareColor', value)}
@@ -862,7 +872,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 />
                 <button
                   onClick={() => updateStylingField('styling.cornersGradient', false)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                     !localStylingProps.cornersGradient
                       ? 'bg-purple-600 text-white'
                       : 'bg-white/10 text-gray-400 hover:bg-white/20'
@@ -873,7 +883,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 </button>
                 <button
                   onClick={() => updateStylingField('styling.cornersGradient', true)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
                     localStylingProps.cornersGradient
                       ? 'bg-purple-600 text-white'
                       : 'bg-white/10 text-gray-400 hover:bg-white/20'
@@ -886,115 +896,125 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
             </div>
 
             {/* Background Color */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">BG:</span>
-              <ColorPicker
-                value={fieldValues['styling.bgColor'] || localStylingProps.bgColor || '#FFFFFF'}
-                onChange={(value) => updateStylingField('styling.bgColor', value)}
-                label="Background Color"
-              />
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">BG:</span>
+              <div className="flex-1 min-w-0">
+                <ColorPicker
+                  value={fieldValues['styling.bgColor'] || localStylingProps.bgColor || '#FFFFFF'}
+                  onChange={(value) => updateStylingField('styling.bgColor', value)}
+                  label="Background Color"
+                />
+              </div>
             </div>
           </div>
 
           {/* Shapes Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2">
+          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2 min-w-0 overflow-hidden">
             <h6 className="text-xs font-medium text-white mb-2">Shapes</h6>
 
             {/* Dots Shape */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Dots:</span>
-              <SelectDropdown
-                value={fieldValues['styling.dotsType'] || localStylingProps.dotsType || 'rounded'}
-                onChange={(value) => updateStylingField('styling.dotsType', value)}
-                options={[
-                  { value: 'square', label: 'Square' },
-                  { value: 'dots', label: 'Dots' },
-                  { value: 'rounded', label: 'Rounded' },
-                  { value: 'extra-rounded', label: 'Extra Rounded' },
-                  { value: 'classy', label: 'Classy' },
-                  { value: 'classy-rounded', label: 'Classy Rounded' }
-                ]}
-                className="flex-1"
-              />
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Dots:</span>
+              <div className="flex-1 min-w-0">
+                <SelectDropdown
+                  value={fieldValues['styling.dotsType'] || localStylingProps.dotsType || 'rounded'}
+                  onChange={(value) => updateStylingField('styling.dotsType', value)}
+                  options={[
+                    { value: 'square', label: 'Square' },
+                    { value: 'dots', label: 'Dots' },
+                    { value: 'rounded', label: 'Rounded' },
+                    { value: 'extra-rounded', label: 'Extra Rounded' },
+                    { value: 'classy', label: 'Classy' },
+                    { value: 'classy-rounded', label: 'Classy Rounded' }
+                  ]}
+                  className="w-full min-w-0"
+                />
+              </div>
             </div>
 
             {/* Corners Shape */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Corners:</span>
-              <SelectDropdown
-                value={fieldValues['styling.cornerSquareType'] || localStylingProps.cornerSquareType || 'square'}
-                onChange={(value) => updateStylingField('styling.cornerSquareType', value)}
-                options={[
-                  { value: 'square', label: 'Square' },
-                  { value: 'dot', label: 'Dot' },
-                  { value: 'rounded', label: 'Rounded' },
-                  { value: 'extra-rounded', label: 'Extra Rounded' },
-                  { value: 'classy', label: 'Classy' },
-                  { value: 'classy-rounded', label: 'Classy Rounded' }
-                ]}
-                className="flex-1"
-              />
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Corners:</span>
+              <div className="flex-1 min-w-0">
+                <SelectDropdown
+                  value={fieldValues['styling.cornerSquareType'] || localStylingProps.cornerSquareType || 'square'}
+                  onChange={(value) => updateStylingField('styling.cornerSquareType', value)}
+                  options={[
+                    { value: 'square', label: 'Square' },
+                    { value: 'dot', label: 'Dot' },
+                    { value: 'rounded', label: 'Rounded' },
+                    { value: 'extra-rounded', label: 'Extra Rounded' },
+                    { value: 'classy', label: 'Classy' },
+                    { value: 'classy-rounded', label: 'Classy Rounded' }
+                  ]}
+                  className="w-full min-w-0"
+                />
+              </div>
             </div>
 
             {/* Corner Dots */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">C-Dots:</span>
-              <SelectDropdown
-                value={fieldValues['styling.cornerDotType'] || localStylingProps.cornerDotType || 'dot'}
-                onChange={(value) => updateStylingField('styling.cornerDotType', value)}
-                options={[
-                  { value: 'square', label: 'Square' },
-                  { value: 'dot', label: 'Dot' },
-                  { value: 'rounded', label: 'Rounded' }
-                ]}
-                className="flex-1"
-              />
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">C-Dots:</span>
+              <div className="flex-1 min-w-0">
+                <SelectDropdown
+                  value={fieldValues['styling.cornerDotType'] || localStylingProps.cornerDotType || 'dot'}
+                  onChange={(value) => updateStylingField('styling.cornerDotType', value)}
+                  options={[
+                    { value: 'square', label: 'Square' },
+                    { value: 'dot', label: 'Dot' },
+                    { value: 'rounded', label: 'Rounded' }
+                  ]}
+                  className="w-full min-w-0"
+                />
+              </div>
             </div>
           </div>
 
           {/* Settings Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2">
+          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2 min-w-0 overflow-hidden">
             <h6 className="text-xs font-medium text-white mb-2">Settings</h6>
 
             {/* Error Correction */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Error:</span>
-              <SelectDropdown
-                value={fieldValues['styling.errorCorrectionLevel'] ?? localStylingProps.errorCorrectionLevel ?? 'H'}
-                onChange={(value) => updateStylingField('styling.errorCorrectionLevel', value)}
-                options={[
-                  { value: 'L', label: 'Low (7%)' },
-                  { value: 'M', label: 'Medium (15%)' },
-                  { value: 'Q', label: 'Quartile (25%)' },
-                  { value: 'H', label: 'High (30%)' }
-                ]}
-                className="flex-1 text-xs"
-              />
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Error:</span>
+              <div className="flex-1 min-w-0">
+                <SelectDropdown
+                  value={fieldValues['styling.errorCorrectionLevel'] ?? localStylingProps.errorCorrectionLevel ?? 'H'}
+                  onChange={(value) => updateStylingField('styling.errorCorrectionLevel', value)}
+                  options={[
+                    { value: 'L', label: 'Low (7%)' },
+                    { value: 'M', label: 'Medium (15%)' },
+                    { value: 'Q', label: 'Quartile (25%)' },
+                    { value: 'H', label: 'High (30%)' }
+                  ]}
+                  className="w-full min-w-0 text-xs"
+                />
+              </div>
             </div>
 
             {/* Margin */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Margin:</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Margin:</span>
               <input
                 type="number"
                 min="0"
                 max="20"
                 value={fieldValues['styling.margin'] ?? localStylingProps.margin ?? 0}
                 onChange={(e) => updateStylingField('styling.margin', parseInt(e.target.value) || 0)}
-                className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent min-w-0"
               />
             </div>
 
             {/* Border Radius */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-xs min-w-[50px]">Radius:</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Radius:</span>
               <input
                 type="number"
                 min="0"
                 max="50"
                 value={fieldValues['styling.borderRadius'] ?? localStylingProps.borderRadius ?? 0}
                 onChange={(e) => updateStylingField('styling.borderRadius', parseInt(e.target.value) || 0)}
-                className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent min-w-0"
               />
             </div>
           </div>

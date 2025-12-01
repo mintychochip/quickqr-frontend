@@ -32,56 +32,65 @@ function Navigation() {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-12">
+      <nav className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl border-b border-white/10">
+        <div className="max-w-screen-2xl mx-auto px-6 lg:px-8 xl:px-12">
+          <div className="flex items-center justify-between h-16">
             {/* Left Section: Logo + Nav Links */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-8 xl:gap-12">
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-1.5">
-                <div className="p-1.5 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg">
-                  <Zap className="w-4 h-4 text-white" />
+              <Link to="/" className="flex items-center gap-2.5">
+                <div className="p-2 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg shadow-purple-500/25">
+                  <Zap className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-white">
+                <span className="text-xl font-bold text-white">
                   QuickQR
                 </span>
               </Link>
 
               {/* Desktop Nav Links */}
-              <div className="hidden lg:flex items-center gap-6">
-                <a href="#features" className="text-white hover:text-purple-400 transition-colors font-semibold">
+              <div className="hidden lg:flex items-center gap-8 xl:gap-10">
+                <a href="#features" className="text-white/90 hover:text-white transition-colors font-medium text-sm lg:text-base">
                   Features
                 </a>
-                <Link to="/pricing" className="text-white hover:text-purple-400 transition-colors font-semibold">
+                <Link to="/pricing" className="text-white/90 hover:text-white transition-colors font-medium text-sm lg:text-base">
                   Pricing
                 </Link>
-                <Link to="/about" className="text-white hover:text-purple-400 transition-colors font-semibold">
+                <Link to="/about" className="text-white/90 hover:text-white transition-colors font-medium text-sm lg:text-base">
                   About
                 </Link>
+                <div className="hidden xl:flex items-center gap-2 text-xs lg:text-sm text-gray-400">
+                  <span>New</span>
+                  <div className="px-2 py-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium">
+                    v2.0
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Right Section: CTA */}
             {user ? (
-              <div className="hidden md:flex items-center gap-3">
-                <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors">
+              <div className="hidden md:flex items-center gap-4 lg:gap-6">
+                <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors font-medium text-sm lg:text-base">
                   Dashboard
                 </Link>
-                <span className="text-gray-400 text-sm hidden lg:block">{user.email}</span>
+                <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-lg border border-white/10">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-300 text-sm font-mono">{user.email?.split('@')[0]}</span>
+                </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all hover:scale-[1.02] active:scale-[0.98] font-medium text-sm lg:text-base"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden lg:inline">Logout</span>
                 </button>
               </div>
             ) : (
-              <div className="hidden md:flex items-center gap-3">
-                <Link to="/signin" className="text-gray-400 hover:text-white transition-colors">
+              <div className="hidden md:flex items-center gap-4 lg:gap-6">
+                <Link to="/signin" className="text-gray-400 hover:text-white transition-colors font-medium text-sm lg:text-base">
                   Sign In
                 </Link>
-                <Link to="/signup" className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <Link to="/signup" className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm lg:text-base">
                   Get Started
                 </Link>
               </div>
@@ -91,13 +100,13 @@ function Navigation() {
             <div className="md:hidden flex items-center">
               <button
                 onClick={toggleMobileMenu}
-                className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2.5 text-white hover:bg-white/10 rounded-lg transition-colors"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 ) : (
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-6 h-6" />
                 )}
               </button>
             </div>
@@ -115,27 +124,43 @@ function Navigation() {
           />
 
           {/* Mobile Menu Panel */}
-          <div className="fixed right-0 top-0 h-full w-64 bg-black/95 backdrop-blur-lg border-l border-white/10">
-            <div className="p-4 pt-16">
+          <div className="fixed right-0 top-0 h-full w-72 bg-black/95 backdrop-blur-xl border-l border-white/10">
+            <div className="p-6 pt-20">
+              {/* Mobile Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg">
+                    <Zap className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-lg font-bold text-white">QuickQR</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <span>New</span>
+                  <div className="px-1.5 py-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium">
+                    v2.0
+                  </div>
+                </div>
+              </div>
+
               {/* Mobile Nav Links */}
-              <div className="space-y-4 mb-6">
+              <div className="space-y-5 mb-8">
                 <a
                   href="#features"
-                  className="block text-white hover:text-purple-400 transition-colors font-semibold"
+                  className="block text-white/90 hover:text-white transition-colors font-medium text-lg py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Features
                 </a>
                 <Link
                   to="/pricing"
-                  className="block text-white hover:text-purple-400 transition-colors font-semibold"
+                  className="block text-white/90 hover:text-white transition-colors font-medium text-lg py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Pricing
                 </Link>
                 <Link
                   to="/about"
-                  className="block text-white hover:text-purple-400 transition-colors font-semibold"
+                  className="block text-white/90 hover:text-white transition-colors font-medium text-lg py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   About
@@ -143,7 +168,7 @@ function Navigation() {
                 {user && (
                   <Link
                     to="/dashboard"
-                    className="block text-white hover:text-purple-400 transition-colors font-semibold"
+                    className="block text-white/90 hover:text-white transition-colors font-medium text-lg py-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
@@ -151,19 +176,27 @@ function Navigation() {
                 )}
               </div>
 
-              {/* Mobile CTA */}
-              <div className="space-y-3">
+              {/* Mobile User Info / CTA */}
+              <div className="space-y-4">
                 {user ? (
                   <>
-                    <div className="text-gray-400 text-sm mb-4 p-3 bg-white/5 rounded-lg">
-                      {user.email}
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div>
+                          <div className="text-sm font-medium text-white">
+                            {user.email?.split('@')[0]}
+                          </div>
+                          <div className="text-xs text-gray-400">{user.email}</div>
+                        </div>
+                      </div>
                     </div>
                     <button
                       onClick={() => {
                         handleLogout();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all font-medium"
                     >
                       <LogOut className="w-4 h-4" />
                       Logout
@@ -173,14 +206,14 @@ function Navigation() {
                   <>
                     <Link
                       to="/signin"
-                      className="block w-full text-center text-gray-400 hover:text-white transition-colors px-4 py-2"
+                      className="block w-full text-center text-gray-400 hover:text-white transition-colors px-4 py-3 font-medium"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Sign In
                     </Link>
                     <Link
                       to="/signup"
-                      className="block w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all text-center"
+                      className="block w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all text-center"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Get Started

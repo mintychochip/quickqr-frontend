@@ -20,11 +20,13 @@ export default function ColorSwatch({
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 min-w-0 ${className}`}>
       <div
         className={`${sizeClasses[size]} rounded border-2 border-white/20 shadow-inner flex-shrink-0 relative overflow-hidden bg-white`}
         style={{
           backgroundColor: color || '#000000',
+          minWidth: sizeClasses[size].split(' ')[0],
+          minHeight: sizeClasses[size].split(' ')[1],
         }}
         title={color}
       >
@@ -36,10 +38,10 @@ export default function ColorSwatch({
         )}
       </div>
       {label && (
-        <span className="text-gray-400 text-xs">{label}:</span>
+        <span className="text-gray-400 text-xs whitespace-nowrap flex-shrink-0">{label}:</span>
       )}
       {showHex && (
-        <span className="text-white text-xs font-mono bg-black/30 px-2 py-1 rounded">
+        <span className="text-white text-xs font-mono bg-black/30 px-2 py-1 rounded whitespace-nowrap min-w-0">
           {color || '#000000'}
         </span>
       )}

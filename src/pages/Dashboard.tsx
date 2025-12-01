@@ -362,7 +362,15 @@ export default function Dashboard() {
                   <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
                     Data Range
                   </label>
-                  <select className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all">
+                  <select
+                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                      backgroundPosition: 'right 12px center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '20px'
+                    }}
+                  >
                     <option value="30">Last 30 days</option>
                     <option value="7">Last 7 days</option>
                     <option value="90">Last 90 days</option>
