@@ -19,7 +19,7 @@ export default function Features() {
             <p className="text-gray-400 max-w-md">
               Join millions of users creating beautiful, customizable QR codes
             </p>
-            <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-semibold text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            <button className="px-8 py-4 bg-white rounded-lg font-semibold text-black hover:bg-gray-100 transition-all duration-200">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5" />
                 Start Creating Now

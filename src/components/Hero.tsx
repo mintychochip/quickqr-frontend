@@ -18,9 +18,9 @@ export default function Hero() {
             <span className="text-sm text-gray-300">Lightning-fast QR generation</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-100 to-gray-400">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white">
             Create Stunning
-            <span className="block bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-purple-500">
+            <span className="block text-white">
               QR Codes
             </span>
           </h1>
@@ -31,14 +31,14 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-semibold text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            <button className="group relative px-8 py-4 bg-white rounded-lg font-semibold text-black hover:bg-gray-100 transition-all duration-200">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                 Get Started Free
               </div>
             </button>
 
-            <button className="px-8 py-4 bg-white/5 backdrop-blur-sm rounded-lg font-semibold text-white border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            <button className="px-8 py-4 bg-white/5 backdrop-blur-sm rounded-lg font-semibold text-white border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-200">
               <div className="flex items-center gap-2">
                 <Download className="w-5 h-5" />
                 Download Sample

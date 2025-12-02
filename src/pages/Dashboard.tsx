@@ -138,8 +138,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-black pt-16">
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-black border-r border-white/10 p-6">
+        {/* Sidebar - Hidden on mobile */}
+        <aside className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-black border-r border-white/10 p-6">
           <nav className="space-y-6">
             {/* QR Codes Section */}
             <div>
@@ -202,7 +202,57 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="ml-64 flex-1 p-8">
+        <div className="lg:ml-64 flex-1 p-4 lg:p-8">
+          {/* Mobile Navigation Tabs */}
+          <div className="lg:hidden mb-6 overflow-x-auto">
+            <div className="flex gap-2 pb-2 min-w-max">
+              <button
+                onClick={() => setActiveView('active')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                  activeView === 'active'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <QrCode className="w-4 h-4" />
+                <span className="text-sm font-medium">Active</span>
+              </button>
+              <button
+                onClick={() => setActiveView('stats')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                  activeView === 'stats'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="text-sm font-medium">Stats</span>
+              </button>
+              <button
+                onClick={() => setActiveView('settings')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                  activeView === 'settings'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+              <button
+                onClick={() => setActiveView('billing')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                  activeView === 'billing'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <CreditCard className="w-4 h-4" />
+                <span className="text-sm font-medium">Billing</span>
+              </button>
+            </div>
+          </div>
+
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">

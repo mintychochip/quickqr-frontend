@@ -1297,39 +1297,43 @@ export default function QRCodeGenerator({
         {/* Right Column - QR Preview (Sticky) */}
         <div className="lg:col-span-1">
           <div className="sticky top-52 space-y-6">
-            <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-white/10 rounded-xl p-8">
-              <h3 className="text-lg font-bold text-white mb-4">Preview</h3>
-              <div className="flex justify-center">
-                <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-2xl" />
-              </div>
-              <p className="text-xs text-gray-400 text-center mt-4">
-                {qrMode === 'static' ? 'Static QR Code' : 'Dynamic QR Code with tracking'}
-              </p>
-            </div>
-
-            {/* QR Name and Save Section */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">QR Code Name</label>
-                  <input
-                    type="text"
-                    value={qrName}
-                    onChange={(e) => onNameChange?.(e.target.value)}
-                    placeholder="Enter a name for your QR code"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
-                  />
+            {qrMode === 'static' && (
+              <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-white/10 rounded-xl p-8">
+                <h3 className="text-lg font-bold text-white mb-4">Preview</h3>
+                <div className="flex justify-center">
+                  <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-2xl" />
                 </div>
-                <button
-                  onClick={handleSave}
-                  disabled={saving || !qrName.trim()}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Save className="w-5 h-5" />
-                  {saving ? 'Saving...' : 'Save QR Code'}
-                </button>
+                <p className="text-xs text-gray-400 text-center mt-4">
+                  Static QR Code
+                </p>
               </div>
-            </div>
+            )}
+
+            {/* QR Name and Save Section - Only for Dynamic */}
+            {qrMode === 'dynamic' && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">QR Code Name</label>
+                    <input
+                      type="text"
+                      value={qrName}
+                      onChange={(e) => onNameChange?.(e.target.value)}
+                      placeholder="Enter a name for your QR code"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || !qrName.trim()}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-5 h-5" />
+                    {saving ? 'Saving...' : 'Save QR Code'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

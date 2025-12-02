@@ -650,30 +650,30 @@ export default function InteractiveQRGenerator() {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setCustomizationTab('shape')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 customizationTab === 'shape'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white/5 text-gray-400 hover:text-white'
+                  ? 'bg-white text-black'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
               }`}
             >
               Shape
             </button>
             <button
               onClick={() => setCustomizationTab('colors')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 customizationTab === 'colors'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white/5 text-gray-400 hover:text-white'
+                  ? 'bg-white text-black'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
               }`}
             >
               Colors
             </button>
             <button
               onClick={() => setCustomizationTab('logo')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 customizationTab === 'logo'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white/5 text-gray-400 hover:text-white'
+                  ? 'bg-white text-black'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
               }`}
             >
               Logo
@@ -1042,28 +1042,28 @@ export default function InteractiveQRGenerator() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => handleDownload('png')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-[1.02]"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white rounded-lg font-medium text-black hover:bg-gray-100 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               PNG
             </button>
             <button
               onClick={() => handleDownload('svg')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg font-medium text-white hover:bg-white/10 transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               SVG
             </button>
             <button
               onClick={() => handleDownload('jpeg')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg font-medium text-white hover:bg-white/10 transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               JPEG
             </button>
             <button
               onClick={() => handleDownload('webp')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg font-medium text-white hover:bg-white/10 transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               WebP

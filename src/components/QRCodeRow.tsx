@@ -19,7 +19,7 @@ function SelectDropdown({ value, onChange, options, className = '' }: SelectDrop
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent appearance-none cursor-pointer max-w-full ${className}`}
+      className={`bg-black border border-white/20 rounded text-white text-sm px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent appearance-none cursor-pointer w-full ${className}`}
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
         backgroundPosition: 'right 8px center',
@@ -366,10 +366,49 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     }));
   };
 
-  // Removed backend save functionality - fields are now local only
-
-  const saveField = (fieldKey: string, value: string) => {
+  // Save field to backend
+  const saveField = async (fieldKey: string, value: string) => {
     updateFieldValue(fieldKey, value);
+
+    // Prepare update data
+    const updateData: any = {
+      qrcodeid: qr.qrcodeid
+    };
+
+    // Handle different field types
+    if (fieldKey === 'name') {
+      updateData.name = value;
+    } else if (fieldKey.startsWith('content.')) {
+      // Update content field
+      const contentField = fieldKey.replace('content.', '');
+      const updatedContent = {
+        ...parsedContent,
+        [contentField]: value
+      };
+      updateData.content = JSON.stringify(updatedContent);
+    }
+
+    // Send update to backend
+    try {
+      const response = await fetch('https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('Failed to update QR code:', result.error);
+        alert('Failed to update: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error updating QR code:', error);
+      alert('Error updating QR code');
+    }
   };
 
   // Helper function to get current field value from QR data
@@ -399,11 +438,11 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     }
   }, [qrStylingProps, hasLocalModifications]);
 
-  // Handle styling field updates (local only)
+  // Handle styling field updates and save to backend
   const updateStylingField = useCallback((fieldKey: string, value: any) => {
     const stylingKey = fieldKey.replace('styling.', '');
 
-    
+
     // Mark that we have local modifications to prevent auto-reset
     setHasLocalModifications(true);
 
@@ -430,6 +469,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         newStyling.cornersGradient = false;
               }
 
+      // Save to backend after state update
+      saveStylingToBackend(newStyling);
+
             return newStyling;
     });
 
@@ -446,7 +488,35 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     });
   }, []); // No dependencies to prevent infinite loops
 
-  // Removed backend save functionality - styling is now local only
+  // Save styling to backend with debouncing
+  const saveStylingToBackend = useCallback((stylingData: typeof qrStylingProps) => {
+    // Use debounce to avoid too many requests
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch('https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            qrcodeid: qr.qrcodeid,
+            styling: JSON.stringify(stylingData)
+          })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error('Failed to update styling:', result.error);
+        }
+      } catch (error) {
+        console.error('Error updating styling:', error);
+      }
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [qr.qrcodeid]);
 
   // Handle clicks outside to save and close editing
   useEffect(() => {
@@ -820,242 +890,301 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       <div className={`${isCompact ? 'space-y-3' : 'space-y-4'}`}>
         <h5 className="text-sm font-semibold text-white mb-2">QR Code Styling</h5>
 
-        {/* Compact Grid Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {/* Compact Grid Layout - Fixed overflow */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-          {/* Colors Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2 min-w-0 overflow-hidden">
-            <h6 className="text-xs font-medium text-white mb-2">Colors</h6>
+          {/* Colors & Shapes Combined Card */}
+          <div className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-3">
+            <h6 className="text-sm font-semibold text-white mb-3">Colors & Shapes</h6>
 
-            {/* Dots Color */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Dots:</span>
-              <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
-                <ColorPicker
-                  value={fieldValues['styling.dotsColor'] || localStylingProps.dotsColor || '#8b5cf6'}
-                  onChange={(value) => updateStylingField('styling.dotsColor', value)}
-                  label="Dots Color"
-                />
-                <button
-                  onClick={() => updateStylingField('styling.dotsGradient', false)}
-                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
-                    !localStylingProps.dotsGradient
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                  }`}
-                  title="Use solid color"
-                >
-                  Solid
-                </button>
-                <button
-                  onClick={() => updateStylingField('styling.dotsGradient', true)}
-                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
-                    localStylingProps.dotsGradient
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                  }`}
-                  title="Use gradient"
-                >
-                  Grad
-                </button>
+            {/* Dots */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Dots</label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <ColorPicker
+                    value={fieldValues['styling.dotsColor'] || localStylingProps.dotsColor || '#8b5cf6'}
+                    onChange={(value) => updateStylingField('styling.dotsColor', value)}
+                    label="Dots Color"
+                  />
+                </div>
+                <div className="flex-1">
+                  <SelectDropdown
+                    value={fieldValues['styling.dotsType'] || localStylingProps.dotsType || 'rounded'}
+                    onChange={(value) => updateStylingField('styling.dotsType', value)}
+                    options={[
+                      { value: 'square', label: 'Square' },
+                      { value: 'dots', label: 'Dots' },
+                      { value: 'rounded', label: 'Rounded' },
+                      { value: 'extra-rounded', label: 'Extra' },
+                      { value: 'classy', label: 'Classy' }
+                    ]}
+                    className="w-full"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Corners Color */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Corners:</span>
-              <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
-                <ColorPicker
-                  value={fieldValues['styling.cornerSquareColor'] || localStylingProps.cornerSquareColor || '#8b5cf6'}
-                  onChange={(value) => updateStylingField('styling.cornerSquareColor', value)}
-                  label="Corners Color"
-                />
-                <button
-                  onClick={() => updateStylingField('styling.cornersGradient', false)}
-                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
-                    !localStylingProps.cornersGradient
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                  }`}
-                  title="Use solid color"
-                >
-                  Solid
-                </button>
-                <button
-                  onClick={() => updateStylingField('styling.cornersGradient', true)}
-                  className={`px-2 py-1 text-xs rounded transition-colors flex-shrink-0 ${
-                    localStylingProps.cornersGradient
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                  }`}
-                  title="Use gradient"
-                >
-                  Grad
-                </button>
+            {/* Corners */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Corners</label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <ColorPicker
+                    value={fieldValues['styling.cornerSquareColor'] || localStylingProps.cornerSquareColor || '#8b5cf6'}
+                    onChange={(value) => updateStylingField('styling.cornerSquareColor', value)}
+                    label="Corners Color"
+                  />
+                </div>
+                <div className="flex-1">
+                  <SelectDropdown
+                    value={fieldValues['styling.cornerSquareType'] || localStylingProps.cornerSquareType || 'square'}
+                    onChange={(value) => updateStylingField('styling.cornerSquareType', value)}
+                    options={[
+                      { value: 'square', label: 'Square' },
+                      { value: 'dot', label: 'Dot' },
+                      { value: 'rounded', label: 'Rounded' },
+                      { value: 'extra-rounded', label: 'Extra' }
+                    ]}
+                    className="w-full"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Background Color */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">BG:</span>
-              <div className="flex-1 min-w-0">
-                <ColorPicker
-                  value={fieldValues['styling.bgColor'] || localStylingProps.bgColor || '#FFFFFF'}
-                  onChange={(value) => updateStylingField('styling.bgColor', value)}
-                  label="Background Color"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Shapes Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2 min-w-0 overflow-hidden">
-            <h6 className="text-xs font-medium text-white mb-2">Shapes</h6>
-
-            {/* Dots Shape */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Dots:</span>
-              <div className="flex-1 min-w-0">
-                <SelectDropdown
-                  value={fieldValues['styling.dotsType'] || localStylingProps.dotsType || 'rounded'}
-                  onChange={(value) => updateStylingField('styling.dotsType', value)}
-                  options={[
-                    { value: 'square', label: 'Square' },
-                    { value: 'dots', label: 'Dots' },
-                    { value: 'rounded', label: 'Rounded' },
-                    { value: 'extra-rounded', label: 'Extra Rounded' },
-                    { value: 'classy', label: 'Classy' },
-                    { value: 'classy-rounded', label: 'Classy Rounded' }
-                  ]}
-                  className="w-full min-w-0"
-                />
-              </div>
-            </div>
-
-            {/* Corners Shape */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Corners:</span>
-              <div className="flex-1 min-w-0">
-                <SelectDropdown
-                  value={fieldValues['styling.cornerSquareType'] || localStylingProps.cornerSquareType || 'square'}
-                  onChange={(value) => updateStylingField('styling.cornerSquareType', value)}
-                  options={[
-                    { value: 'square', label: 'Square' },
-                    { value: 'dot', label: 'Dot' },
-                    { value: 'rounded', label: 'Rounded' },
-                    { value: 'extra-rounded', label: 'Extra Rounded' },
-                    { value: 'classy', label: 'Classy' },
-                    { value: 'classy-rounded', label: 'Classy Rounded' }
-                  ]}
-                  className="w-full min-w-0"
-                />
-              </div>
-            </div>
-
-            {/* Corner Dots */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">C-Dots:</span>
-              <div className="flex-1 min-w-0">
-                <SelectDropdown
-                  value={fieldValues['styling.cornerDotType'] || localStylingProps.cornerDotType || 'dot'}
-                  onChange={(value) => updateStylingField('styling.cornerDotType', value)}
-                  options={[
-                    { value: 'square', label: 'Square' },
-                    { value: 'dot', label: 'Dot' },
-                    { value: 'rounded', label: 'Rounded' }
-                  ]}
-                  className="w-full min-w-0"
-                />
-              </div>
+            {/* Background */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Background</label>
+              <ColorPicker
+                value={fieldValues['styling.bgColor'] || localStylingProps.bgColor || '#FFFFFF'}
+                onChange={(value) => updateStylingField('styling.bgColor', value)}
+                label="Background Color"
+              />
             </div>
           </div>
 
           {/* Settings Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2 min-w-0 overflow-hidden">
-            <h6 className="text-xs font-medium text-white mb-2">Settings</h6>
+          <div className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-3">
+            <h6 className="text-sm font-semibold text-white mb-3">Settings</h6>
 
             {/* Error Correction */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Error:</span>
-              <div className="flex-1 min-w-0">
-                <SelectDropdown
-                  value={fieldValues['styling.errorCorrectionLevel'] ?? localStylingProps.errorCorrectionLevel ?? 'H'}
-                  onChange={(value) => updateStylingField('styling.errorCorrectionLevel', value)}
-                  options={[
-                    { value: 'L', label: 'Low (7%)' },
-                    { value: 'M', label: 'Medium (15%)' },
-                    { value: 'Q', label: 'Quartile (25%)' },
-                    { value: 'H', label: 'High (30%)' }
-                  ]}
-                  className="w-full min-w-0 text-xs"
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Error Correction</label>
+              <SelectDropdown
+                value={fieldValues['styling.errorCorrectionLevel'] ?? localStylingProps.errorCorrectionLevel ?? 'H'}
+                onChange={(value) => updateStylingField('styling.errorCorrectionLevel', value)}
+                options={[
+                  { value: 'L', label: 'Low (7%)' },
+                  { value: 'M', label: 'Medium (15%)' },
+                  { value: 'Q', label: 'Quartile (25%)' },
+                  { value: 'H', label: 'High (30%)' }
+                ]}
+                className="w-full"
+              />
             </div>
 
             {/* Margin */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Margin:</span>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Margin</label>
               <input
                 type="number"
                 min="0"
                 max="20"
                 value={fieldValues['styling.margin'] ?? localStylingProps.margin ?? 0}
                 onChange={(e) => updateStylingField('styling.margin', parseInt(e.target.value) || 0)}
-                className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent min-w-0"
+                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+              />
+            </div>
+
+            {/* Corner Dots Style */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Corner Dots</label>
+              <SelectDropdown
+                value={fieldValues['styling.cornerDotType'] || localStylingProps.cornerDotType || 'dot'}
+                onChange={(value) => updateStylingField('styling.cornerDotType', value)}
+                options={[
+                  { value: 'square', label: 'Square' },
+                  { value: 'dot', label: 'Dot' },
+                  { value: 'rounded', label: 'Rounded' }
+                ]}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+        </div>
+
+        {/* Logo Settings Card */}
+        <div className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-3">
+          <h6 className="text-sm font-semibold text-white mb-3">Logo Settings</h6>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Logo URL */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Logo URL</label>
+              <input
+                type="url"
+                value={fieldValues['styling.logoUrl'] || localStylingProps.logoUrl || ''}
+                onChange={(e) => updateStylingField('styling.logoUrl', e.target.value)}
+                placeholder="https://example.com/logo.png"
+                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600 placeholder-gray-500"
+              />
+            </div>
+
+            {/* Logo Size */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Logo Size (0.1 - 0.5)</label>
+              <input
+                type="number"
+                min="0.1"
+                max="0.5"
+                step="0.05"
+                value={fieldValues['styling.imageSize'] ?? localStylingProps.imageSize ?? 0.3}
+                onChange={(e) => updateStylingField('styling.imageSize', parseFloat(e.target.value) || 0.3)}
+                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+              />
+            </div>
+
+            {/* Logo Margin */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Logo Margin</label>
+              <input
+                type="number"
+                min="0"
+                max="20"
+                value={fieldValues['styling.imageMargin'] ?? localStylingProps.imageMargin ?? 5}
+                onChange={(e) => updateStylingField('styling.imageMargin', parseInt(e.target.value) || 5)}
+                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
               />
             </div>
 
             {/* Border Radius */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-gray-400 text-xs min-w-[50px] flex-shrink-0">Radius:</span>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Border Radius</label>
               <input
                 type="number"
                 min="0"
                 max="50"
                 value={fieldValues['styling.borderRadius'] ?? localStylingProps.borderRadius ?? 0}
                 onChange={(e) => updateStylingField('styling.borderRadius', parseInt(e.target.value) || 0)}
-                className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent min-w-0"
+                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
               />
             </div>
           </div>
-
-          {/* Logo Card */}
-          {(qrStylingProps.image || qrStylingProps.imageBackground) && (
-            <div className="bg-black/30 rounded-lg border border-white/10 p-3 space-y-2">
-              <h6 className="text-xs font-medium text-white mb-2">Logo</h6>
-
-              {/* Logo Image */}
-              {qrStylingProps.image && (
-                <LogoThumbnail
-                  url={qrStylingProps.image}
-                  size={qrStylingProps.imageSize || 0.4}
-                  margin={qrStylingProps.imageMargin || 0}
-                  label="Logo"
-                />
-              )}
-
-              {/* Image Background */}
-              {qrStylingProps.imageBackground && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400 text-xs min-w-[50px]">BG:</span>
-                  <ColorSwatch
-                    color={qrStylingProps.imageBackgroundColor || '#FFFFFF'}
-                    size="tiny"
-                    showHex={false}
-                  />
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Detailed Styling Sections (Collapsible) */}
+        {/* Advanced Styling Options (Collapsible) */}
         <div className="space-y-2">
           <StylingSection
             title="Advanced Styling Options"
             defaultExpanded={false}
             compact={true}
           >
+            <div className="space-y-4">
+              {/* Gradient Settings */}
+              <div className="bg-black/20 rounded-lg p-4 border border-white/10">
+                <h6 className="text-xs font-semibold text-white mb-3">Gradient Settings</h6>
+
+                {/* Gradient Toggles */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Dots Gradient Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-400">Dots Gradient</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateStylingField('styling.dotsGradient', false)}
+                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
+                          !localStylingProps.dotsGradient
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        Solid
+                      </button>
+                      <button
+                        onClick={() => updateStylingField('styling.dotsGradient', true)}
+                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
+                          localStylingProps.dotsGradient
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        Gradient
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Corners Gradient Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-400">Corners Gradient</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateStylingField('styling.cornersGradient', false)}
+                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
+                          !localStylingProps.cornersGradient
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        Solid
+                      </button>
+                      <button
+                        onClick={() => updateStylingField('styling.cornersGradient', true)}
+                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
+                          localStylingProps.cornersGradient
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        Gradient
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gradient Colors - Only show when gradient is enabled */}
+                {localStylingProps.dotsGradient && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pt-3 border-t border-white/10">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-400">Dots Gradient Color 1</label>
+                      <ColorPicker
+                        value={fieldValues['styling.dotsGradientColor1'] || localStylingProps.dotsGradientColor1 || '#6366f1'}
+                        onChange={(value) => updateStylingField('styling.dotsGradientColor1', value)}
+                        label="Dots Gradient Color 1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-400">Dots Gradient Color 2</label>
+                      <ColorPicker
+                        value={fieldValues['styling.dotsGradientColor2'] || localStylingProps.dotsGradientColor2 || '#3b82f6'}
+                        onChange={(value) => updateStylingField('styling.dotsGradientColor2', value)}
+                        label="Dots Gradient Color 2"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {localStylingProps.cornersGradient && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-white/10">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-400">Corners Gradient Color 1</label>
+                      <ColorPicker
+                        value={fieldValues['styling.cornersGradientColor1'] || localStylingProps.cornersGradientColor1 || '#8b5cf6'}
+                        onChange={(value) => updateStylingField('styling.cornersGradientColor1', value)}
+                        label="Corners Gradient Color 1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-400">Corners Gradient Color 2</label>
+                      <ColorPicker
+                        value={fieldValues['styling.cornersGradientColor2'] || localStylingProps.cornersGradientColor2 || '#3b82f6'}
+                        onChange={(value) => updateStylingField('styling.cornersGradientColor2', value)}
+                        label="Corners Gradient Color 2"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
 
               {/* Extended Colors Info */}
@@ -1146,20 +1275,20 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       </div>
 
       {/* Compact Action Buttons */}
-      <div className="flex gap-2 pt-4">
+      <div className="flex gap-3 pt-5 border-t border-white/10 mt-5">
         <button
           onClick={handleDownload}
-          className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg text-xs font-medium text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-1.5"
+          className="flex-1 px-4 py-2.5 bg-white rounded-lg text-sm font-semibold text-black hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2"
         >
-          <Download className="w-3.5 h-3.5" />
-          Download QR Code
+          <Download className="w-4 h-4" />
+          Download
         </button>
         <button
-          onClick={(e) => e.stopPropagation()}
-          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium text-white transition-all flex items-center gap-1.5"
+          onClick={handleDelete}
+          className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-sm font-semibold text-red-400 hover:text-red-300 transition-all duration-200 flex items-center justify-center gap-2"
         >
-          <Settings className="w-3.5 h-3.5" />
-          Edit Styling
+          <Trash2 className="w-4 h-4" />
+          Delete
         </button>
       </div>
     </>
@@ -1451,59 +1580,62 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         <tr className="border-b border-white/5 bg-white/5">
           <td colSpan={5} className="py-4 lg:py-6 px-3 lg:px-4 w-full">
             <div className="w-full max-w-full overflow-x-hidden">
-            {/* Desktop Layout - Prominent QR code with enhanced styling */}
-            <div className="hidden lg:flex gap-8 xl:gap-12 items-start w-full">
-              {/* QR Code Preview - Prominent and centered */}
-              <div className="flex-shrink-0 lg:w-[360px] xl:w-[400px]">
-                <div className="relative flex justify-center items-center p-6 lg:p-8">
-                    {/* QR Code wrapper with glow */}
+            {/* Desktop Layout - Cleaner organization */}
+            <div className="hidden lg:flex gap-6 items-start w-full">
+              {/* QR Code Preview - Fixed width */}
+              <div className="flex-shrink-0 w-[280px]">
+                <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                  <div className="relative flex justify-center items-center">
+                    {/* QR Code wrapper with subtle glow */}
                     <div className="relative">
-                      {/* Glow effect positioned around the QR code */}
-                      <div className="absolute -inset-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur-lg opacity-40"></div>
-                      <div ref={qrRefDesktop} className="w-[240px] h-[240px] relative z-10"></div>
+                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 rounded-lg blur-md"></div>
+                      <div ref={qrRefDesktop} className="w-[240px] h-[240px] relative z-10 bg-white rounded-lg"></div>
                     </div>
                   </div>
+                </div>
               </div>
 
-              {/* Compact Details Section - Responsive width */}
-              <div className="flex-1 min-w-0 space-y-6">
+              {/* Details Section - Flexible width */}
+              <div className="flex-1 min-w-0 space-y-5">
                 {renderCompactDetails(false)}
               </div>
             </div>
 
-            {/* Tablet Layout - Enhanced prominence */}
-            <div className="hidden md:flex lg:hidden gap-8 items-center justify-center w-full">
-              {/* QR Code Preview - Enhanced for tablet */}
-              <div className="flex-shrink-0">
-                <div className="relative flex justify-center items-center p-6">
-                    {/* QR Code wrapper with glow */}
+            {/* Tablet Layout */}
+            <div className="hidden md:flex lg:hidden gap-6 items-start w-full">
+              {/* QR Code Preview */}
+              <div className="flex-shrink-0 w-[240px]">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                  <div className="relative flex justify-center items-center">
                     <div className="relative">
-                      {/* Glow effect positioned around the QR code */}
-                      <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg blur-lg opacity-40"></div>
-                      <div ref={qrRefTablet} className="w-[240px] h-[240px] relative z-10"></div>
+                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 rounded-lg blur-md"></div>
+                      <div ref={qrRefTablet} className="w-[200px] h-[200px] relative z-10 bg-white rounded-lg"></div>
                     </div>
                   </div>
+                </div>
               </div>
 
-              {/* Details Section for tablet */}
-              <div className="flex-1 space-y-5">
+              {/* Details Section */}
+              <div className="flex-1 space-y-4">
                 {renderCompactDetails(true)}
               </div>
             </div>
 
-            {/* Mobile Layout - Centered prominence */}
-            <div className="flex md:hidden flex-col gap-6 items-center w-full">
-              {/* QR Code Preview - Prominent on mobile */}
-              <div className="relative flex justify-center items-center p-6">
-                  {/* QR Code wrapper with glow */}
-                  <div className="relative">
-                    {/* Glow effect positioned around the QR code */}
-                    <div className="absolute -inset-2 bg-gradient-to-r from-purple-400 to-blue-400 rounded-lg blur-lg opacity-40"></div>
-                    <div ref={qrRefMobile} className="w-[240px] h-[240px] relative z-10"></div>
+            {/* Mobile Layout */}
+            <div className="flex md:hidden flex-col gap-4 items-center w-full">
+              {/* QR Code Preview */}
+              <div className="w-full max-w-[280px]">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                  <div className="relative flex justify-center items-center">
+                    <div className="relative">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 rounded-lg blur-md"></div>
+                      <div ref={qrRefMobile} className="w-[200px] h-[200px] relative z-10 bg-white rounded-lg"></div>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-              {/* Mobile Details Section */}
+              {/* Details Section */}
               <div className="w-full space-y-4">
                 {renderCompactDetails(true)}
               </div>
