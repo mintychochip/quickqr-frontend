@@ -3,6 +3,8 @@ import { QrCode, Download, Settings, Plus, BarChart3, Search, ArrowUpDown, Credi
 import { useState, useMemo, useEffect } from 'react';
 import QRCodeRow from '../components/QRCodeRow';
 import StatsCharts from '../components/StatsCharts';
+import UserStatsPanel from '../components/UserStatsPanel';
+import DetailedStatsPanel from '../components/DetailedStatsPanel';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchUserQRCodes, getQRCodeDisplayUrl, getQRCodeName, deleteQRCode, type QRCode as QRCodeType } from '../services/qrCodeService';
 
@@ -405,182 +407,14 @@ export default function Dashboard() {
           )}
 
           {activeView === 'stats' && (
-            <>
-              {/* Date Range Selector */}
-              <div className="mb-6 flex justify-between items-center">
-                <div className="relative">
-                  <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
-                    Data Range
-                  </label>
-                  <select
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all appearance-none cursor-pointer shadow-sm"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                      backgroundPosition: 'right 12px center',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: '20px'
-                    }}
-                  >
-                    <option value="30">Last 30 days</option>
-                    <option value="7">Last 7 days</option>
-                    <option value="90">Last 90 days</option>
-                    <option value="365">Last year</option>
-                  </select>
-                </div>
-              </div>
+            <div className="space-y-6">
+              {/* User Stats Panel */}
+              <UserStatsPanel days={30} />
 
-              {/* Statistics Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* QR Code Scans Table */}
-                <div className="relative">
-                  <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <QrCode className="w-5 h-5 text-teal-600" />
-                        QR Code Scans (last 30 days)
-                      </h3>
-                      <button className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-all flex items-center gap-2 shadow-sm">
-                        <Download className="w-4 h-4" />
-                        Export as CSV
-                      </button>
-                    </div>
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
-                      <div className="text-center py-12 text-gray-600">
-                        No Data
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Detailed Stats Tables */}
+              <DetailedStatsPanel days={30} />
 
-                {/* Operating Systems Table */}
-                <div className="relative">
-                  <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <Settings className="w-5 h-5 text-teal-600" />
-                        Operating Systems (last 30 days)
-                      </h3>
-                      <button className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-all flex items-center gap-2 shadow-sm">
-                        <Download className="w-4 h-4" />
-                        Export as CSV
-                      </button>
-                    </div>
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 border-b-2 border-gray-200">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">#</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Operating System</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Scans</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">%</th>
-                          </tr>
-                        </thead>
-                      </table>
-                      <div className="text-center py-12 text-gray-600">
-                        No Data
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Countries Table */}
-                <div className="relative">
-                  <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <QrCode className="w-5 h-5 text-teal-600" />
-                        Countries (last 30 days)
-                      </h3>
-                      <button className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-all flex items-center gap-2 shadow-sm">
-                        <Download className="w-4 h-4" />
-                        Export as CSV
-                      </button>
-                    </div>
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 border-b-2 border-gray-200">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">#</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Country</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Scans</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">%</th>
-                          </tr>
-                        </thead>
-                      </table>
-                      <div className="text-center py-12 text-gray-600">
-                        No Data
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cities Table */}
-                <div className="relative">
-                  <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <QrCode className="w-5 h-5 text-teal-600" />
-                        Cities (last 30 days)
-                      </h3>
-                      <button className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-all flex items-center gap-2 shadow-sm">
-                        <Download className="w-4 h-4" />
-                        Export as CSV
-                      </button>
-                    </div>
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 border-b-2 border-gray-200">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">#</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">City</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Scans</th>
-                            <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">%</th>
-                          </tr>
-                        </thead>
-                      </table>
-                      <div className="text-center py-12 text-gray-600">
-                        No Data
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Scans by QR Code - Full Width */}
-              <div className="relative mt-6">
-                <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <QrCode className="w-5 h-5 text-teal-600" />
-                      Scans by QR Code (last 30 days)
-                    </h3>
-                    <button className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-all flex items-center gap-2 shadow-sm">
-                      <Download className="w-4 h-4" />
-                      Export as CSV
-                    </button>
-                  </div>
-                  <div className="overflow-hidden rounded-lg border border-gray-200">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b-2 border-gray-200">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">ID</th>
-                          <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Name</th>
-                          <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Scans</th>
-                          <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">%</th>
-                        </tr>
-                      </thead>
-                    </table>
-                    <div className="text-center py-12 text-gray-600">
-                      No Data
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeView === 'stats' && (
-            <div className="space-y-8">
+              {/* Charts */}
               <StatsCharts />
             </div>
           )}
