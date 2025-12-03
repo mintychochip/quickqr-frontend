@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <!-- Rounded square background with teal color -->
-  <rect width="48" height="48" rx="8" fill="#14b8a6"/>
-  <!-- Lucide Zap icon - scaled and centered -->
-  <g transform="translate(12, 12)">
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Circular background with teal color -->
+  <circle cx="24" cy="24" r="24" fill="#14b8a6"/>
+  <!-- Lucide Zap icon - larger and centered -->
+  <g transform="translate(6, 6) scale(1.5)">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>
