@@ -49,9 +49,6 @@ function Navigation() {
 
               {/* Desktop Nav Links */}
               <div className="hidden lg:flex items-center gap-8 xl:gap-10">
-                <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
-                  Features
-                </a>
                 <Link to="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
                   Pricing
                 </Link>

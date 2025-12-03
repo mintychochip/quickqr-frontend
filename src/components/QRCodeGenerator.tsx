@@ -26,16 +26,8 @@ type DataType =
   | 'url'
   | 'text'
   | 'email'
-  | 'phone'
   | 'sms'
-  | 'vcard'
-  | 'mecard'
-  | 'location'
-  | 'facebook'
-  | 'twitter'
-  | 'youtube'
-  | 'wifi'
-  | 'event';
+  | 'wifi';
 
 type DotType = 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
 type CornerSquareType = 'dot' | 'square' | 'extra-rounded';
