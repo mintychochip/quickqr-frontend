@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 
-const API_BASE_URL = 'https://artemis.cs.csub.edu/~jlo';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
 
 interface RedirectResponse {
   type: string;

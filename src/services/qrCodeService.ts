@@ -3,7 +3,7 @@
  * Handles fetching and managing QR codes for authenticated users
  */
 
-const API_BASE_URL = 'https://artemis.cs.csub.edu/~jlo';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
 
 export interface QRCode {
   qrcodeid: string;
@@ -28,10 +28,17 @@ export interface FetchCodesResponse {
  */
 export async function fetchUserQRCodes(): Promise<FetchCodesResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/qrcode_handler.php?action=list&limit=100`, {
-      method: 'GET',
+    const response = await fetch(`${API_BASE_URL}/qrcode.php`, {
+      method: 'POST',
       credentials: 'include',
       mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'list',
+        limit: 100,
+      }),
     });
 
     if (!response.ok) {
@@ -116,7 +123,7 @@ export function getQRCodeDisplayUrl(qrCode: QRCode): string {
  */
 export async function deleteQRCode(qrcodeId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch(`https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=delete`, {
+    const response = await fetch(`${API_BASE_URL}/qrcode.php`, {
       method: 'POST',
       credentials: 'include',
       mode: 'cors',

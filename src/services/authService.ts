@@ -4,7 +4,7 @@
  * Enhanced with retry logic and better error handling for session persistence
  */
 
-const API_BASE_URL = 'https://artemis.cs.csub.edu/~jlo';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
 
 // Retry configuration
 const MAX_RETRIES = 3;
@@ -113,22 +113,20 @@ async function enhancedFetch(url: string, options: RequestInit = {}): Promise<Re
 }
 
 /**
- * Register a new user with form data format
+ * Register a new user with JSON format
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
   try {
-    // Use form data format to match backend getInputData() function
-    const formData = new URLSearchParams();
-    formData.append('action', 'register');
-    formData.append('email', data.email);
-    formData.append('password', data.password);
-
-    const response = await enhancedFetch(`${API_BASE_URL}/auth_handler.php`, {
+    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: formData.toString(),
+      body: JSON.stringify({
+        action: 'register',
+        email: data.email,
+        password: data.password,
+      }),
       credentials: 'include', // Include cookies for session
       mode: 'cors',
     });
@@ -148,22 +146,20 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
 }
 
 /**
- * Login a user with form data format
+ * Login a user with JSON format
  */
 export async function login(data: LoginData): Promise<AuthResponse> {
   try {
-    // Use form data format to match backend getInputData() function
-    const formData = new URLSearchParams();
-    formData.append('action', 'login');
-    formData.append('email', data.email);
-    formData.append('password', data.password);
-
-    const response = await enhancedFetch(`${API_BASE_URL}/auth_handler.php`, {
+    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: formData.toString(),
+      body: JSON.stringify({
+        action: 'login',
+        email: data.email,
+        password: data.password,
+      }),
       credentials: 'include', // Include cookies for session
       mode: 'cors',
     });
@@ -187,10 +183,14 @@ export async function login(data: LoginData): Promise<AuthResponse> {
  */
 export async function logout(): Promise<AuthResponse> {
   try {
-    const url = `${API_BASE_URL}/auth_handler.php?action=logout`;
-
-    const response = await fetch(url, {
-      method: 'GET',
+    const response = await fetch(`${API_BASE_URL}/auth.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'logout',
+      }),
       credentials: 'include',
     });
 
@@ -212,11 +212,15 @@ export async function logout(): Promise<AuthResponse> {
  * Get current user info with enhanced retry logic
  */
 export async function getCurrentUser(): Promise<AuthResponse> {
-  const url = `${API_BASE_URL}/auth_handler.php?action=me`;
-
   const fetchWithRetry = async (): Promise<AuthResponse> => {
-    const response = await enhancedFetch(url, {
-      method: 'GET',
+    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'me',
+      }),
       credentials: 'include',
       mode: 'cors',
     });
@@ -267,11 +271,15 @@ export async function getCurrentUser(): Promise<AuthResponse> {
  * Refresh user session
  */
 export async function refreshSession(): Promise<AuthResponse> {
-  const url = `${API_BASE_URL}/auth_handler.php?action=refresh`;
-
   try {
-    const response = await enhancedFetch(url, {
-      method: 'GET',
+    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'refresh',
+      }),
       credentials: 'include',
       mode: 'cors',
     });

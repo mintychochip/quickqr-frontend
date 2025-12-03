@@ -17,7 +17,7 @@ function Navigation() {
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
-  const isRedirectPage = location.pathname.startsWith('/code/');
+  const isRedirectPage = location.pathname.startsWith('/r/');
 
   if (isAuthPage || isRedirectPage) return null;
 
@@ -220,7 +220,7 @@ function Navigation() {
 function Footer() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
-  const isRedirectPage = location.pathname.startsWith('/code/');
+  const isRedirectPage = location.pathname.startsWith('/r/');
   const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/create';
 
   if (isAuthPage || isRedirectPage || isDashboardPage) return null;
@@ -245,16 +245,16 @@ function Footer() {
             <h4 className="font-semibold text-gray-900 mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-gray-600">
               <li><Link to="/about" className="hover:text-gray-900 transition-colors">About</Link></li>
-              <li><span className="text-gray-400">Blog</span></li>
+              <li><span className="text-gray-600">Blog</span></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold text-gray-900 mb-3">Legal</h4>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><span className="text-gray-400">Privacy</span></li>
-              <li><span className="text-gray-400">Terms</span></li>
-              <li><span className="text-gray-400">Security</span></li>
+              <li><span className="text-gray-600">Privacy</span></li>
+              <li><span className="text-gray-600">Terms</span></li>
+              <li><span className="text-gray-600">Security</span></li>
             </ul>
           </div>
         </div>
@@ -289,7 +289,7 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/code/:slug" element={<QRCodeRedirect />} />
+          <Route path="/r/:slug" element={<QRCodeRedirect />} />
         </Routes>
       </main>
 

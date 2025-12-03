@@ -8,7 +8,7 @@ export const API_CONFIG = {
   }
 } as const;
 
-export const APP_URL = import.meta.env.VITE_APP_BASE_URL;
+export const APP_URL = import.meta.env.VITE_APP_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr';
 
 // Helper function to build full API URL
 export const getApiUrl = (endpoint: keyof typeof API_CONFIG.endpoints): string => {

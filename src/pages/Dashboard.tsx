@@ -317,11 +317,13 @@ export default function Dashboard() {
                       </div>
                     ) : error ? (
                       <div className="text-center py-12">
-                        <p className="text-red-400 mb-2">{error}</p>
+                        <p className="text-red-600 mb-4">{error}</p>
                         <button
-                          onClick={() => window.location.reload()}
-                          className="px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg text-white transition-all shadow-md"
+                          onClick={loadQRCodes}
+                          disabled={loading}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
+                          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                           Retry
                         </button>
                       </div>

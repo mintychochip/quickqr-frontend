@@ -22,9 +22,9 @@ function SelectDropdown({ value, onChange, options, className = '' }: SelectDrop
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`bg-black border border-white/20 rounded text-white text-sm px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent appearance-none cursor-pointer w-full ${className}`}
+      className={`bg-white border border-gray-300 rounded text-gray-900 text-sm px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none cursor-pointer w-full shadow-sm ${className}`}
       style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
         backgroundPosition: 'right 8px center',
         backgroundRepeat: 'no-repeat',
         backgroundSize: '16px'
@@ -34,7 +34,7 @@ function SelectDropdown({ value, onChange, options, className = '' }: SelectDrop
         <option
           key={option.value}
           value={option.value}
-          className="bg-gray-900 text-gray-100"
+          className="bg-white text-gray-900"
         >
           {option.label}
         </option>
@@ -57,14 +57,14 @@ function ColorPicker({ value, onChange, label }: ColorPickerProps) {
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+        className="w-8 h-8 rounded border border-gray-300 cursor-pointer bg-white flex-shrink-0"
         title={label}
       />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 bg-black border border-white/20 rounded text-white text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent min-w-0"
+        className="flex-1 bg-white border border-gray-300 rounded text-gray-900 text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent min-w-0 shadow-sm"
         placeholder="#000000"
       />
     </div>
@@ -166,21 +166,21 @@ function EditableField({
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={`flex-1 px-3 py-1.5 bg-black border ${
-            validationError ? 'border-red-500' : 'border-white/20'
-          } rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent`}
+          className={`flex-1 px-3 py-1.5 bg-white border ${
+            validationError ? 'border-red-500' : 'border-gray-300'
+          } rounded text-gray-900 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm`}
           autoFocus
         />
         <button
           onClick={handleSave}
-          className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium text-white transition-colors"
+          className="px-2 py-1 bg-teal-500 hover:bg-teal-600 rounded text-xs font-medium text-white transition-colors shadow-sm"
           title="Save"
         >
           ✓
         </button>
         <button
           onClick={handleCancel}
-          className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs font-medium text-white transition-colors"
+          className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs font-medium text-gray-900 transition-colors shadow-sm"
           title="Cancel"
         >
           ✕
@@ -192,7 +192,7 @@ function EditableField({
   return (
     <div
       onClick={handleEdit}
-      className="cursor-text rounded px-2 py-1 flex-1 text-white font-medium"
+      className="cursor-text rounded px-2 py-1 flex-1 text-gray-900 font-medium"
       title="Click to edit"
       data-editable-field
     >
@@ -251,7 +251,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   // Generate QR code data based on type and content
   const generateQRData = (): string => {
     // All QR codes should redirect through our redirect endpoint
-    return `${APP_URL}/code/${qr.qrcodeid}`;
+    return `${APP_URL}/r/${qr.qrcodeid}`;
   };
 
   // Parse QR content for editing
@@ -466,12 +466,12 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     <>
       {/* Compact Details Section */}
       <div className={`${isCompact ? 'space-y-3' : 'space-y-4'}`}>
-        <h4 className={`${isCompact ? 'text-base' : 'text-lg'} font-semibold text-white mb-3`}>Details</h4>
+        <h4 className={`${isCompact ? 'text-base' : 'text-lg'} font-semibold text-gray-900 mb-3`}>Details</h4>
 
         {/* Compact Basic Details */}
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-xs min-w-[60px]">Name</span>
+            <span className="text-gray-600 text-xs min-w-[60px]">Name</span>
             <EditableField
               value={fieldValues['name'] || qr.name}
               onChange={(value) => saveField('name', value)}
@@ -488,15 +488,15 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-xs min-w-[60px]">Scans</span>
-            <span className="text-white font-medium">{qr.scans.toLocaleString()}</span>
+            <span className="text-gray-600 text-xs min-w-[60px]">Scans</span>
+            <span className="text-gray-900 font-medium">{qr.scans.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-xs min-w-[60px]">Created</span>
-            <span className="text-white font-medium">{formatDate(qr.created)}</span>
+            <span className="text-gray-600 text-xs min-w-[60px]">Created</span>
+            <span className="text-gray-900 font-medium">{formatDate(qr.created)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-xs min-w-[60px]">Status</span>
+            <span className="text-gray-600 text-xs min-w-[60px]">Status</span>
             <span className="text-green-400 font-medium capitalize">{qr.status}</span>
           </div>
         </div>
@@ -504,16 +504,16 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
       {/* Compact Content Section */}
       <div className={`${isCompact ? 'space-y-2' : 'space-y-3'}`}>
-        <h5 className="text-sm font-semibold text-white mb-2">Content</h5>
+        <h5 className="text-sm font-semibold text-gray-900 mb-2">Content</h5>
         {(() => {
           try {
             const contentDecoded = JSON.parse(qr.content);
             switch (qr.type) {
               case 'url':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm">
+                  <div className="bg-white rounded-lg p-3 text-sm border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">URL</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">URL</span>
                       <EditableField
                         value={fieldValues['content.url'] || contentDecoded.url || ''}
                         onChange={(value) => saveField('content.url', value)}
@@ -538,9 +538,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 );
               case 'email':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm space-y-2">
+                  <div className="bg-white rounded-lg p-3 text-sm space-y-2 border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Email</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Email</span>
                       <EditableField
                         value={fieldValues['content.email'] || contentDecoded.email || ''}
                         onChange={(value) => saveField('content.email', value)}
@@ -558,7 +558,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Subj</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Subj</span>
                       <EditableField
                         value={fieldValues['content.subject'] || contentDecoded.subject || ''}
                         onChange={(value) => saveField('content.subject', value)}
@@ -574,7 +574,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Body</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Body</span>
                       <EditableField
                         value={fieldValues['content.body'] || contentDecoded.body || ''}
                         onChange={(value) => saveField('content.body', value)}
@@ -593,9 +593,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 );
               case 'phone':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm">
+                  <div className="bg-white rounded-lg p-3 text-sm border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Phone</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Phone</span>
                       <EditableField
                         value={fieldValues['content.phone'] || contentDecoded.phone || ''}
                         onChange={(value) => saveField('content.phone', value)}
@@ -616,9 +616,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 );
               case 'sms':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm space-y-2">
+                  <div className="bg-white rounded-lg p-3 text-sm space-y-2 border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Number</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Number</span>
                       <EditableField
                         value={fieldValues['content.number'] || contentDecoded.number || ''}
                         onChange={(value) => saveField('content.number', value)}
@@ -636,7 +636,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Msg</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Msg</span>
                       <EditableField
                         value={fieldValues['content.message'] || contentDecoded.message || ''}
                         onChange={(value) => saveField('content.message', value)}
@@ -655,9 +655,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 );
               case 'text':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm">
+                  <div className="bg-white rounded-lg p-3 text-sm border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Text</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Text</span>
                       <EditableField
                         value={fieldValues['content.text'] || contentDecoded.text || ''}
                         onChange={(value) => saveField('content.text', value)}
@@ -678,115 +678,115 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
               case 'vcard':
               case 'mecard':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm space-y-2">
+                  <div className="bg-white rounded-lg p-3 text-sm space-y-2 border border-gray-200 shadow-sm">
                     {contentDecoded.name && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Name</span>
-                        <span className="text-white flex-1">{contentDecoded.name}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Name</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.name}</span>
                       </div>
                     )}
                     {contentDecoded.phone && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Phone</span>
-                        <span className="text-white flex-1">{contentDecoded.phone}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Phone</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.phone}</span>
                       </div>
                     )}
                     {contentDecoded.email && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Email</span>
-                        <span className="text-white flex-1">{contentDecoded.email}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Email</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.email}</span>
                       </div>
                     )}
                     {contentDecoded.org && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Org</span>
-                        <span className="text-white flex-1">{contentDecoded.org}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Org</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.org}</span>
                       </div>
                     )}
                     {contentDecoded.url && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Web</span>
-                        <span className="text-white break-all flex-1">{contentDecoded.url}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Web</span>
+                        <span className="text-gray-900 break-all flex-1">{contentDecoded.url}</span>
                       </div>
                     )}
                   </div>
                 );
               case 'location':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm space-y-2">
+                  <div className="bg-white rounded-lg p-3 text-sm space-y-2 border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Lat</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Lat</span>
                       <span className="text-white flex-1">{contentDecoded.latitude}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs min-w-[30px]">Lng</span>
+                      <span className="text-gray-600 text-xs min-w-[30px]">Lng</span>
                       <span className="text-white flex-1">{contentDecoded.longitude}</span>
                     </div>
                   </div>
                 );
               case 'wifi':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm space-y-2">
+                  <div className="bg-white rounded-lg p-3 text-sm space-y-2 border border-gray-200 shadow-sm">
                     {contentDecoded.ssid && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">SSID</span>
-                        <span className="text-white flex-1">{contentDecoded.ssid}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">SSID</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.ssid}</span>
                       </div>
                     )}
                     {contentDecoded.encryption && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Sec</span>
-                        <span className="text-white flex-1">{contentDecoded.encryption}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Sec</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.encryption}</span>
                       </div>
                     )}
                     {contentDecoded.password && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Pass</span>
-                        <span className="text-white flex-1">{contentDecoded.password}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Pass</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.password}</span>
                       </div>
                     )}
                   </div>
                 );
               case 'event':
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm space-y-2">
+                  <div className="bg-white rounded-lg p-3 text-sm space-y-2 border border-gray-200 shadow-sm">
                     {contentDecoded.title && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Title</span>
-                        <span className="text-white flex-1">{contentDecoded.title}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Title</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.title}</span>
                       </div>
                     )}
                     {contentDecoded.location && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Where</span>
-                        <span className="text-white flex-1">{contentDecoded.location}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Where</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.location}</span>
                       </div>
                     )}
                     {contentDecoded.start && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">Start</span>
-                        <span className="text-white flex-1">{contentDecoded.start}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">Start</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.start}</span>
                       </div>
                     )}
                     {contentDecoded.end && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs min-w-[30px]">End</span>
-                        <span className="text-white flex-1">{contentDecoded.end}</span>
+                        <span className="text-gray-600 text-xs min-w-[30px]">End</span>
+                        <span className="text-gray-900 flex-1">{contentDecoded.end}</span>
                       </div>
                     )}
                   </div>
                 );
               default:
                 return (
-                  <div className="bg-black/30 rounded-lg p-3 text-sm">
-                    <span className="text-gray-400">Type: {qr.type}</span>
+                  <div className="bg-white rounded-lg p-3 text-sm border border-gray-200 shadow-sm">
+                    <span className="text-gray-600">Type: {qr.type}</span>
                   </div>
                 );
             }
           } catch (e) {
             return (
-              <div className="bg-black/30 rounded-lg p-3 text-sm">
-                <span className="text-gray-400">Unable to parse content</span>
+              <div className="bg-white rounded-lg p-3 text-sm border border-gray-200 shadow-sm">
+                <span className="text-gray-600">Unable to parse content</span>
               </div>
             );
           }
@@ -795,18 +795,18 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
       {/* Compact Styling Grid */}
       <div className={`${isCompact ? 'space-y-3' : 'space-y-4'}`}>
-        <h5 className="text-sm font-semibold text-white mb-2">QR Code Styling</h5>
+        <h5 className="text-sm font-semibold text-gray-900 mb-2">QR Code Styling</h5>
 
         {/* Compact Grid Layout - Fixed overflow */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
           {/* Colors & Shapes Combined Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-3">
-            <h6 className="text-sm font-semibold text-white mb-3">Colors & Shapes</h6>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 shadow-sm">
+            <h6 className="text-sm font-semibold text-gray-900 mb-3">Colors & Shapes</h6>
 
             {/* Dots */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Dots</label>
+              <label className="text-xs font-medium text-gray-700">Dots</label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   <ColorPicker
@@ -834,7 +834,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
             {/* Corners */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Corners</label>
+              <label className="text-xs font-medium text-gray-700">Corners</label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   <ColorPicker
@@ -861,7 +861,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
             {/* Background */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Background</label>
+              <label className="text-xs font-medium text-gray-700">Background</label>
               <ColorPicker
                 value={fieldValues['styling.bgColor'] || localStylingProps.bgColor || '#FFFFFF'}
                 onChange={(value) => updateStylingField('styling.bgColor', value)}
@@ -871,12 +871,12 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
           </div>
 
           {/* Settings Card */}
-          <div className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-3">
-            <h6 className="text-sm font-semibold text-white mb-3">Settings</h6>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 shadow-sm">
+            <h6 className="text-sm font-semibold text-gray-900 mb-3">Settings</h6>
 
             {/* Error Correction */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Error Correction</label>
+              <label className="text-xs font-medium text-gray-700">Error Correction</label>
               <SelectDropdown
                 value={fieldValues['styling.errorCorrectionLevel'] ?? localStylingProps.errorCorrectionLevel ?? 'H'}
                 onChange={(value) => updateStylingField('styling.errorCorrectionLevel', value)}
@@ -892,20 +892,20 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
             {/* Margin */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Margin</label>
+              <label className="text-xs font-medium text-gray-700">Margin</label>
               <input
                 type="number"
                 min="0"
                 max="20"
                 value={fieldValues['styling.margin'] ?? localStylingProps.margin ?? 0}
                 onChange={(e) => updateStylingField('styling.margin', parseInt(e.target.value) || 0)}
-                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                className="w-full bg-white border border-gray-300 rounded text-gray-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
               />
             </div>
 
             {/* Corner Dots Style */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Corner Dots</label>
+              <label className="text-xs font-medium text-gray-700">Corner Dots</label>
               <SelectDropdown
                 value={fieldValues['styling.cornerDotType'] || localStylingProps.cornerDotType || 'dot'}
                 onChange={(value) => updateStylingField('styling.cornerDotType', value)}
@@ -922,24 +922,24 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         </div>
 
         {/* Logo Settings Card */}
-        <div className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-3">
-          <h6 className="text-sm font-semibold text-white mb-3">Logo Settings</h6>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 shadow-sm">
+          <h6 className="text-sm font-semibold text-gray-900 mb-3">Logo Settings</h6>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Logo URL */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Logo URL</label>
+              <label className="text-xs font-medium text-gray-700">Logo URL</label>
               <input
                 type="url"
                 value={fieldValues['styling.logoUrl'] || localStylingProps.logoUrl || ''}
                 onChange={(e) => updateStylingField('styling.logoUrl', e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600 placeholder-gray-500"
+                className="w-full bg-white border border-gray-300 rounded text-gray-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-500 shadow-sm"
               />
             </div>
 
             {/* Logo Size */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Logo Size (0.1 - 0.5)</label>
+              <label className="text-xs font-medium text-gray-700">Logo Size (0.1 - 0.5)</label>
               <input
                 type="number"
                 min="0.1"
@@ -947,33 +947,33 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 step="0.05"
                 value={fieldValues['styling.imageSize'] ?? localStylingProps.imageSize ?? 0.3}
                 onChange={(e) => updateStylingField('styling.imageSize', parseFloat(e.target.value) || 0.3)}
-                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                className="w-full bg-white border border-gray-300 rounded text-gray-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
               />
             </div>
 
             {/* Logo Margin */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Logo Margin</label>
+              <label className="text-xs font-medium text-gray-700">Logo Margin</label>
               <input
                 type="number"
                 min="0"
                 max="20"
                 value={fieldValues['styling.imageMargin'] ?? localStylingProps.imageMargin ?? 5}
                 onChange={(e) => updateStylingField('styling.imageMargin', parseInt(e.target.value) || 5)}
-                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                className="w-full bg-white border border-gray-300 rounded text-gray-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
               />
             </div>
 
             {/* Border Radius */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Border Radius</label>
+              <label className="text-xs font-medium text-gray-700">Border Radius</label>
               <input
                 type="number"
                 min="0"
                 max="50"
                 value={fieldValues['styling.borderRadius'] ?? localStylingProps.borderRadius ?? 0}
                 onChange={(e) => updateStylingField('styling.borderRadius', parseInt(e.target.value) || 0)}
-                className="w-full bg-black border border-white/20 rounded text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                className="w-full bg-white border border-gray-300 rounded text-gray-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
               />
             </div>
           </div>
@@ -988,8 +988,8 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
           >
             <div className="space-y-4">
               {/* Gradient Settings */}
-              <div className="bg-black/20 rounded-lg p-4 border border-white/10">
-                <h6 className="text-xs font-semibold text-white mb-3">Gradient Settings</h6>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <h6 className="text-xs font-semibold text-gray-900 mb-3">Gradient Settings</h6>
 
               </div>
             </div>
@@ -997,12 +997,12 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
               {/* Extended Colors Info */}
               <div className="space-y-2">
-                <h6 className="text-xs font-medium text-gray-300">Color Details</h6>
+                <h6 className="text-xs font-medium text-gray-700">Color Details</h6>
 
                 {/* Dots Color Details */}
                 {qrStylingProps.dotsGradient ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-xs">Dots:</span>
+                    <span className="text-gray-600 text-xs">Dots:</span>
                     <div className="flex gap-1">
                       <ColorSwatch
                         color={qrStylingProps.dotsGradientColor1 || '#000000'}
@@ -1028,7 +1028,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 {/* Corners Color Details */}
                 {qrStylingProps.cornersGradient ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-xs">Corners:</span>
+                    <span className="text-gray-600 text-xs">Corners:</span>
                     <div className="flex gap-1">
                       <ColorSwatch
                         color={qrStylingProps.cornersGradientColor1 || '#000000'}
@@ -1054,7 +1054,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
               {/* Extended Shapes Info */}
               <div className="space-y-2">
-                <h6 className="text-xs font-medium text-gray-300">Shape Details</h6>
+                <h6 className="text-xs font-medium text-gray-700">Shape Details</h6>
 
                 <ShapeIndicator
                   type="dots"
@@ -1083,17 +1083,17 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       </div>
 
       {/* Compact Action Buttons */}
-      <div className="flex gap-3 pt-5 border-t border-white/10 mt-5">
+      <div className="flex gap-3 pt-5 border-t border-gray-200 mt-5">
         <button
           onClick={handleDownload}
-          className="flex-1 px-4 py-2.5 bg-white rounded-lg text-sm font-semibold text-black hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-2.5 bg-teal-500 rounded-lg text-sm font-semibold text-white hover:bg-teal-600 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
         >
           <Download className="w-4 h-4" />
           Download
         </button>
         <button
           onClick={handleDelete}
-          className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-sm font-semibold text-red-400 hover:text-red-300 transition-all duration-200 flex items-center justify-center gap-2"
+          className="px-4 py-2.5 bg-white hover:bg-gray-50 border border-red-300 rounded-lg text-sm font-semibold text-red-600 hover:text-red-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
         >
           <Trash2 className="w-4 h-4" />
           Delete
@@ -1334,19 +1334,19 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
               <QrCode className="w-6 h-6 text-black" />
             </div>
-            <span className="text-white font-medium">{qr.name}</span>
+            <span className="text-gray-900 font-medium">{qr.name}</span>
           </div>
         </td>
         <td className="py-4 px-4">
-          <span className="text-gray-400 text-sm truncate max-w-xs block">
+          <span className="text-gray-600 text-sm truncate max-w-xs block">
             {qr.type === 'url' ? 'URL' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}
           </span>
         </td>
         <td className="py-4 px-4">
-          <span className="text-white font-semibold">{qr.scans.toLocaleString()}</span>
+          <span className="text-gray-900 font-semibold">{qr.scans.toLocaleString()}</span>
         </td>
         <td className="py-4 px-4">
-          <span className="text-gray-400 text-sm">{formatDate(qr.created)}</span>
+          <span className="text-gray-600 text-sm">{formatDate(qr.created)}</span>
         </td>
         <td className="py-4 px-4">
           <div className="flex items-center justify-end gap-2">
@@ -1356,21 +1356,21 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
               title="Download"
               disabled={!isExpanded}
             >
-              <Download className={`w-4 h-4 ${isExpanded ? 'text-gray-400 hover:text-white' : 'text-gray-600 cursor-not-allowed'}`} />
+              <Download className={`w-4 h-4 ${isExpanded ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 cursor-not-allowed'}`} />
             </button>
                         <button
               onClick={(e) => e.stopPropagation()}
               className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               title="Settings"
             >
-              <Settings className="w-4 h-4 text-gray-400 hover:text-white" />
+              <Settings className="w-4 h-4 text-gray-600 hover:text-gray-900" />
             </button>
             <button
               onClick={handleDelete}
               className="p-2 hover:bg-red-500/20 rounded-lg transition-colors group"
               title="Delete QR Code"
             >
-              <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors" />
+              <Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
             </button>
             <button
               onClick={(e) => {
@@ -1382,7 +1382,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
               disabled={isToggling}
             >
               <ChevronDown
-                className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${
                   isExpanded ? 'rotate-180' : ''
                 }`}
                 style={{ pointerEvents: 'none' }}
@@ -1392,14 +1392,14 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         </td>
       </tr>
       {isExpanded && (
-        <tr className="border-b border-white/5 bg-white/5">
+        <tr className="border-b border-gray-200 bg-gray-50">
           <td colSpan={5} className="py-4 lg:py-6 px-3 lg:px-4 w-full">
             <div className="w-full max-w-full overflow-x-hidden">
             {/* Desktop Layout - Cleaner organization */}
             <div className="hidden lg:flex gap-6 items-start w-full">
               {/* QR Code Preview - Fixed width */}
               <div className="flex-shrink-0 w-[280px]">
-                <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                   <div className="relative flex justify-center items-center">
                     {/* QR Code wrapper */}
                     <div className="relative shadow-md rounded-lg">
@@ -1419,7 +1419,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
             <div className="hidden md:flex lg:hidden gap-6 items-start w-full">
               {/* QR Code Preview */}
               <div className="flex-shrink-0 w-[240px]">
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="relative flex justify-center items-center">
                     <div className="relative">
                       <div className="absolute -inset-1 shadow-md rounded-lg"></div>
@@ -1439,7 +1439,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
             <div className="flex md:hidden flex-col gap-4 items-center w-full">
               {/* QR Code Preview */}
               <div className="w-full max-w-[280px]">
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <div className="relative flex justify-center items-center">
                     <div className="relative">
                       <div className="absolute -inset-1 shadow-md rounded-lg"></div>
@@ -1463,20 +1463,17 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       {showDeleteModal && (
         <tr>
           <td colSpan={5} className="p-0">
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
               <div className="relative max-w-md w-full mx-4">
-                {/* Gradient glow effect */}
-                <div className="absolute -inset-0.5 shadow-lg shadow-red-500/50 rounded-2xl"></div>
-
                 {/* Modal content */}
-                <div className="relative bg-black border border-red-500/30 rounded-2xl p-6">
+                <div className="relative bg-white border border-gray-200 rounded-2xl p-6 shadow-2xl">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Trash2 className="w-8 h-8 text-red-400" />
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-red-200">
+                      <Trash2 className="w-8 h-8 text-red-600" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Delete QR Code?</h3>
-                    <p className="text-gray-400">
-                      Are you sure you want to delete <span className="text-white font-semibold">"{qr.name}"</span>?
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Delete QR Code?</h3>
+                    <p className="text-gray-600">
+                      Are you sure you want to delete <span className="text-gray-900 font-semibold">"{qr.name}"</span>?
                     </p>
                     <p className="text-gray-500 text-sm mt-2">
                       This action cannot be undone.
@@ -1486,13 +1483,13 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                   <div className="flex gap-3">
                     <button
                       onClick={cancelDelete}
-                      className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium text-white transition-all"
+                      className="flex-1 px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg font-medium text-gray-900 transition-all shadow-sm"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={confirmDelete}
-                      className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2"
+                      className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 shadow-md"
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete
