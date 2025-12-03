@@ -10,7 +10,6 @@ import Dashboard from './pages/Dashboard';
 import Pricing from './pages/Pricing';
 import QRCodeRedirect from './pages/QRCodeRedirect';
 import CreateQRCode from './pages/CreateQRCode';
-import About from './pages/About';
 
 function Navigation() {
   const location = useLocation();
@@ -51,9 +50,6 @@ function Navigation() {
               <div className="hidden lg:flex items-center gap-8 xl:gap-10">
                 <Link to="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
                   Pricing
-                </Link>
-                <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
-                  About
                 </Link>
               </div>
             </div>
@@ -136,14 +132,7 @@ function Navigation() {
                 >
                   Pricing
                 </Link>
-                <Link
-                  to="/about"
-                  className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  About
-                </Link>
-                {user && (
+                                {user && (
                   <Link
                     to="/dashboard"
                     className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
@@ -234,7 +223,7 @@ function Footer() {
           <div>
             <h4 className="font-semibold text-gray-900 mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link to="/about" className="hover:text-gray-900 transition-colors">About</Link></li>
+              <li><Link to="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link></li>
               <li><span className="text-gray-600">Blog</span></li>
             </ul>
           </div>
@@ -266,7 +255,6 @@ function AppContent() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={

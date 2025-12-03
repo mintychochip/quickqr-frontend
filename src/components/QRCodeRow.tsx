@@ -558,7 +558,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-600 text-xs min-w-[60px]">Status</span>
-              <span className="text-green-400 font-medium capitalize">{qr.status}</span>
+              <span className="text-teal-500 font-medium capitalize">{qr.status}</span>
             </div>
           </div>
         </div>
@@ -1041,119 +1041,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
           </div>
         </div>
 
-        {/* Advanced Styling Options (Collapsible) */}
-        <div className="space-y-2">
-          <StylingSection
-            title="Advanced Styling Options"
-            defaultExpanded={false}
-            compact={true}
-          >
-            <div className="space-y-6">
-              {/* Gradient Settings */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                <h6 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                  Gradient Settings
-                </h6>
-
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-
-              {/* Extended Colors Info */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                <h6 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                  Color Details
-                </h6>
-
-                {/* Dots Color Details */}
-                {qrStylingProps.dotsGradient ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-xs">Dots:</span>
-                    <div className="flex gap-1">
-                      <ColorSwatch
-                        color={qrStylingProps.dotsGradientColor1 || '#000000'}
-                        size="tiny"
-                        showHex={true}
-                      />
-                      <ColorSwatch
-                        color={qrStylingProps.dotsGradientColor2 || '#000000'}
-                        size="tiny"
-                        showHex={true}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <ColorSwatch
-                    color={qrStylingProps.dotsColor || '#000000'}
-                    label="Dots"
-                    showHex={true}
-                    size="small"
-                  />
-                )}
-
-                {/* Corners Color Details */}
-                {qrStylingProps.cornersGradient ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-xs">Corners:</span>
-                    <div className="flex gap-1">
-                      <ColorSwatch
-                        color={qrStylingProps.cornersGradientColor1 || '#000000'}
-                        size="tiny"
-                        showHex={true}
-                      />
-                      <ColorSwatch
-                        color={qrStylingProps.cornersGradientColor2 || '#000000'}
-                        size="tiny"
-                        showHex={true}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <ColorSwatch
-                    color={qrStylingProps.cornersColor || '#000000'}
-                    label="Corners"
-                    showHex={true}
-                    size="small"
-                  />
-                )}
-              </div>
-
-              {/* Extended Shapes Info */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                <h6 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                  Shape Details
-                </h6>
-
-                <div className="space-y-4">
-                  <ShapeIndicator
-                    type="dots"
-                    shape={qrStylingProps.dotsType || 'rounded'}
-                    label="Dots Shape"
-                    size="small"
-                  />
-
-                  <ShapeIndicator
-                    type="corners"
-                    shape={qrStylingProps.cornerSquareType || 'square'}
-                    label="Corners Shape"
-                    size="small"
-                  />
-
-                  <ShapeIndicator
-                    type="dots"
-                    shape={qrStylingProps.cornerDotType || 'dot'}
-                    label="Corner Dots"
-                    size="small"
-                  />
-                </div>
-              </div>
-            </div>
-          </StylingSection>
         </div>
-      </div>
 
       {/* Compact Action Buttons */}
       <div className="flex gap-3 pt-5 border-t border-gray-200 mt-5">
