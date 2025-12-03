@@ -86,6 +86,7 @@ interface QRCodeRowProps {
   };
   formatDate: (dateString: string) => string;
   onDelete?: (qrId: string | number) => void;
+  onUpdate?: (qrId: string, updatedData: Partial<QRCodeRowProps['qr']>) => void;
 }
 
 // EditableField component for inline editing
@@ -201,7 +202,7 @@ function EditableField({
   );
 }
 
-export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) {
+export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCodeRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -309,12 +310,29 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(updateData)
+        body: JSON.stringify({
+          action: 'update',
+          ...updateData
+        })
       });
 
       const result = await response.json();
 
-      if (!result.success) {
+      if (result.success) {
+        // Notify parent component of the update
+        if (onUpdate && qr.qrcodeid) {
+          if (fieldKey === 'name') {
+            onUpdate(qr.qrcodeid, { name: String(value) });
+          } else if (fieldKey.startsWith('content.')) {
+            const contentField = fieldKey.replace('content.', '');
+            const updatedContent = {
+              ...parsedContent,
+              [contentField]: value
+            };
+            onUpdate(qr.qrcodeid, { content: JSON.stringify(updatedContent) });
+          }
+        }
+      } else {
         alert('Failed to update: ' + result.error);
       }
     } catch (error) {
@@ -361,6 +379,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
           },
           credentials: 'include',
           body: JSON.stringify({
+            action: 'update',
             qrcodeid: qr.qrcodeid,
             styling: JSON.stringify(stylingData)
           })

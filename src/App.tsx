@@ -261,6 +261,7 @@ function Footer() {
 
         <div className="pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
           <p>&copy; 2025 QuickQR. All rights reserved.</p>
+          <p className="mt-2">QR Code is a registered trademark of DENSO WAVE INCORPORATED</p>
         </div>
       </div>
     </footer>

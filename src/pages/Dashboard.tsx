@@ -62,6 +62,16 @@ export default function Dashboard() {
     }
   };
 
+  const handleUpdateQRCode = (qrId: string, updatedData: any) => {
+    setQrCodes(prevQrCodes =>
+      prevQrCodes.map(qr =>
+        qr.qrcodeid === qrId
+          ? { ...qr, ...updatedData }
+          : qr
+      )
+    );
+  };
+
   // Fetch QR codes on mount
   useEffect(() => {
     loadQRCodes();
@@ -388,6 +398,7 @@ export default function Dashboard() {
                               qr={qr}
                               formatDate={formatDate}
                               onDelete={handleDeleteQRCode}
+                              onUpdate={handleUpdateQRCode}
                             />
                           ))}
                         </tbody>
