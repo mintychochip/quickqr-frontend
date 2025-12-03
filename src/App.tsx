@@ -129,13 +129,6 @@ function Navigation() {
 
               {/* Mobile Nav Links */}
               <div className="space-y-5 mb-8">
-                <a
-                  href="#features"
-                  className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Features
-                </a>
                 <Link
                   to="/pricing"
                   className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"

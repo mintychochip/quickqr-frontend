@@ -1048,18 +1048,24 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
             defaultExpanded={false}
             compact={true}
           >
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Gradient Settings */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <h6 className="text-xs font-semibold text-gray-900 mb-3">Gradient Settings</h6>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h6 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                  Gradient Settings
+                </h6>
 
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 
               {/* Extended Colors Info */}
-              <div className="space-y-2">
-                <h6 className="text-xs font-medium text-gray-700">Color Details</h6>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <h6 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                  Color Details
+                </h6>
 
                 {/* Dots Color Details */}
                 {qrStylingProps.dotsGradient ? (
@@ -1115,29 +1121,34 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
               </div>
 
               {/* Extended Shapes Info */}
-              <div className="space-y-2">
-                <h6 className="text-xs font-medium text-gray-700">Shape Details</h6>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <h6 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                  Shape Details
+                </h6>
 
-                <ShapeIndicator
-                  type="dots"
-                  shape={qrStylingProps.dotsType || 'rounded'}
-                  label="Dots Shape"
-                  size="small"
-                />
+                <div className="space-y-4">
+                  <ShapeIndicator
+                    type="dots"
+                    shape={qrStylingProps.dotsType || 'rounded'}
+                    label="Dots Shape"
+                    size="small"
+                  />
 
-                <ShapeIndicator
-                  type="corners"
-                  shape={qrStylingProps.cornerSquareType || 'square'}
-                  label="Corners Shape"
-                  size="small"
-                />
+                  <ShapeIndicator
+                    type="corners"
+                    shape={qrStylingProps.cornerSquareType || 'square'}
+                    label="Corners Shape"
+                    size="small"
+                  />
 
-                <ShapeIndicator
-                  type="dots"
-                  shape={qrStylingProps.cornerDotType || 'dot'}
-                  label="Corner Dots"
-                  size="small"
-                />
+                  <ShapeIndicator
+                    type="dots"
+                    shape={qrStylingProps.cornerDotType || 'dot'}
+                    label="Corner Dots"
+                    size="small"
+                  />
+                </div>
               </div>
             </div>
           </StylingSection>
