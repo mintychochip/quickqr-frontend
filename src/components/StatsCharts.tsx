@@ -92,44 +92,73 @@ export default function StatsCharts() {
     plugins: {
       legend: {
         labels: {
-          color: 'white',
+          color: '#111827', // gray-900
+          usePointStyle: true,
+          padding: 15,
+          generateLabels: (chart: any) => {
+            const data = chart.data;
+            if (data.datasets.length) {
+              return data.datasets.map((dataset: any, i: number) => {
+                const meta = chart.getDatasetMeta(i);
+                const style = meta.controller.getStyle(i);
+                return {
+                  text: dataset.label,
+                  fillStyle: style.backgroundColor,
+                  strokeStyle: style.borderColor,
+                  lineWidth: style.borderWidth,
+                  hidden: !chart.isDatasetVisible(i),
+                  index: i,
+                  fontColor: !chart.isDatasetVisible(i) ? '#9CA3AF' : '#111827', // gray-400 when hidden, gray-900 when visible
+                };
+              });
+            }
+            return [];
+          },
+        },
+        onClick: (e: any, legendItem: any, legend: any) => {
+          const index = legendItem.index;
+          const chart = legend.chart;
+          const meta = chart.getDatasetMeta(index);
+
+          meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+          chart.update();
         },
       },
     },
     scales: {
       x: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
+          color: 'rgba(229, 231, 235, 0.8)', // gray-200
         },
         ticks: {
-          color: 'white',
+          color: '#4B5563', // gray-600
         },
       },
       y: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
+          color: 'rgba(229, 231, 235, 0.8)', // gray-200
         },
         ticks: {
-          color: 'white',
+          color: '#4B5563', // gray-600
         },
       },
     },
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Line Chart - Scans Over Time */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">Scans Over Time</h3>
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Scans Over Time (Sample Data)</h3>
         <div className="h-80">
           <Line data={lineData} options={options} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Doughnut Chart - QR Code Types */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">QR Code Types</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">QR Code Types (Sample Data)</h3>
           <div className="h-64">
             <Doughnut
               data={doughnutData}
@@ -140,8 +169,37 @@ export default function StatsCharts() {
                   legend: {
                     position: 'bottom',
                     labels: {
-                      color: 'white',
+                      color: '#111827', // gray-900
+                      usePointStyle: true,
                       padding: 15,
+                      generateLabels: (chart: any) => {
+                        const data = chart.data;
+                        if (data.labels && data.datasets.length) {
+                          return data.labels.map((label: string, i: number) => {
+                            const meta = chart.getDatasetMeta(0);
+                            const style = meta.controller.getStyle(i);
+                            const hidden = meta.data[i].hidden;
+                            return {
+                              text: label,
+                              fillStyle: style.backgroundColor,
+                              strokeStyle: style.borderColor,
+                              lineWidth: style.borderWidth,
+                              hidden: hidden,
+                              index: i,
+                              fontColor: hidden ? '#9CA3AF' : '#111827', // gray-400 when hidden, gray-900 when visible
+                            };
+                          });
+                        }
+                        return [];
+                      },
+                    },
+                    onClick: (e: any, legendItem: any, legend: any) => {
+                      const index = legendItem.index;
+                      const chart = legend.chart;
+                      const meta = chart.getDatasetMeta(0);
+
+                      meta.data[index].hidden = !meta.data[index].hidden;
+                      chart.update();
                     },
                   },
                 },
@@ -151,8 +209,8 @@ export default function StatsCharts() {
         </div>
 
         {/* Bar Chart - Scans by Type */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Scans by Type</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Scans by Type (Sample Data)</h3>
           <div className="h-64">
             <Bar data={barData} options={options} />
           </div>
