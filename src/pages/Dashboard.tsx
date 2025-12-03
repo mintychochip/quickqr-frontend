@@ -147,7 +147,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
-      <div className="flex">
+      <div className="flex w-full">
         {/* Sidebar - Hidden on mobile */}
         <aside className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 p-6">
           <nav className="space-y-6">
@@ -212,7 +212,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="lg:ml-64 flex-1 p-4 lg:p-8">
+        <div className="w-full lg:ml-64 flex-1 p-4 lg:p-8">
           {/* Mobile Navigation Tabs */}
           <div className="lg:hidden mb-6 overflow-x-auto">
             <div className="flex gap-2 pb-2 min-w-max">
@@ -263,8 +263,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Header */}
-          <div className="mb-8">
+          {/* Header - Hidden on mobile */}
+          <div className="mb-8 hidden lg:block">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               {activeView === 'active' && 'Active QR Codes'}
               {activeView === 'stats' && 'Statistics'}
@@ -287,8 +287,8 @@ export default function Dashboard() {
                 <div className="relative bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                   {/* Header with Search and Create Button */}
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Your QR Codes</h2>
-                    <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-gray-900 hidden lg:block">Your QR Codes</h2>
+                    <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
                       <button
                         onClick={loadQRCodes}
                         disabled={loading}
@@ -299,7 +299,8 @@ export default function Dashboard() {
                       </button>
                       <Link to="/create" className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
                         <Plus className="w-4 h-4" />
-                        Create New
+                        <span className="hidden sm:inline">Create New</span>
+                        <span className="sm:hidden">New</span>
                       </Link>
                     </div>
                   </div>
@@ -318,8 +319,8 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Table */}
-                  <div className="overflow-x-auto">
+                  {/* Table/Cards Container */}
+                  <div>
                     {loading ? (
                       <div className="text-center py-12">
                         <div className="inline-block w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -345,7 +346,7 @@ export default function Dashboard() {
                         ) : (
                           <>
                             <p className="text-gray-600 mb-4">You haven't created any QR codes yet</p>
-                            <Link to="/create" className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all mx-auto">
+                            <Link to="/create" className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all">
                               <Plus className="w-4 h-4" />
                               Create Your First QR Code
                             </Link>
@@ -353,45 +354,60 @@ export default function Dashboard() {
                         )}
                       </div>
                     ) : (
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-3 px-4">
-                              <button
-                                onClick={() => handleSort('name')}
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
-                              >
-                                Name
-                                <ArrowUpDown className="w-4 h-4" />
-                              </button>
-                            </th>
-                            <th className="text-left py-3 px-4">
-                              <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Content</span>
-                            </th>
-                            <th className="text-left py-3 px-4">
-                              <button
-                                onClick={() => handleSort('scans')}
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
-                              >
-                                Scans
-                                <ArrowUpDown className="w-4 h-4" />
-                              </button>
-                            </th>
-                            <th className="text-left py-3 px-4">
-                              <button
-                                onClick={() => handleSort('created')}
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
-                              >
-                                Created
-                                <ArrowUpDown className="w-4 h-4" />
-                              </button>
-                            </th>
-                            <th className="text-right py-3 px-4">
-                              <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Actions</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                      <>
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-4">
+                                  <button
+                                    onClick={() => handleSort('name')}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
+                                  >
+                                    Name
+                                    <ArrowUpDown className="w-4 h-4" />
+                                  </button>
+                                </th>
+                                <th className="text-left py-3 px-4">
+                                  <button
+                                    onClick={() => handleSort('scans')}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
+                                  >
+                                    Scans
+                                    <ArrowUpDown className="w-4 h-4" />
+                                  </button>
+                                </th>
+                                <th className="text-left py-3 px-4">
+                                  <button
+                                    onClick={() => handleSort('created')}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
+                                  >
+                                    Created
+                                    <ArrowUpDown className="w-4 h-4" />
+                                  </button>
+                                </th>
+                                <th className="text-right py-3 px-4">
+                                  <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Actions</span>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredAndSortedQRCodes.map((qr) => (
+                                <QRCodeRow
+                                  key={qr.id}
+                                  qr={qr}
+                                  formatDate={formatDate}
+                                  onDelete={handleDeleteQRCode}
+                                  onUpdate={handleUpdateQRCode}
+                                />
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden space-y-4">
                           {filteredAndSortedQRCodes.map((qr) => (
                             <QRCodeRow
                               key={qr.id}
@@ -401,8 +417,8 @@ export default function Dashboard() {
                               onUpdate={handleUpdateQRCode}
                             />
                           ))}
-                        </tbody>
-                      </table>
+                        </div>
+                      </>
                     )}
                   </div>
 

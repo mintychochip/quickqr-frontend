@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { QrCode, Download, Settings, ChevronDown, Trash2 } from 'lucide-react';
+import { QrCode, Download, Settings, ChevronDown, Trash2, Link2, Type, Mail, Phone, MessageSquare, Wifi, UserCircle, MapPin, Calendar, Facebook, Twitter, Youtube } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import ColorSwatch from './QRCodeRow/ColorSwatch';
 import ShapeIndicator from './QRCodeRow/ShapeIndicator';
@@ -201,6 +201,42 @@ function EditableField({
     </div>
   );
 }
+
+// Helper function to get icon for QR code type
+const getTypeIcon = (type: string) => {
+  const iconProps = { className: "w-4 h-4", strokeWidth: 2 };
+
+  switch (type.toLowerCase()) {
+    case 'url':
+      return <Link2 {...iconProps} />;
+    case 'text':
+      return <Type {...iconProps} />;
+    case 'email':
+      return <Mail {...iconProps} />;
+    case 'phone':
+      return <Phone {...iconProps} />;
+    case 'sms':
+      return <MessageSquare {...iconProps} />;
+    case 'wifi':
+      return <Wifi {...iconProps} />;
+    case 'vcard':
+    case 'mecard':
+    case 'me-card':
+      return <UserCircle {...iconProps} />;
+    case 'location':
+      return <MapPin {...iconProps} />;
+    case 'event':
+      return <Calendar {...iconProps} />;
+    case 'facebook':
+      return <Facebook {...iconProps} />;
+    case 'twitter':
+      return <Twitter {...iconProps} />;
+    case 'youtube':
+      return <Youtube {...iconProps} />;
+    default:
+      return <QrCode {...iconProps} />;
+  }
+};
 
 export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCodeRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -488,35 +524,42 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
         <h4 className={`${isCompact ? 'text-base' : 'text-lg'} font-semibold text-gray-900 mb-3`}>Details</h4>
 
         {/* Compact Basic Details */}
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600 text-xs min-w-[60px]">Name</span>
-            <EditableField
-              value={fieldValues['name'] || qr.name}
-              onChange={(value) => saveField('name', value)}
-              onSave={stopEditingField}
-              onCancel={stopEditingField}
-              isEditing={editingField === 'name'}
-              onEditToggle={() => startEditingField('name')}
-              placeholder="Enter QR code name"
-              validation={(value) => {
-                if (!value.trim()) return 'Name is required';
-                if (value.length > 100) return 'Name too long';
-                return null;
-              }}
-            />
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          {/* Column 1: Name & Scans */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 text-xs min-w-[60px]">Name</span>
+              <EditableField
+                value={fieldValues['name'] || qr.name}
+                onChange={(value) => saveField('name', value)}
+                onSave={stopEditingField}
+                onCancel={stopEditingField}
+                isEditing={editingField === 'name'}
+                onEditToggle={() => startEditingField('name')}
+                placeholder="Enter QR code name"
+                validation={(value) => {
+                  if (!value.trim()) return 'Name is required';
+                  if (value.length > 100) return 'Name too long';
+                  return null;
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 text-xs min-w-[60px]">Scans</span>
+              <span className="text-gray-900 font-medium">{qr.scans.toLocaleString()}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600 text-xs min-w-[60px]">Scans</span>
-            <span className="text-gray-900 font-medium">{qr.scans.toLocaleString()}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600 text-xs min-w-[60px]">Created</span>
-            <span className="text-gray-900 font-medium">{formatDate(qr.created)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600 text-xs min-w-[60px]">Status</span>
-            <span className="text-green-400 font-medium capitalize">{qr.status}</span>
+
+          {/* Column 2: Created & Status */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 text-xs min-w-[60px]">Created</span>
+              <span className="text-gray-900 font-medium">{formatDate(qr.created)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 text-xs min-w-[60px]">Status</span>
+              <span className="text-green-400 font-medium capitalize">{qr.status}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1344,22 +1387,107 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
   
   return (
     <>
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-4" onClick={handleRowClick}>
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 text-black">
+                {getTypeIcon(qr.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-gray-900 font-semibold text-base truncate">{qr.name}</h3>
+                <p className="text-gray-500 text-sm">{qr.type === 'url' ? 'URL' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}</p>
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggle();
+              }}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
+              disabled={isToggling}
+            >
+              <ChevronDown
+                className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${
+                  isExpanded ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4">
+              <div>
+                <span className="text-gray-500">Scans: </span>
+                <span className="text-gray-900 font-semibold">{qr.scans.toLocaleString()}</span>
+              </div>
+              <div className="text-gray-500">{formatDate(qr.created)}</div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleDownload}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Download"
+                disabled={!isExpanded}
+              >
+                <Download className={`w-4 h-4 ${isExpanded ? 'text-gray-600' : 'text-gray-400'}`} />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete"
+              >
+                <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Card Expanded Content */}
+        {isExpanded && (
+          <div className="border-t border-gray-200 bg-gray-50 p-4">
+            <div className="w-full max-w-full overflow-x-hidden">
+              {/* Mobile expanded layout - same as the table row mobile layout */}
+              <div className="flex flex-col gap-4 items-center w-full">
+                {/* QR Code Preview */}
+                <div className="w-full max-w-[280px]">
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <div className="relative flex justify-center items-center">
+                      <div className="relative shadow-md rounded-lg">
+                        <div ref={qrRefMobile} className="w-[240px] h-[240px] relative z-10 bg-white rounded-lg mx-auto"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details Section */}
+                <div className="w-full space-y-4">
+                  {renderCompactDetails(true)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table Row */}
       <tr
-  className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
-  onClick={handleRowClick}
->
+        className="hidden lg:table-row border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+        onClick={handleRowClick}
+      >
         <td className="py-4 px-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-              <QrCode className="w-6 h-6 text-black" />
+            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 text-black">
+              {getTypeIcon(qr.type)}
             </div>
-            <span className="text-gray-900 font-medium">{qr.name}</span>
+            <div>
+              <div className="text-gray-900 font-medium">{qr.name}</div>
+              <div className="text-gray-500 text-sm mt-0.5">
+                {qr.type === 'url' ? 'URL' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}
+              </div>
+            </div>
           </div>
-        </td>
-        <td className="py-4 px-4">
-          <span className="text-gray-600 text-sm truncate max-w-xs block">
-            {qr.type === 'url' ? 'URL' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}
-          </span>
         </td>
         <td className="py-4 px-4">
           <span className="text-gray-900 font-semibold">{qr.scans.toLocaleString()}</span>
@@ -1411,8 +1539,8 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
         </td>
       </tr>
       {isExpanded && (
-        <tr className="border-b border-gray-200 bg-gray-50">
-          <td colSpan={5} className="py-4 lg:py-6 px-3 lg:px-4 w-full">
+        <tr className="hidden lg:table-row border-b border-gray-200 bg-gray-50">
+          <td colSpan={4} className="py-4 lg:py-6 px-3 lg:px-4 w-full">
             <div className="w-full max-w-full overflow-x-hidden">
             {/* Desktop Layout - Cleaner organization */}
             <div className="hidden lg:flex gap-6 items-start w-full">
