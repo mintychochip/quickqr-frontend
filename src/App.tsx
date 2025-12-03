@@ -50,14 +50,8 @@ function Navigation() {
 
               {/* Desktop Nav Links */}
               <div className="hidden lg:flex items-center gap-8 xl:gap-10">
-                <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
-                  Features
-                </a>
                 <Link to="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
                   Pricing
-                </Link>
-                <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
-                  About
                 </Link>
               </div>
             </div>
@@ -138,13 +132,6 @@ function Navigation() {
 
               {/* Mobile Nav Links */}
               <div className="space-y-5 mb-8">
-                <a
-                  href="#features"
-                  className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Features
-                </a>
                 <Link
                   to="/pricing"
                   className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
@@ -261,7 +248,7 @@ function Footer() {
           <div>
             <h4 className="font-semibold text-gray-900 mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link to="/about" className="hover:text-gray-900 transition-colors">About</Link></li>
+              <li><Link to="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link></li>
               <li><span className="text-gray-600">Blog</span></li>
             </ul>
           </div>
@@ -278,6 +265,7 @@ function Footer() {
 
         <div className="pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
           <p>&copy; 2025 QuickQR. All rights reserved.</p>
+          <p className="mt-2">QR Code is a registered trademark of DENSO WAVE INCORPORATED</p>
         </div>
       </div>
     </footer>
@@ -292,7 +280,6 @@ function AppContent() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={
