@@ -52,27 +52,17 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Animated background effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-full blur-3xl"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       {/* Sign in card */}
       <div className="relative w-full max-w-md">
-        {/* Animated pulsing glow */}
-        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 opacity-75 blur-sm animate-pulse"></div>
-
-        <div className="relative bg-black backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="relative bg-white border border-gray-200 rounded-2xl p-8 shadow-xl">
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <Link to="/" className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg shadow-purple-500/50">
+              <div className="p-3 bg-teal-500 rounded-xl shadow-md">
                 <Zap className="w-8 h-8 text-white" />
               </div>
-              <span className="text-3xl font-bold text-white">
+              <span className="text-3xl font-bold text-gray-900">
                 QuickQR
               </span>
             </Link>
@@ -80,22 +70,22 @@ export default function SignIn() {
 
           {/* Title */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Login</h1>
-            <p className="text-gray-400">Sign in to your account</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
+            <p className="text-gray-600">Sign in to your account</p>
           </div>
 
           {/* Error message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-400" />
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {/* Email/Password form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <div className="relative">
@@ -110,13 +100,13 @@ export default function SignIn() {
                   placeholder="you@example.com"
                   disabled={loading}
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -131,7 +121,7 @@ export default function SignIn() {
                   placeholder="••••••••"
                   disabled={loading}
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 />
               </div>
             </div>
@@ -140,11 +130,11 @@ export default function SignIn() {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-600 focus:ring-purple-600 focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-gray-300 bg-white text-teal-500 focus:ring-teal-500 focus:ring-offset-0"
                 />
-                <span className="ml-2 text-sm text-gray-400">Remember me</span>
+                <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+              <a href="#" className="text-sm text-teal-600 hover:text-teal-700 transition-colors">
                 Forgot password?
               </a>
             </div>
@@ -152,25 +142,22 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
           {/* Sign up link */}
-          <div className="mt-6 relative z-10">
-            <p className="text-gray-400 text-sm">
+          <div className="mt-6">
+            <p className="text-gray-600 text-sm text-center">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-purple-400 hover:text-purple-300 font-medium transition-colors relative z-10">
+              <Link to="/signup" className="text-teal-600 hover:text-teal-700 font-medium transition-colors">
                 Sign up
               </Link>
             </p>
           </div>
         </div>
-
-        {/* Bottom glow */}
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-64 h-32 bg-gradient-to-t from-purple-600/30 to-transparent blur-2xl pointer-events-none"></div>
       </div>
     </div>
   );

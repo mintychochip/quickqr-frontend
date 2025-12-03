@@ -2,27 +2,17 @@ import { Zap, Mail, Lock, Github } from 'lucide-react';
 
 export default function SignIn() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Animated background effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-full blur-3xl"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12 relative overflow-hidden">
       {/* Sign in card */}
       <div className="relative w-full max-w-md">
-        {/* Glow effect behind card */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/50 to-blue-600/50 blur-xl opacity-50"></div>
-
-        <div className="relative bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="relative bg-white border border-gray-200 rounded-2xl p-8 shadow-xl">
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg shadow-purple-500/50">
+              <div className="p-3 bg-teal-500 rounded-xl shadow-md">
                 <Zap className="w-8 h-8 text-white" />
               </div>
-              <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              <span className="text-3xl font-bold text-gray-900">
                 QuickQR
               </span>
             </div>
@@ -30,13 +20,13 @@ export default function SignIn() {
 
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-gray-400">Sign in to your account</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p className="text-gray-600">Sign in to your account</p>
           </div>
 
           {/* Social sign in */}
           <div className="space-y-3 mb-6">
-            <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white font-medium transition-all hover:shadow-lg hover:shadow-white/10 group">
+            <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium transition-all shadow-sm group">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -46,7 +36,7 @@ export default function SignIn() {
               <span>Continue with Google</span>
             </button>
 
-            <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white font-medium transition-all hover:shadow-lg hover:shadow-white/10 group">
+            <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium transition-all shadow-sm group">
               <Github className="w-5 h-5" />
               <span>Continue with GitHub</span>
             </button>
@@ -55,17 +45,17 @@ export default function SignIn() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-black text-gray-500">Or continue with email</span>
+              <span className="px-4 bg-white text-gray-600">Or continue with email</span>
             </div>
           </div>
 
           {/* Email/Password form */}
           <form className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <div className="relative">
@@ -76,13 +66,13 @@ export default function SignIn() {
                   id="email"
                   type="email"
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -93,7 +83,7 @@ export default function SignIn() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
                 />
               </div>
             </div>
@@ -102,18 +92,18 @@ export default function SignIn() {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-600 focus:ring-purple-600 focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-gray-300 bg-white text-teal-500 focus:ring-teal-500 focus:ring-offset-0"
                 />
-                <span className="ml-2 text-sm text-gray-400">Remember me</span>
+                <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+              <a href="#" className="text-sm text-teal-600 hover:text-teal-700 transition-colors">
                 Forgot password?
               </a>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Sign In
             </button>
@@ -121,17 +111,14 @@ export default function SignIn() {
 
           {/* Sign up link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-600 text-sm">
               Don't have an account?{' '}
-              <a href="#" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+              <a href="#" className="text-teal-600 hover:text-teal-700 font-medium transition-colors">
                 Sign up
               </a>
             </p>
           </div>
         </div>
-
-        {/* Bottom glow */}
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-64 h-32 bg-gradient-to-t from-purple-600/30 to-transparent blur-2xl"></div>
       </div>
     </div>
   );

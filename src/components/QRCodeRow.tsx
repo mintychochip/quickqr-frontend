@@ -5,10 +5,13 @@ import ColorSwatch from './QRCodeRow/ColorSwatch';
 import ShapeIndicator from './QRCodeRow/ShapeIndicator';
 import LogoThumbnail from './QRCodeRow/LogoThumbnail';
 import StylingSection from './QRCodeRow/StylingSection';
+import { getApiUrl, APP_URL } from '../config/api';
+import { UpdateQRCodeData } from '../types/qrcode.types';
+import { QR_SIZES, TIMING } from '../constants/qr.constants';
 
 // SelectDropdown component for styling options
 interface SelectDropdownProps {
-  value: string;
+  value: string | number;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   className?: string;
@@ -87,7 +90,7 @@ interface QRCodeRowProps {
 
 // EditableField component for inline editing
 interface EditableFieldProps {
-  value: string;
+  value: string | number;
   onChange: (value: string) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -109,17 +112,17 @@ function EditableField({
   type = 'text',
   validation
 }: EditableFieldProps) {
-  const [tempValue, setTempValue] = useState(value);
+  const [tempValue, setTempValue] = useState(String(value));
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Reset temp value when the actual value changes externally
   useEffect(() => {
-    setTempValue(value);
+    setTempValue(String(value));
   }, [value]);
 
   const handleEdit = () => {
     onEditToggle();
-    setTempValue(value);
+    setTempValue(String(value));
     setValidationError(null);
   };
 
@@ -136,7 +139,7 @@ function EditableField({
   };
 
   const handleCancel = () => {
-    setTempValue(value);
+    setTempValue(String(value));
     setValidationError(null);
     onCancel();
   };
@@ -202,7 +205,8 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [fieldValues, setFieldValues] = useState<Record<string, string | number>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   // const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
   const qrRefDesktop = useRef<HTMLDivElement>(null);
   const qrRefTablet = useRef<HTMLDivElement>(null);
@@ -215,19 +219,12 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   const qrStylingProps = useMemo(() => {
     const defaults = {
       dotsType: 'rounded' as const,
-      dotsColor: '#8b5cf6',
-      dotsGradient: true,
-      dotsGradientColor1: '#6366f1',
-      dotsGradientColor2: '#3b82f6',
+      dotsColor: '#212529',
       bgColor: '#ffffff',
       cornerSquareType: 'extra-rounded' as const,
-      cornerSquareColor: '#8b5cf6',
-      cornersGradient: false,
-      cornersGradientType: 'linear' as const,
-      cornersGradientColor1: '#8b5cf6',
-      cornersGradientColor2: '#3b82f6',
+      cornerSquareColor: '#20c997',
       cornerDotType: 'dot' as const,
-      cornerDotColor: '#8b5cf6',
+      cornerDotColor: '#20c997',
       logoUrl: '',
     };
 
@@ -242,103 +239,19 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       return defaults;
     }
   }, [qr.styling]);
-
-  // Smart section expansion logic based on styling complexity and usage
-  // Memoized for performance - only recalculates when styling props change
-  /*
-  const sectionExpansion = useMemo(() => {
-    const colorsAndGradientsExpanded = !!(
-      qrStylingProps.dotsGradient ||
-      qrStylingProps.cornersGradient ||
-      qrStylingProps.backgroundGradient ||
-      qrStylingProps.dotsColor !== '#000000' ||
-      qrStylingProps.cornersColor !== '#000000' ||
-      qrStylingProps.backgroundColor !== '#FFFFFF'
-    );
-
-    const shapesAndStylesExpanded = !!(
-      qrStylingProps.dotsType !== 'rounded' ||
-      qrStylingProps.cornerSquareType !== 'square' ||
-      qrStylingProps.cornerDotType !== 'dot' ||
-      qrStylingProps.dotRotation ||
-      qrStylingProps.cornersDotType ||
-      qrStylingProps.cornersSquareGradient
-    );
-
-    const logoAndImagesExpanded = !!(
-      qrStylingProps.image ||
-      qrStylingProps.imageBackground ||
-      qrStylingProps.imageBackgroundColor ||
-      qrStylingProps.imageMargin !== 0 ||
-      qrStylingProps.imageSize !== 0.4
-    );
-
-    const advancedSettingsExpanded = !!(
-      qrStylingProps.errorCorrectionLevel !== 'H' ||
-      qrStylingProps.frame ||
-      qrStylingProps.margin !== 0 ||
-      qrStylingProps.borderRadius ||
-      qrStylingProps.drawSquares ||
-      qrStylingProps.drawCircles
-    );
-
-    // Count total customizations to determine if this is a heavily customized QR code
-    const customizationsCount = [
-      colorsAndGradientsExpanded,
-      shapesAndStylesExpanded,
-      logoAndImagesExpanded,
-      advancedSettingsExpanded
-    ].filter(Boolean).length;
-
-    // Auto-expand more sections for highly customized QR codes
-    const shouldExpandMore = customizationsCount >= 2;
-
-    return {
-      colorsAndGradients: colorsAndGradientsExpanded || shouldExpandMore,
-      shapesAndStyles: shapesAndStylesExpanded || shouldExpandMore,
-      logoAndImages: logoAndImagesExpanded,
-      advancedSettings: advancedSettingsExpanded || shouldExpandMore,
-    };
-  }, [
-    qrStylingProps.dotsGradient,
-    qrStylingProps.cornersGradient,
-    qrStylingProps.backgroundGradient,
-    qrStylingProps.dotsColor,
-    qrStylingProps.cornersColor,
-    qrStylingProps.backgroundColor,
-    qrStylingProps.dotsType,
-    qrStylingProps.cornerSquareType,
-    qrStylingProps.cornerDotType,
-    qrStylingProps.dotRotation,
-    qrStylingProps.cornersDotType,
-    qrStylingProps.cornersSquareGradient,
-    qrStylingProps.image,
-    qrStylingProps.imageBackground,
-    qrStylingProps.imageBackgroundColor,
-    qrStylingProps.imageMargin,
-    qrStylingProps.imageSize,
-    qrStylingProps.errorCorrectionLevel,
-    qrStylingProps.frame,
-    qrStylingProps.margin,
-    qrStylingProps.borderRadius,
-    qrStylingProps.drawSquares,
-    qrStylingProps.drawCircles
-  ]);
-  */
-
   const handleToggle = () => {
     if (isToggling) return;
     setIsToggling(true);
     setIsExpanded(!isExpanded);
     setTimeout(() => {
       setIsToggling(false);
-    }, 300);
+    }, TIMING.TOGGLE_DEBOUNCE);
   };
 
   // Generate QR code data based on type and content
   const generateQRData = (): string => {
     // All QR codes should redirect through our redirect endpoint
-    return `https://quickqr-frontend.vercel.app/code/${qr.qrcodeid}`;
+    return `${APP_URL}/code/${qr.qrcodeid}`;
   };
 
   // Parse QR content for editing
@@ -359,7 +272,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     setEditingField(null);
   };
 
-  const updateFieldValue = (fieldKey: string, value: string) => {
+  const updateFieldValue = (fieldKey: string, value: string | number) => {
     setFieldValues(prev => ({
       ...prev,
       [fieldKey]: value
@@ -367,17 +280,17 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   };
 
   // Save field to backend
-  const saveField = async (fieldKey: string, value: string) => {
-    updateFieldValue(fieldKey, value);
+  const saveField = async (fieldKey: string, value: string | number) => {
+    updateFieldValue(fieldKey, String(value));
 
     // Prepare update data
-    const updateData: any = {
-      qrcodeid: qr.qrcodeid
+    const updateData: UpdateQRCodeData = {
+      qrcodeid: qr.qrcodeid || ''
     };
 
     // Handle different field types
     if (fieldKey === 'name') {
-      updateData.name = value;
+      updateData.name = String(value);
     } else if (fieldKey.startsWith('content.')) {
       // Update content field
       const contentField = fieldKey.replace('content.', '');
@@ -390,7 +303,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
 
     // Send update to backend
     try {
-      const response = await fetch('https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=update', {
+      const response = await fetch(getApiUrl('update'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -402,11 +315,9 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
       const result = await response.json();
 
       if (!result.success) {
-        console.error('Failed to update QR code:', result.error);
         alert('Failed to update: ' + result.error);
       }
     } catch (error) {
-      console.error('Error updating QR code:', error);
       alert('Error updating QR code');
     }
   };
@@ -438,10 +349,39 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     }
   }, [qrStylingProps, hasLocalModifications]);
 
-  // Handle styling field updates and save to backend
-  const updateStylingField = useCallback((fieldKey: string, value: any) => {
-    const stylingKey = fieldKey.replace('styling.', '');
+  // Save styling to backend with debouncing
+  const saveStylingToBackend = useCallback((stylingData: typeof qrStylingProps) => {
+    // Use debounce to avoid too many requests
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(getApiUrl('update'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            qrcodeid: qr.qrcodeid,
+            styling: JSON.stringify(stylingData)
+          })
+        });
 
+        const result = await response.json();
+
+        if (!result.success) {
+          // Silently fail - styling update error
+        }
+      } catch (error) {
+        // Silently fail - styling update error
+      }
+    }, TIMING.EXPANSION_DELAY);
+
+    return () => clearTimeout(timeoutId);
+  }, [qr.qrcodeid]);
+
+  // Handle styling field updates and save to backend
+  const updateStylingField = useCallback((fieldKey: string, value: string | number) => {
+    const stylingKey = fieldKey.replace('styling.', '');
 
     // Mark that we have local modifications to prevent auto-reset
     setHasLocalModifications(true);
@@ -482,41 +422,8 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     }));
 
     // Force QR code regeneration by incrementing the key
-    setQrRegenerationKey(prev => {
-      const newKey = prev + 1;
-            return newKey;
-    });
-  }, []); // No dependencies to prevent infinite loops
-
-  // Save styling to backend with debouncing
-  const saveStylingToBackend = useCallback((stylingData: typeof qrStylingProps) => {
-    // Use debounce to avoid too many requests
-    const timeoutId = setTimeout(async () => {
-      try {
-        const response = await fetch('https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            qrcodeid: qr.qrcodeid,
-            styling: JSON.stringify(stylingData)
-          })
-        });
-
-        const result = await response.json();
-
-        if (!result.success) {
-          console.error('Failed to update styling:', result.error);
-        }
-      } catch (error) {
-        console.error('Error updating styling:', error);
-      }
-    }, 1000); // 1 second debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [qr.qrcodeid]);
+    setQrRegenerationKey(prev => prev + 1);
+  }, [saveStylingToBackend]);
 
   // Handle clicks outside to save and close editing
   useEffect(() => {
@@ -1084,105 +991,6 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
               <div className="bg-black/20 rounded-lg p-4 border border-white/10">
                 <h6 className="text-xs font-semibold text-white mb-3">Gradient Settings</h6>
 
-                {/* Gradient Toggles */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {/* Dots Gradient Toggle */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-400">Dots Gradient</label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => updateStylingField('styling.dotsGradient', false)}
-                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
-                          !localStylingProps.dotsGradient
-                            ? 'bg-white text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        Solid
-                      </button>
-                      <button
-                        onClick={() => updateStylingField('styling.dotsGradient', true)}
-                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
-                          localStylingProps.dotsGradient
-                            ? 'bg-white text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        Gradient
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Corners Gradient Toggle */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-400">Corners Gradient</label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => updateStylingField('styling.cornersGradient', false)}
-                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
-                          !localStylingProps.cornersGradient
-                            ? 'bg-white text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        Solid
-                      </button>
-                      <button
-                        onClick={() => updateStylingField('styling.cornersGradient', true)}
-                        className={`flex-1 px-3 py-2 rounded text-xs font-medium transition-all duration-200 ${
-                          localStylingProps.cornersGradient
-                            ? 'bg-white text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        Gradient
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gradient Colors - Only show when gradient is enabled */}
-                {localStylingProps.dotsGradient && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pt-3 border-t border-white/10">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-400">Dots Gradient Color 1</label>
-                      <ColorPicker
-                        value={fieldValues['styling.dotsGradientColor1'] || localStylingProps.dotsGradientColor1 || '#6366f1'}
-                        onChange={(value) => updateStylingField('styling.dotsGradientColor1', value)}
-                        label="Dots Gradient Color 1"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-400">Dots Gradient Color 2</label>
-                      <ColorPicker
-                        value={fieldValues['styling.dotsGradientColor2'] || localStylingProps.dotsGradientColor2 || '#3b82f6'}
-                        onChange={(value) => updateStylingField('styling.dotsGradientColor2', value)}
-                        label="Dots Gradient Color 2"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {localStylingProps.cornersGradient && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-white/10">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-400">Corners Gradient Color 1</label>
-                      <ColorPicker
-                        value={fieldValues['styling.cornersGradientColor1'] || localStylingProps.cornersGradientColor1 || '#8b5cf6'}
-                        onChange={(value) => updateStylingField('styling.cornersGradientColor1', value)}
-                        label="Corners Gradient Color 1"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-400">Corners Gradient Color 2</label>
-                      <ColorPicker
-                        value={fieldValues['styling.cornersGradientColor2'] || localStylingProps.cornersGradientColor2 || '#3b82f6'}
-                        onChange={(value) => updateStylingField('styling.cornersGradientColor2', value)}
-                        label="Corners Gradient Color 2"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -1308,11 +1116,18 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   // Handle QR code deletion
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row expansion
-    if (window.confirm(`Are you sure you want to delete "${qr.name}"? This action cannot be undone.`)) {
-      if (onDelete) {
-        onDelete(qr.qrcodeid || qr.id);
-      }
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (onDelete) {
+      onDelete(qr.qrcodeid || qr.id);
     }
+    setShowDeleteModal(false);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
   };
 
   // Handle row click for expansion
@@ -1325,7 +1140,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     const qrData = generateQRData();
 
     
-    const options: any = {
+    const options = {
       width: size,
       height: size,
       type: "svg",
@@ -1378,20 +1193,20 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
     };
 
     if (localStylingProps.borderRadius) {
-      options.backgroundOptions = {
+      (options as any).backgroundOptions = {
         ...options.backgroundOptions,
         borderRadius: localStylingProps.borderRadius
       };
     }
 
     if (localStylingProps.image || localStylingProps.logoUrl) {
-      options.imageOptions = {
+      (options as any).imageOptions = {
         hideBackgroundDots: true,
         imageSize: localStylingProps.imageSize || 0.4,
         margin: localStylingProps.imageMargin || 0,
         crossOrigin: 'anonymous',
       };
-      options.image = localStylingProps.image || localStylingProps.logoUrl;
+      (options as any).image = localStylingProps.image || localStylingProps.logoUrl;
     }
 
     
@@ -1399,7 +1214,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   };
 
   // Memoize QR code options for consistent size across all screen sizes
-  const qrCodeOptions = useMemo(() => createQROptions(240), [
+  const qrCodeOptions = useMemo(() => createQROptions(QR_SIZES.LARGE), [
     localStylingProps.dotsType,
     localStylingProps.dotsColor,
     localStylingProps.dotsGradient,
@@ -1442,24 +1257,24 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         // Create QR codes using consistent size
         try {
           if (qrRefDesktop.current) {
-            qrCodeRefDesktop.current = new QRCodeStyling(qrCodeOptions);
+            qrCodeRefDesktop.current = new QRCodeStyling(qrCodeOptions as any);
             qrCodeRefDesktop.current.append(qrRefDesktop.current);
           }
 
           if (qrRefTablet.current) {
-            qrCodeRefTablet.current = new QRCodeStyling(qrCodeOptions);
+            qrCodeRefTablet.current = new QRCodeStyling(qrCodeOptions as any);
             qrCodeRefTablet.current.append(qrRefTablet.current);
           }
 
           if (qrRefMobile.current) {
-            qrCodeRefMobile.current = new QRCodeStyling(qrCodeOptions);
+            qrCodeRefMobile.current = new QRCodeStyling(qrCodeOptions as any);
             qrCodeRefMobile.current.append(qrRefMobile.current);
           }
         } catch (error) {
           console.error('❌ Error creating QR codes:', error);
         }
       }
-    }, 100); // Small delay for lazy loading
+    }, TIMING.REGENERATION_DELAY);
 
     // Cleanup when collapsed or when dependencies change
     return () => {
@@ -1488,21 +1303,21 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
         });
 
         if (qrRefDesktop.current) {
-                    qrCodeRefDesktop.current = new QRCodeStyling(qrCodeOptions);
+                    qrCodeRefDesktop.current = new QRCodeStyling(qrCodeOptions as any);
           qrCodeRefDesktop.current.append(qrRefDesktop.current);
         }
         if (qrRefTablet.current) {
-                    qrCodeRefTablet.current = new QRCodeStyling(qrCodeOptions);
+                    qrCodeRefTablet.current = new QRCodeStyling(qrCodeOptions as any);
           qrCodeRefTablet.current.append(qrRefTablet.current);
         }
         if (qrRefMobile.current) {
-                    qrCodeRefMobile.current = new QRCodeStyling(qrCodeOptions);
+                    qrCodeRefMobile.current = new QRCodeStyling(qrCodeOptions as any);
           qrCodeRefMobile.current.append(qrRefMobile.current);
         }
               } catch (error) {
         console.error('❌ Error regenerating QR codes:', error);
       }
-    }, 100); // Slightly longer delay for regeneration
+    }, TIMING.REGENERATION_DELAY);
 
     return () => clearTimeout(timeoutId);
   }, [qrRegenerationKey, isExpanded]); // Only depend on regeneration key and expansion
@@ -1586,9 +1401,8 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
               <div className="flex-shrink-0 w-[280px]">
                 <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                   <div className="relative flex justify-center items-center">
-                    {/* QR Code wrapper with subtle glow */}
-                    <div className="relative">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 rounded-lg blur-md"></div>
+                    {/* QR Code wrapper */}
+                    <div className="relative shadow-md rounded-lg">
                       <div ref={qrRefDesktop} className="w-[240px] h-[240px] relative z-10 bg-white rounded-lg"></div>
                     </div>
                   </div>
@@ -1608,7 +1422,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <div className="relative flex justify-center items-center">
                     <div className="relative">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 rounded-lg blur-md"></div>
+                      <div className="absolute -inset-1 shadow-md rounded-lg"></div>
                       <div ref={qrRefTablet} className="w-[200px] h-[200px] relative z-10 bg-white rounded-lg"></div>
                     </div>
                   </div>
@@ -1628,7 +1442,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <div className="relative flex justify-center items-center">
                     <div className="relative">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 rounded-lg blur-md"></div>
+                      <div className="absolute -inset-1 shadow-md rounded-lg"></div>
                       <div ref={qrRefMobile} className="w-[200px] h-[200px] relative z-10 bg-white rounded-lg"></div>
                     </div>
                   </div>
@@ -1640,6 +1454,52 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
                 {renderCompactDetails(true)}
               </div>
             </div>
+            </div>
+          </td>
+        </tr>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <tr>
+          <td colSpan={5} className="p-0">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+              <div className="relative max-w-md w-full mx-4">
+                {/* Gradient glow effect */}
+                <div className="absolute -inset-0.5 shadow-lg shadow-red-500/50 rounded-2xl"></div>
+
+                {/* Modal content */}
+                <div className="relative bg-black border border-red-500/30 rounded-2xl p-6">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Trash2 className="w-8 h-8 text-red-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Delete QR Code?</h3>
+                    <p className="text-gray-400">
+                      Are you sure you want to delete <span className="text-white font-semibold">"{qr.name}"</span>?
+                    </p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      This action cannot be undone.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={cancelDelete}
+                      className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium text-white transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmDelete}
+                      className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </td>
         </tr>

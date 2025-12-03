@@ -2,27 +2,22 @@ import { Zap } from 'lucide-react';
 
 export default function Features() {
   return (
-    <section className="relative py-24 bg-gradient-to-b from-black via-zinc-950 to-black">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-      </div>
-
+    <section className="relative py-24 bg-gray-50">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* CTA Section */}
         <div className="mt-20 text-center">
-          <div className="inline-flex flex-col items-center gap-6 p-12 bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-3xl border border-purple-500/30">
-            <h3 className="text-3xl font-bold text-white">
-              Ready to create amazing QR codes?
+          <div className="inline-flex flex-col items-center gap-6 p-12 bg-white rounded-3xl border border-gray-200 shadow-lg">
+            <h3 className="text-3xl font-bold text-gray-900">
+              Try QuickQR for Free
             </h3>
-            <p className="text-gray-400 max-w-md">
-              Join millions of users creating beautiful, customizable QR codes
+            <p className="text-gray-600 max-w-md">
+              Start generating professional QR codes with customization options
             </p>
-            <button className="px-8 py-4 bg-white rounded-lg font-semibold text-black hover:bg-gray-100 transition-all duration-200">
+            <button className="px-8 py-4 bg-teal-500 hover:bg-teal-600 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all duration-200">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5" />
-                Start Creating Now
+                Create Your First Code
               </div>
             </button>
           </div>

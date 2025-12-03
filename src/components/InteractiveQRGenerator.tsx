@@ -15,6 +15,7 @@ import {
   Download,
 } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
+import { QRCodeStylingProps } from '../types/qrcode.types';
 
 type DataType =
   | 'url'
@@ -38,7 +39,7 @@ type CornerDotType = 'dot' | 'square';
 
 export default function InteractiveQRGenerator() {
   const qrRef = useRef<HTMLDivElement>(null);
-  const qrCodeRef = useRef<any>(null);
+  const qrCodeRef = useRef<QRCodeStyling | null>(null);
 
   // Step 1: Data Type
   const [dataType, setDataType] = useState<DataType>('url');
@@ -80,26 +81,18 @@ export default function InteractiveQRGenerator() {
 
   // Shape/Dots
   const [dotsType, setDotsType] = useState<DotType>('rounded');
-  const [dotsColor, setDotsColor] = useState('#000000');
-  const [dotsGradient, setDotsGradient] = useState(false);
-  const [dotsGradientColor1, setDotsGradientColor1] = useState('#000000');
-  const [dotsGradientColor2, setDotsGradientColor2] = useState('#7c3aed');
-  const [dotsGradientType, setDotsGradientType] = useState<'linear' | 'radial'>('linear');
+  const [dotsColor, setDotsColor] = useState('#212529');
 
   // Background
   const [bgColor, setBgColor] = useState('#FFFFFF');
-  const [bgGradient, setBgGradient] = useState(false);
-  const [bgGradientColor1, setBgGradientColor1] = useState('#FFFFFF');
-  const [bgGradientColor2, setBgGradientColor2] = useState('#e0e7ff');
-  const [bgGradientType, setBgGradientType] = useState<'linear' | 'radial'>('linear');
 
   // Corner Squares
   const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('extra-rounded');
-  const [cornerSquareColor, setCornerSquareColor] = useState('#000000');
+  const [cornerSquareColor, setCornerSquareColor] = useState('#20c997');
 
   // Corner Dots
   const [cornerDotType, setCornerDotType] = useState<CornerDotType>('dot');
-  const [cornerDotColor, setCornerDotColor] = useState('#000000');
+  const [cornerDotColor, setCornerDotColor] = useState('#20c997');
 
   // Logo
   const [logoUrl, setLogoUrl] = useState('');
@@ -162,46 +155,22 @@ export default function InteractiveQRGenerator() {
     if (!qrRef.current) return;
 
     try {
-      const options: any = {
+      const options = {
         width: qrSize,
         height: qrSize,
         data: qrValue,
         margin: margin,
         qrOptions: {
-          typeNumber: 0,
-          mode: 'Byte',
-          errorCorrectionLevel: 'H'
+          typeNumber: 0 as any,
+          mode: 'Byte' as any,
+          errorCorrectionLevel: 'H' as any
         },
         dotsOptions: {
           type: dotsType,
-          color: dotsGradient
-            ? undefined
-            : dotsColor,
-          gradient: dotsGradient
-            ? {
-                type: dotsGradientType,
-                rotation: 0,
-                colorStops: [
-                  { offset: 0, color: dotsGradientColor1 },
-                  { offset: 1, color: dotsGradientColor2 }
-                ]
-              }
-            : undefined
+          color: dotsColor
         },
         backgroundOptions: {
-          color: bgGradient
-            ? undefined
-            : bgColor,
-          gradient: bgGradient
-            ? {
-                type: bgGradientType,
-                rotation: 0,
-                colorStops: [
-                  { offset: 0, color: bgGradientColor1 },
-                  { offset: 1, color: bgGradientColor2 }
-                ]
-              }
-            : undefined
+          color: bgColor
         },
         cornersSquareOptions: {
           type: cornerSquareType,
@@ -214,20 +183,20 @@ export default function InteractiveQRGenerator() {
       };
 
       if (logoUrl) {
-        options.imageOptions = {
+        (options as any).imageOptions = {
           hideBackgroundDots: true,
           imageSize: logoSize,
           margin: logoMargin,
           crossOrigin: 'anonymous',
         };
-        options.image = logoUrl;
+        (options as any).image = logoUrl;
       }
 
-      qrCodeRef.current = new QRCodeStyling(options);
+      qrCodeRef.current = new QRCodeStyling(options as any);
 
       qrCodeRef.current.append(qrRef.current);
     } catch (error) {
-      console.error('Error initializing QR Code:', error);
+      // Silently fail - QR code initialization error
     }
   }, []);
 
@@ -236,41 +205,17 @@ export default function InteractiveQRGenerator() {
     if (!qrCodeRef.current) return;
 
     try {
-      const updateOptions: any = {
+      const updateOptions = {
         width: qrSize,
         height: qrSize,
         data: qrValue,
         margin: margin,
         dotsOptions: {
           type: dotsType,
-          color: dotsGradient
-            ? undefined
-            : dotsColor,
-          gradient: dotsGradient
-            ? {
-                type: dotsGradientType,
-                rotation: 0,
-                colorStops: [
-                  { offset: 0, color: dotsGradientColor1 },
-                  { offset: 1, color: dotsGradientColor2 }
-                ]
-              }
-            : undefined
+          color: dotsColor
         },
         backgroundOptions: {
-          color: bgGradient
-            ? undefined
-            : bgColor,
-          gradient: bgGradient
-            ? {
-                type: bgGradientType,
-                rotation: 0,
-                colorStops: [
-                  { offset: 0, color: bgGradientColor1 },
-                  { offset: 1, color: bgGradientColor2 }
-                ]
-              }
-            : undefined
+          color: bgColor
         },
         cornersSquareOptions: {
           type: cornerSquareType,
@@ -283,18 +228,18 @@ export default function InteractiveQRGenerator() {
       };
 
       if (logoUrl) {
-        updateOptions.imageOptions = {
+        (updateOptions as any).imageOptions = {
           hideBackgroundDots: true,
           imageSize: logoSize,
           margin: logoMargin,
           crossOrigin: 'anonymous',
         };
-        updateOptions.image = logoUrl;
+        (updateOptions as any).image = logoUrl;
       }
 
       qrCodeRef.current.update(updateOptions);
     } catch (error) {
-      console.error('Error updating QR Code:', error);
+      // Silently fail - QR code update error
     }
   }, [
     qrValue,
@@ -302,15 +247,7 @@ export default function InteractiveQRGenerator() {
     margin,
     dotsType,
     dotsColor,
-    dotsGradient,
-    dotsGradientColor1,
-    dotsGradientColor2,
-    dotsGradientType,
     bgColor,
-    bgGradient,
-    bgGradientColor1,
-    bgGradientColor2,
-    bgGradientType,
     cornerSquareType,
     cornerSquareColor,
     cornerDotType,
@@ -342,7 +279,7 @@ export default function InteractiveQRGenerator() {
             value={url}
             onChange={(e) => handleInputChange(setUrl, e.target.value)}
             placeholder="https://example.com"
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
       case 'text':
@@ -352,7 +289,7 @@ export default function InteractiveQRGenerator() {
             onChange={(e) => handleInputChange(setText, e.target.value)}
             placeholder="Enter your text"
             rows={3}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
           />
         );
       case 'email':
@@ -363,21 +300,21 @@ export default function InteractiveQRGenerator() {
               value={email}
               onChange={(e) => handleInputChange(setEmail, e.target.value)}
               placeholder="email@example.com"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={emailSubject}
               onChange={(e) => handleInputChange(setEmailSubject, e.target.value)}
               placeholder="Subject (optional)"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <textarea
               value={emailBody}
               onChange={(e) => handleInputChange(setEmailBody, e.target.value)}
               placeholder="Message (optional)"
               rows={2}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             />
           </div>
         );
@@ -388,7 +325,7 @@ export default function InteractiveQRGenerator() {
             value={phone}
             onChange={(e) => handleInputChange(setPhone, e.target.value)}
             placeholder="+1234567890"
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
       case 'sms':
@@ -399,14 +336,14 @@ export default function InteractiveQRGenerator() {
               value={smsNumber}
               onChange={(e) => handleInputChange(setSmsNumber, e.target.value)}
               placeholder="+1234567890"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <textarea
               value={smsMessage}
               onChange={(e) => handleInputChange(setSmsMessage, e.target.value)}
               placeholder="Message (optional)"
               rows={2}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             />
           </div>
         );
@@ -418,35 +355,35 @@ export default function InteractiveQRGenerator() {
               value={vcardName}
               onChange={(e) => handleInputChange(setVcardName, e.target.value)}
               placeholder="Full Name"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={vcardOrg}
               onChange={(e) => handleInputChange(setVcardOrg, e.target.value)}
               placeholder="Organization"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="tel"
               value={vcardPhone}
               onChange={(e) => handleInputChange(setVcardPhone, e.target.value)}
               placeholder="Phone"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="email"
               value={vcardEmail}
               onChange={(e) => handleInputChange(setVcardEmail, e.target.value)}
               placeholder="Email"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="url"
               value={vcardUrl}
               onChange={(e) => handleInputChange(setVcardUrl, e.target.value)}
               placeholder="Website"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
         );
@@ -458,21 +395,21 @@ export default function InteractiveQRGenerator() {
               value={mecardName}
               onChange={(e) => handleInputChange(setMecardName, e.target.value)}
               placeholder="Full Name"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="tel"
               value={mecardPhone}
               onChange={(e) => handleInputChange(setMecardPhone, e.target.value)}
               placeholder="Phone"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="email"
               value={mecardEmail}
               onChange={(e) => handleInputChange(setMecardEmail, e.target.value)}
               placeholder="Email"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
         );
@@ -484,14 +421,14 @@ export default function InteractiveQRGenerator() {
               value={latitude}
               onChange={(e) => handleInputChange(setLatitude, e.target.value)}
               placeholder="Latitude (e.g., 37.7749)"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={longitude}
               onChange={(e) => handleInputChange(setLongitude, e.target.value)}
               placeholder="Longitude (e.g., -122.4194)"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
         );
@@ -502,7 +439,7 @@ export default function InteractiveQRGenerator() {
             value={facebookUrl}
             onChange={(e) => handleInputChange(setFacebookUrl, e.target.value)}
             placeholder="https://facebook.com/yourpage"
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
       case 'twitter':
@@ -512,7 +449,7 @@ export default function InteractiveQRGenerator() {
             value={twitterUrl}
             onChange={(e) => handleInputChange(setTwitterUrl, e.target.value)}
             placeholder="https://twitter.com/yourusername"
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
       case 'youtube':
@@ -522,7 +459,7 @@ export default function InteractiveQRGenerator() {
             value={youtubeUrl}
             onChange={(e) => handleInputChange(setYoutubeUrl, e.target.value)}
             placeholder="https://youtube.com/@yourchannel"
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
       case 'wifi':
@@ -533,19 +470,19 @@ export default function InteractiveQRGenerator() {
               value={wifiSsid}
               onChange={(e) => handleInputChange(setWifiSsid, e.target.value)}
               placeholder="Network Name (SSID)"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={wifiPassword}
               onChange={(e) => handleInputChange(setWifiPassword, e.target.value)}
               placeholder="Password"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <select
               value={wifiEncryption}
               onChange={(e) => handleInputChange(setWifiEncryption, e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent [&>option]:bg-gray-900 [&>option]:text-gray-100 [&>option:hover]:bg-white/10"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent [&>option]:bg-white [&>option]:text-gray-900"
             >
               <option value="WPA">WPA/WPA2</option>
               <option value="WEP">WEP</option>
@@ -561,28 +498,28 @@ export default function InteractiveQRGenerator() {
               value={eventTitle}
               onChange={(e) => handleInputChange(setEventTitle, e.target.value)}
               placeholder="Event Title"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={eventLocation}
               onChange={(e) => handleInputChange(setEventLocation, e.target.value)}
               placeholder="Location"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={eventStart}
               onChange={(e) => handleInputChange(setEventStart, e.target.value)}
               placeholder="Start (YYYYMMDDTHHMMSS)"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={eventEnd}
               onChange={(e) => handleInputChange(setEventEnd, e.target.value)}
               placeholder="End (YYYYMMDDTHHMMSS)"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
         );
@@ -596,12 +533,12 @@ export default function InteractiveQRGenerator() {
       {/* Left Column - Steps */}
       <div className="space-y-6">
         {/* Step 1: Choose Data Type */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold">
               1
             </div>
-            <h3 className="text-xl font-bold text-white">Choose Data Type</h3>
+            <h3 className="text-xl font-bold text-gray-900">Choose Data Type</h3>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -613,8 +550,8 @@ export default function InteractiveQRGenerator() {
                   onClick={() => setDataType(type.id as DataType)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
                     dataType === type.id
-                      ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-600 text-white'
-                      : 'bg-white/5 border-white/10 text-gray-400 hover:border-purple-600/50 hover:text-white'
+                      ? 'bg-teal-500 border-teal-600 text-white shadow-md'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-teal-500 hover:text-gray-900'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -626,24 +563,24 @@ export default function InteractiveQRGenerator() {
         </div>
 
         {/* Step 2: Complete the Content */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold">
               2
             </div>
-            <h3 className="text-xl font-bold text-white">Complete the Content</h3>
+            <h3 className="text-xl font-bold text-gray-900">Complete the Content</h3>
           </div>
 
           {renderContentForm()}
         </div>
 
         {/* Step 3: Design Your QR Code */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold">
               3
             </div>
-            <h3 className="text-xl font-bold text-white">Design Your QR Code</h3>
+            <h3 className="text-xl font-bold text-gray-900">Design Your QR Code</h3>
           </div>
 
           {/* Sub-tabs */}
@@ -652,8 +589,8 @@ export default function InteractiveQRGenerator() {
               onClick={() => setCustomizationTab('shape')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 customizationTab === 'shape'
-                  ? 'bg-white text-black'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                  ? 'bg-teal-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
               }`}
             >
               Shape
@@ -662,8 +599,8 @@ export default function InteractiveQRGenerator() {
               onClick={() => setCustomizationTab('colors')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 customizationTab === 'colors'
-                  ? 'bg-white text-black'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                  ? 'bg-teal-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
               }`}
             >
               Colors
@@ -672,8 +609,8 @@ export default function InteractiveQRGenerator() {
               onClick={() => setCustomizationTab('logo')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 customizationTab === 'logo'
-                  ? 'bg-white text-black'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                  ? 'bg-teal-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
               }`}
             >
               Logo
@@ -685,13 +622,13 @@ export default function InteractiveQRGenerator() {
             {customizationTab === 'shape' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Dot Style
                   </label>
                   <select
                     value={dotsType}
                     onChange={(e) => setDotsType(e.target.value as DotType)}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 [&>option]:bg-gray-900 [&>option]:text-gray-100 [&>option:hover]:bg-white/10"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 [&>option]:bg-white [&>option]:text-gray-900"
                   >
                     <option value="rounded">Rounded</option>
                     <option value="dots">Dots</option>
@@ -703,13 +640,13 @@ export default function InteractiveQRGenerator() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Corner Square Style
                   </label>
                   <select
                     value={cornerSquareType}
                     onChange={(e) => setCornerSquareType(e.target.value as CornerSquareType)}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 [&>option]:bg-gray-900 [&>option]:text-gray-100 [&>option:hover]:bg-white/10"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 [&>option]:bg-white [&>option]:text-gray-900"
                   >
                     <option value="dot">Dot</option>
                     <option value="square">Square</option>
@@ -718,13 +655,13 @@ export default function InteractiveQRGenerator() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Corner Dot Style
                   </label>
                   <select
                     value={cornerDotType}
                     onChange={(e) => setCornerDotType(e.target.value as CornerDotType)}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 [&>option]:bg-gray-900 [&>option]:text-gray-100 [&>option:hover]:bg-white/10"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 [&>option]:bg-white [&>option]:text-gray-900"
                   >
                     <option value="dot">Dot</option>
                     <option value="square">Square</option>
@@ -732,7 +669,7 @@ export default function InteractiveQRGenerator() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     QR Code Size
                   </label>
                   <input
@@ -744,11 +681,11 @@ export default function InteractiveQRGenerator() {
                     onChange={(e) => setQrSize(parseInt(e.target.value))}
                     className="w-full"
                   />
-                  <div className="text-sm text-gray-400 mt-1">{qrSize}px</div>
+                  <div className="text-sm text-gray-600 mt-1">{qrSize}px</div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Margin
                   </label>
                   <input
@@ -760,7 +697,7 @@ export default function InteractiveQRGenerator() {
                     onChange={(e) => setMargin(parseInt(e.target.value))}
                     className="w-full"
                   />
-                  <div className="text-sm text-gray-400 mt-1">{margin}px</div>
+                  <div className="text-sm text-gray-600 mt-1">{margin}px</div>
                 </div>
               </>
             )}
@@ -768,163 +705,47 @@ export default function InteractiveQRGenerator() {
             {customizationTab === 'colors' && (
               <>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-400">
-                      Dots Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="dotsGradient"
-                        checked={dotsGradient}
-                        onChange={(e) => setDotsGradient(e.target.checked)}
-                        className="w-4 h-4 rounded bg-white/5 border-white/10 text-purple-600 focus:ring-purple-600"
-                      />
-                      <label htmlFor="dotsGradient" className="text-sm text-gray-400">
-                        Gradient
-                      </label>
-                    </div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Dots Color
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={dotsColor}
+                      onChange={(e) => setDotsColor(e.target.value)}
+                      className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={dotsColor}
+                      onChange={(e) => setDotsColor(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
                   </div>
-
-                  {!dotsGradient ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={dotsColor}
-                        onChange={(e) => setDotsColor(e.target.value)}
-                        className="w-12 h-10 rounded border border-white/10 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={dotsColor}
-                        onChange={(e) => setDotsColor(e.target.value)}
-                        className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={dotsGradientColor1}
-                          onChange={(e) => setDotsGradientColor1(e.target.value)}
-                          className="w-12 h-10 rounded border border-white/10 cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={dotsGradientColor1}
-                          onChange={(e) => setDotsGradientColor1(e.target.value)}
-                          placeholder="Color 1"
-                          className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={dotsGradientColor2}
-                          onChange={(e) => setDotsGradientColor2(e.target.value)}
-                          className="w-12 h-10 rounded border border-white/10 cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={dotsGradientColor2}
-                          onChange={(e) => setDotsGradientColor2(e.target.value)}
-                          placeholder="Color 2"
-                          className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
-                      </div>
-                      <select
-                        value={dotsGradientType}
-                        onChange={(e) => setDotsGradientType(e.target.value as 'linear' | 'radial')}
-                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 [&>option]:bg-gray-900 [&>option]:text-gray-100 [&>option:hover]:bg-white/10"
-                      >
-                        <option value="linear">Linear</option>
-                        <option value="radial">Radial</option>
-                      </select>
-                    </div>
-                  )}
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-400">
-                      Background Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="bgGradient"
-                        checked={bgGradient}
-                        onChange={(e) => setBgGradient(e.target.checked)}
-                        className="w-4 h-4 rounded bg-white/5 border-white/10 text-purple-600 focus:ring-purple-600"
-                      />
-                      <label htmlFor="bgGradient" className="text-sm text-gray-400">
-                        Gradient
-                      </label>
-                    </div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Background Color
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={bgColor}
+                      onChange={(e) => setBgColor(e.target.value)}
+                      className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={bgColor}
+                      onChange={(e) => setBgColor(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
                   </div>
-
-                  {!bgGradient ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={bgColor}
-                        onChange={(e) => setBgColor(e.target.value)}
-                        className="w-12 h-10 rounded border border-white/10 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={bgColor}
-                        onChange={(e) => setBgColor(e.target.value)}
-                        className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={bgGradientColor1}
-                          onChange={(e) => setBgGradientColor1(e.target.value)}
-                          className="w-12 h-10 rounded border border-white/10 cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={bgGradientColor1}
-                          onChange={(e) => setBgGradientColor1(e.target.value)}
-                          placeholder="Color 1"
-                          className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={bgGradientColor2}
-                          onChange={(e) => setBgGradientColor2(e.target.value)}
-                          className="w-12 h-10 rounded border border-white/10 cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={bgGradientColor2}
-                          onChange={(e) => setBgGradientColor2(e.target.value)}
-                          placeholder="Color 2"
-                          className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
-                      </div>
-                      <select
-                        value={bgGradientType}
-                        onChange={(e) => setBgGradientType(e.target.value as 'linear' | 'radial')}
-                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600 [&>option]:bg-gray-900 [&>option]:text-gray-100 [&>option:hover]:bg-white/10"
-                      >
-                        <option value="linear">Linear</option>
-                        <option value="radial">Radial</option>
-                      </select>
-                    </div>
-                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Corner Square Color
                   </label>
                   <div className="flex gap-2">
@@ -932,19 +753,19 @@ export default function InteractiveQRGenerator() {
                       type="color"
                       value={cornerSquareColor}
                       onChange={(e) => setCornerSquareColor(e.target.value)}
-                      className="w-12 h-10 rounded border border-white/10 cursor-pointer"
+                      className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
                     />
                     <input
                       type="text"
                       value={cornerSquareColor}
                       onChange={(e) => setCornerSquareColor(e.target.value)}
-                      className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Corner Dot Color
                   </label>
                   <div className="flex gap-2">
@@ -952,13 +773,13 @@ export default function InteractiveQRGenerator() {
                       type="color"
                       value={cornerDotColor}
                       onChange={(e) => setCornerDotColor(e.target.value)}
-                      className="w-12 h-10 rounded border border-white/10 cursor-pointer"
+                      className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
                     />
                     <input
                       type="text"
                       value={cornerDotColor}
                       onChange={(e) => setCornerDotColor(e.target.value)}
-                      className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                 </div>
@@ -968,7 +789,7 @@ export default function InteractiveQRGenerator() {
             {customizationTab === 'logo' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
                     Logo URL
                   </label>
                   <input
@@ -976,14 +797,14 @@ export default function InteractiveQRGenerator() {
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
 
                 {logoUrl && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                      <label className="block text-sm font-medium text-gray-600 mb-2">
                         Logo Size (ratio)
                       </label>
                       <input
@@ -995,11 +816,11 @@ export default function InteractiveQRGenerator() {
                         onChange={(e) => setLogoSize(parseFloat(e.target.value))}
                         className="w-full"
                       />
-                      <div className="text-sm text-gray-400 mt-1">{logoSize}</div>
+                      <div className="text-sm text-gray-600 mt-1">{logoSize}</div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                      <label className="block text-sm font-medium text-gray-600 mb-2">
                         Logo Margin
                       </label>
                       <input
@@ -1011,7 +832,7 @@ export default function InteractiveQRGenerator() {
                         onChange={(e) => setLogoMargin(parseInt(e.target.value))}
                         className="w-full"
                       />
-                      <div className="text-sm text-gray-400 mt-1">{logoMargin}px</div>
+                      <div className="text-sm text-gray-600 mt-1">{logoMargin}px</div>
                     </div>
                   </>
                 )}
@@ -1023,47 +844,47 @@ export default function InteractiveQRGenerator() {
 
       {/* Right Column - QR Preview */}
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-white/10 rounded-2xl p-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-md">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold">
               4
             </div>
-            <h3 className="text-xl font-bold text-white">Download QR Code</h3>
+            <h3 className="text-xl font-bold text-gray-900">Download QR Code</h3>
           </div>
 
           <div className="flex justify-center mb-6">
             <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-2xl" />
           </div>
 
-          <p className="text-sm text-gray-400 mb-4 text-center">
+          <p className="text-sm text-gray-600 mb-4 text-center">
             Scan with your phone to test
           </p>
 
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => handleDownload('png')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white rounded-lg font-medium text-black hover:bg-gray-100 transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               PNG
             </button>
             <button
               onClick={() => handleDownload('svg')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               SVG
             </button>
             <button
               onClick={() => handleDownload('jpeg')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               JPEG
             </button>
             <button
               onClick={() => handleDownload('webp')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 border border-white/20 rounded-lg font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200"
             >
               <Download className="w-4 h-4" />
               WebP

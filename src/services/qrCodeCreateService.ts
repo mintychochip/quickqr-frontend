@@ -1,33 +1,22 @@
 // QR Code Creation Service
 import { getCurrentUser } from './authService';
+import { getApiUrl } from '../config/api';
+import { QRContentObject, QRCodeStylingProps, CreateQRCodeResponse as QRCreateResponse } from '../types/qrcode.types';
 
 export interface QRCodeData {
   mode: 'static' | 'dynamic';
   type: string;
-  content: any;
-  styling?: any;
+  content: QRContentObject;
+  styling?: QRCodeStylingProps;
 }
 
-export interface CreateQRCodeResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-  data?: {
-    qrcodeid: string;
-    name: string;
-    content: string;
-    type: string;
-    styling?: any;
-    createdat: string;
-    expirytime?: string;
-  };
-}
+export type CreateQRCodeResponse = QRCreateResponse;
 
 export async function createQRCode(
   name: string,
-  contentObject: any,
+  contentObject: QRContentObject | string,
   type: string,
-  styling?: any
+  styling?: QRCodeStylingProps
 ): Promise<CreateQRCodeResponse> {
   try {
     // First check if user is authenticated
@@ -48,7 +37,7 @@ export async function createQRCode(
       styling: styling ? JSON.stringify(styling) : null
     };
 
-    const response = await fetch('https://artemis.cs.csub.edu/~jlo/qrcode_handler.php?action=create', {
+    const response = await fetch(getApiUrl('create'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

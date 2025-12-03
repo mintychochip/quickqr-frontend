@@ -11,9 +11,9 @@ export default function CompanyMarquee() {
   ];
 
   return (
-    <section className="relative py-20 bg-black border-y border-white/5 overflow-hidden">
+    <section className="relative py-20 bg-white border-y border-gray-200 overflow-hidden">
       <div className="mb-12 text-center">
-        <p className="text-sm uppercase tracking-wider text-gray-500 font-semibold">
+        <p className="text-sm uppercase tracking-wider text-gray-600 font-semibold">
           Trusted by teams at
         </p>
       </div>
@@ -29,7 +29,7 @@ export default function CompanyMarquee() {
               <img
                 src={company.logo}
                 alt={company.name}
-                className="h-10 w-auto object-contain opacity-50 hover:opacity-70 transition-opacity duration-300 brightness-0 invert"
+                className="h-10 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300 grayscale"
                 style={{ maxWidth: '150px' }}
               />
             </div>
@@ -44,17 +44,13 @@ export default function CompanyMarquee() {
               <img
                 src={company.logo}
                 alt={company.name}
-                className="h-10 w-auto object-contain opacity-50 hover:opacity-70 transition-opacity duration-300 brightness-0 invert"
+                className="h-10 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300 grayscale"
                 style={{ maxWidth: '150px' }}
               />
             </div>
           ))}
         </div>
       </div>
-
-      {/* Gradient overlays for fade effect */}
-      <div className="absolute top-0 left-0 w-40 h-full bg-gradient-to-r from-black via-black/80 to-transparent z-10 pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-40 h-full bg-gradient-to-l from-black via-black/80 to-transparent z-10 pointer-events-none"></div>
     </section>
   );
 }
