@@ -10,6 +10,8 @@ import Dashboard from './pages/Dashboard';
 import Pricing from './pages/Pricing';
 import QRCodeRedirect from './pages/QRCodeRedirect';
 import CreateQRCode from './pages/CreateQRCode';
+import About from './pages/About';
+import Admin from './pages/Admin';
 
 function Navigation() {
   const location = useLocation();
@@ -60,6 +62,11 @@ function Navigation() {
                 <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
                   Dashboard
                 </Link>
+                {user.admin && (
+                  <Link to="/admin" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
+                    Admin
+                  </Link>
+                )}
                 <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="text-gray-700 text-sm font-mono">{user.email?.split('@')[0]}</span>
@@ -132,14 +139,32 @@ function Navigation() {
                 >
                   Pricing
                 </Link>
-                                {user && (
-                  <Link
-                    to="/dashboard"
-                    className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
+                <Link
+                  to="/about"
+                  className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  About
+                </Link>
+                {user && (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    {user.admin && (
+                      <Link
+                        to="/admin"
+                        className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Admin
+                      </Link>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -265,6 +290,11 @@ function AppContent() {
           <Route path="/create" element={
             <ProtectedRoute>
               <CreateQRCode />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Admin />
             </ProtectedRoute>
           } />
           <Route path="/pricing" element={<Pricing />} />
