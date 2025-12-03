@@ -6,23 +6,23 @@ import autoTable from 'jspdf-autotable';
 
 interface UserStatsPanelProps {
   days?: number;
+  onDaysChange?: (days: number) => void;
 }
 
-export default function UserStatsPanel({ days = 30 }: UserStatsPanelProps) {
+export default function UserStatsPanel({ days = 30, onDaysChange }: UserStatsPanelProps) {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDays, setSelectedDays] = useState(days);
 
   useEffect(() => {
     loadStats();
-  }, [selectedDays]);
+  }, [days]);
 
   const loadStats = async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await fetchUserStats(selectedDays);
+      const result = await fetchUserStats(days);
 
       if (result.success && result.stats) {
         setStats(result.stats);
@@ -113,7 +113,7 @@ export default function UserStatsPanel({ days = 30 }: UserStatsPanelProps) {
     }
 
     // Save the PDF
-    doc.save(`qr-stats-${selectedDays}days-${new Date().getTime()}.pdf`);
+    doc.save(`qr-stats-${days}days-${new Date().getTime()}.pdf`);
   };
 
   if (loading) {
@@ -160,8 +160,8 @@ export default function UserStatsPanel({ days = 30 }: UserStatsPanelProps) {
         </div>
         <div className="flex gap-3">
           <select
-            value={selectedDays}
-            onChange={(e) => setSelectedDays(Number(e.target.value))}
+            value={days}
+            onChange={(e) => onDaysChange?.(Number(e.target.value))}
             className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all shadow-sm"
           >
             <option value={7}>Last 7 days</option>
