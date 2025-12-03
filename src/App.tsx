@@ -10,7 +10,6 @@ import Dashboard from './pages/Dashboard';
 import Pricing from './pages/Pricing';
 import QRCodeRedirect from './pages/QRCodeRedirect';
 import CreateQRCode from './pages/CreateQRCode';
-import About from './pages/About';
 import Admin from './pages/Admin';
 
 function Navigation() {
@@ -138,13 +137,6 @@ function Navigation() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Pricing
-                </Link>
-                <Link
-                  to="/about"
-                  className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  About
                 </Link>
                 {user && (
                   <>

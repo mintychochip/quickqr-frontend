@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [qrCodes, setQrCodes] = useState<QRCodeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDays, setSelectedDays] = useState(30);
 
   // Fetch QR codes function
   const loadQRCodes = async () => {
@@ -436,13 +437,13 @@ export default function Dashboard() {
           {activeView === 'stats' && (
             <div className="space-y-6">
               {/* User Stats Panel */}
-              <UserStatsPanel days={30} />
+              <UserStatsPanel days={selectedDays} onDaysChange={setSelectedDays} />
 
               {/* Detailed Stats Tables */}
-              <DetailedStatsPanel days={30} />
+              <DetailedStatsPanel days={selectedDays} />
 
               {/* Charts */}
-              <StatsCharts />
+              <StatsCharts days={selectedDays} />
             </div>
           )}
 
