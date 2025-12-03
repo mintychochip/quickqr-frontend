@@ -1,14 +1,14 @@
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr',
   endpoints: {
-    create: '/qrcode_handler.php?action=create',
-    update: '/qrcode_handler.php?action=update',
-    delete: '/qrcode_handler.php?action=delete',
-    get: '/qrcode_handler.php?action=get'
+    create: '/qrcode.php',
+    update: '/qrcode.php',
+    delete: '/qrcode.php',
+    get: '/qrcode.php'
   }
 } as const;
 
-export const APP_URL = import.meta.env.VITE_APP_BASE_URL || 'https://quickqr-frontend.vercel.app';
+export const APP_URL = import.meta.env.VITE_APP_BASE_URL || 'https://quickqr.app';
 
 // Helper function to build full API URL
 export const getApiUrl = (endpoint: keyof typeof API_CONFIG.endpoints): string => {

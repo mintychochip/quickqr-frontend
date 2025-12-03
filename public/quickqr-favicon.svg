@@ -1,14 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#9333ea;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <!-- Rounded square background with gradient -->
-  <rect width="48" height="48" rx="8" fill="url(#grad)"/>
-  <!-- Lucide Zap icon - scaled up and centered -->
-  <g transform="translate(7, 7) scale(1.5)">
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Circular background with teal color -->
+  <circle cx="24" cy="24" r="24" fill="#14b8a6"/>
+  <!-- Lucide Zap icon - larger and centered -->
+  <g transform="translate(6, 6) scale(1.5)">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

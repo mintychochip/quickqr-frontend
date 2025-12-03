@@ -3,15 +3,8 @@ import {
   Globe,
   MessageSquare,
   Mail,
-  Phone,
   MessageCircle,
-  User,
-  MapPin,
-  Facebook,
-  Twitter,
-  Youtube,
   Wifi,
-  Calendar,
   Download,
 } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
@@ -21,16 +14,8 @@ type DataType =
   | 'url'
   | 'text'
   | 'email'
-  | 'phone'
   | 'sms'
-  | 'vcard'
-  | 'mecard'
-  | 'location'
-  | 'facebook'
-  | 'twitter'
-  | 'youtube'
-  | 'wifi'
-  | 'event';
+  | 'wifi';
 
 type CustomizationTab = 'shape' | 'colors' | 'logo';
 type DotType = 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
@@ -50,29 +35,11 @@ export default function InteractiveQRGenerator() {
   const [email, setEmail] = useState('contact@example.com');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
-  const [phone, setPhone] = useState('+1234567890');
   const [smsNumber, setSmsNumber] = useState('+1234567890');
   const [smsMessage, setSmsMessage] = useState('');
-  const [vcardName, setVcardName] = useState('John Doe');
-  const [vcardOrg, setVcardOrg] = useState('QuickQR Inc.');
-  const [vcardPhone, setVcardPhone] = useState('+1234567890');
-  const [vcardEmail, setVcardEmail] = useState('john@example.com');
-  const [vcardUrl, setVcardUrl] = useState('https://example.com');
-  const [mecardName, setMecardName] = useState('John Doe');
-  const [mecardPhone, setMecardPhone] = useState('+1234567890');
-  const [mecardEmail, setMecardEmail] = useState('john@example.com');
-  const [latitude, setLatitude] = useState('37.7749');
-  const [longitude, setLongitude] = useState('-122.4194');
-  const [facebookUrl, setFacebookUrl] = useState('https://facebook.com/yourpage');
-  const [twitterUrl, setTwitterUrl] = useState('https://twitter.com/yourusername');
-  const [youtubeUrl, setYoutubeUrl] = useState('https://youtube.com/@yourchannel');
   const [wifiSsid, setWifiSsid] = useState('MyNetwork');
   const [wifiPassword, setWifiPassword] = useState('password123');
   const [wifiEncryption, setWifiEncryption] = useState('WPA');
-  const [eventTitle, setEventTitle] = useState('Meeting');
-  const [eventLocation, setEventLocation] = useState('Conference Room');
-  const [eventStart, setEventStart] = useState('20250101T100000');
-  const [eventEnd, setEventEnd] = useState('20250101T110000');
 
   // Step 3: Design
   const [customizationTab, setCustomizationTab] = useState<CustomizationTab>('shape');
@@ -103,16 +70,8 @@ export default function InteractiveQRGenerator() {
     { id: 'url', label: 'Link', icon: Globe },
     { id: 'text', label: 'Text', icon: MessageSquare },
     { id: 'email', label: 'E-mail', icon: Mail },
-    { id: 'phone', label: 'Call', icon: Phone },
     { id: 'sms', label: 'SMS', icon: MessageCircle },
-    { id: 'vcard', label: 'V-card', icon: User },
-    { id: 'mecard', label: 'MeCard', icon: User },
     { id: 'wifi', label: 'Wi-Fi', icon: Wifi },
-    { id: 'location', label: 'Location', icon: MapPin },
-    { id: 'facebook', label: 'Facebook', icon: Facebook },
-    { id: 'twitter', label: 'X', icon: Twitter },
-    { id: 'youtube', label: 'YouTube', icon: Youtube },
-    { id: 'event', label: 'Event', icon: Calendar },
   ];
 
   const generateQRValue = (type: DataType): string => {
@@ -123,26 +82,10 @@ export default function InteractiveQRGenerator() {
         return text;
       case 'email':
         return `mailto:${email}${emailSubject ? `?subject=${encodeURIComponent(emailSubject)}` : ''}${emailBody ? `${emailSubject ? '&' : '?'}body=${encodeURIComponent(emailBody)}` : ''}`;
-      case 'phone':
-        return `tel:${phone}`;
       case 'sms':
         return `sms:${smsNumber}${smsMessage ? `?body=${encodeURIComponent(smsMessage)}` : ''}`;
-      case 'vcard':
-        return `BEGIN:VCARD\nVERSION:3.0\nFN:${vcardName}\nORG:${vcardOrg}\nTEL:${vcardPhone}\nEMAIL:${vcardEmail}\nURL:${vcardUrl}\nEND:VCARD`;
-      case 'mecard':
-        return `MECARD:N:${mecardName};TEL:${mecardPhone};EMAIL:${mecardEmail};;`;
-      case 'location':
-        return `geo:${latitude},${longitude}`;
-      case 'facebook':
-        return facebookUrl;
-      case 'twitter':
-        return twitterUrl;
-      case 'youtube':
-        return youtubeUrl;
       case 'wifi':
         return `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`;
-      case 'event':
-        return `BEGIN:VEVENT\nSUMMARY:${eventTitle}\nLOCATION:${eventLocation}\nDTSTART:${eventStart}\nDTEND:${eventEnd}\nEND:VEVENT`;
       default:
         return '';
     }
@@ -318,16 +261,6 @@ export default function InteractiveQRGenerator() {
             />
           </div>
         );
-      case 'phone':
-        return (
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => handleInputChange(setPhone, e.target.value)}
-            placeholder="+1234567890"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
-        );
       case 'sms':
         return (
           <div className="space-y-3">
@@ -346,121 +279,6 @@ export default function InteractiveQRGenerator() {
               className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             />
           </div>
-        );
-      case 'vcard':
-        return (
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={vcardName}
-              onChange={(e) => handleInputChange(setVcardName, e.target.value)}
-              placeholder="Full Name"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={vcardOrg}
-              onChange={(e) => handleInputChange(setVcardOrg, e.target.value)}
-              placeholder="Organization"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="tel"
-              value={vcardPhone}
-              onChange={(e) => handleInputChange(setVcardPhone, e.target.value)}
-              placeholder="Phone"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="email"
-              value={vcardEmail}
-              onChange={(e) => handleInputChange(setVcardEmail, e.target.value)}
-              placeholder="Email"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="url"
-              value={vcardUrl}
-              onChange={(e) => handleInputChange(setVcardUrl, e.target.value)}
-              placeholder="Website"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-          </div>
-        );
-      case 'mecard':
-        return (
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={mecardName}
-              onChange={(e) => handleInputChange(setMecardName, e.target.value)}
-              placeholder="Full Name"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="tel"
-              value={mecardPhone}
-              onChange={(e) => handleInputChange(setMecardPhone, e.target.value)}
-              placeholder="Phone"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="email"
-              value={mecardEmail}
-              onChange={(e) => handleInputChange(setMecardEmail, e.target.value)}
-              placeholder="Email"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-          </div>
-        );
-      case 'location':
-        return (
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={latitude}
-              onChange={(e) => handleInputChange(setLatitude, e.target.value)}
-              placeholder="Latitude (e.g., 37.7749)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={longitude}
-              onChange={(e) => handleInputChange(setLongitude, e.target.value)}
-              placeholder="Longitude (e.g., -122.4194)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-          </div>
-        );
-      case 'facebook':
-        return (
-          <input
-            type="url"
-            value={facebookUrl}
-            onChange={(e) => handleInputChange(setFacebookUrl, e.target.value)}
-            placeholder="https://facebook.com/yourpage"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
-        );
-      case 'twitter':
-        return (
-          <input
-            type="url"
-            value={twitterUrl}
-            onChange={(e) => handleInputChange(setTwitterUrl, e.target.value)}
-            placeholder="https://twitter.com/yourusername"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
-        );
-      case 'youtube':
-        return (
-          <input
-            type="url"
-            value={youtubeUrl}
-            onChange={(e) => handleInputChange(setYoutubeUrl, e.target.value)}
-            placeholder="https://youtube.com/@yourchannel"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
         );
       case 'wifi':
         return (
@@ -488,39 +306,6 @@ export default function InteractiveQRGenerator() {
               <option value="WEP">WEP</option>
               <option value="nopass">None</option>
             </select>
-          </div>
-        );
-      case 'event':
-        return (
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={eventTitle}
-              onChange={(e) => handleInputChange(setEventTitle, e.target.value)}
-              placeholder="Event Title"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={eventLocation}
-              onChange={(e) => handleInputChange(setEventLocation, e.target.value)}
-              placeholder="Location"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={eventStart}
-              onChange={(e) => handleInputChange(setEventStart, e.target.value)}
-              placeholder="Start (YYYYMMDDTHHMMSS)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={eventEnd}
-              onChange={(e) => handleInputChange(setEventEnd, e.target.value)}
-              placeholder="End (YYYYMMDDTHHMMSS)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
           </div>
         );
       default:

@@ -13,15 +13,14 @@ export default function Hero() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900">
-            Create Stunning
-            <span className="block text-gray-900">
-              QR Codes
+            <span className="text-teal-600">Quick</span>-ly Create
+            <span className="block">
+              <span className="text-teal-600">QR</span> Codes
             </span>
           </h1>
 
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Generate beautiful, customizable QR codes in seconds. Professional quality,
-            blazing fast, and completely free.
+            Generate QR codes in seconds. Fast and free.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

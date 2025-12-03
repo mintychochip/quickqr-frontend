@@ -3,7 +3,7 @@
  * Handles fetching and managing QR codes for authenticated users
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr';
 
 export interface QRCode {
   qrcodeid: string;

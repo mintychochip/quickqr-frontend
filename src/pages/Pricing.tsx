@@ -207,7 +207,7 @@ export default function Pricing() {
             <div className="mt-8 text-center">
               <Link
                 to="/signup"
-                className="inline-flex items-center gap-2 px-8 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all"
               >
                 Get Started
                 <ArrowRight className="w-5 h-5" />
@@ -321,7 +321,7 @@ export default function Pricing() {
               </p>
               <Link
                 to="/signup"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all"
               >
                 Create Free Account
                 <ArrowRight className="w-5 h-5" />
