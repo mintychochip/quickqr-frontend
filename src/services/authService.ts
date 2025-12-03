@@ -4,7 +4,7 @@
  * Enhanced with retry logic and better error handling for session persistence
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr';
 
 // Retry configuration
 const MAX_RETRIES = 3;

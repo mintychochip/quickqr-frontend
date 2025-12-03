@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr',
   endpoints: {
     create: '/qrcode.php',
     update: '/qrcode.php',
