@@ -17,7 +17,7 @@ function Navigation() {
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
-  const isRedirectPage = location.pathname.startsWith('/r/');
+  const isRedirectPage = location.pathname.startsWith('/code/');
 
   if (isAuthPage || isRedirectPage) return null;
 
@@ -220,7 +220,7 @@ function Navigation() {
 function Footer() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
-  const isRedirectPage = location.pathname.startsWith('/r/');
+  const isRedirectPage = location.pathname.startsWith('/code/');
   const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/create';
 
   if (isAuthPage || isRedirectPage || isDashboardPage) return null;
@@ -289,7 +289,7 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/r/:slug" element={<QRCodeRedirect />} />
+          <Route path="/code/:slug" element={<QRCodeRedirect />} />
         </Routes>
       </main>
 

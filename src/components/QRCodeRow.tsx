@@ -251,7 +251,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete }: QRCodeRowProps) 
   // Generate QR code data based on type and content
   const generateQRData = (): string => {
     // All QR codes should redirect through our redirect endpoint
-    return `${APP_URL}/r/${qr.qrcodeid}`;
+    return `${APP_URL}/code/${qr.qrcodeid}`;
   };
 
   // Parse QR content for editing
