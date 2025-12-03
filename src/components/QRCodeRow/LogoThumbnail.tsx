@@ -102,13 +102,13 @@ export default function LogoThumbnail({
                   style={{ maxHeight: '60px' }}
                 />
                 {!imageLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
-                    <div className="text-white text-xs">Loading...</div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 rounded">
+                    <div className="text-gray-600 text-xs">Loading...</div>
                   </div>
                 )}
                 {imageError && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
-                    <div className="text-red-400 text-xs text-center">Failed to load</div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-red-50 rounded">
+                    <div className="text-red-500 text-xs text-center">Failed to load</div>
                   </div>
                 )}
               </div>

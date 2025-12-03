@@ -128,18 +128,18 @@ export default function QRCodeRedirect() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="inline-block p-4 bg-red-600/20 rounded-lg mb-4">
+          <div className="inline-block p-4 bg-red-50 rounded-lg mb-4 border border-red-200">
             <svg className="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">QR Code Error</h2>
-          <p className="text-gray-400 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">QR Code Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
           <a
             href="/"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-medium text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+            className="inline-block px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all"
           >
             Go Home
           </a>
@@ -150,13 +150,13 @@ export default function QRCodeRedirect() {
 
   
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
-        <div className="inline-block p-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg mb-4">
-          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+        <div className="inline-block p-4 bg-white rounded-lg mb-4 border border-gray-200 shadow-sm">
+          <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Redirecting...</h2>
-        <p className="text-gray-400">Processing QR code: {slug}</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Redirecting...</h2>
+        <p className="text-gray-600">Processing QR code: {slug}</p>
       </div>
     </div>
   );
