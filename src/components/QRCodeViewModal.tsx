@@ -164,7 +164,7 @@ export default function QRCodeViewModal({ qrCode, onClose }: QRCodeViewModalProp
         </div>
 
         {/* Info */}
-        <div className="px-6 pb-4">
+        <div className="px-6 py-4">
           <div className="text-sm text-gray-600">
             <p className="mb-1"><strong>Owner:</strong> {qrCode.user_email}</p>
             <p className="mb-1"><strong>Scans:</strong> {qrCode.scan_count}</p>
