@@ -27,11 +27,8 @@ ChartJS.register(
   ArcElement
 );
 
-interface StatsChartsProps {
-  days?: number;
-}
-
-export default function StatsCharts({ days = 30 }: StatsChartsProps) {
+export default function StatsCharts() {
+  const days = 30;
   const [timelineData, setTimelineData] = useState<TimelineStat[]>([]);
   const [qrCodeData, setQrCodeData] = useState<QRCodeStat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +57,18 @@ export default function StatsCharts({ days = 30 }: StatsChartsProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Format QR type for display
+  const formatQRType = (type: string): string => {
+    if (!type) return 'Other';
+    const lower = type.toLowerCase();
+    if (lower === 'url') return 'URL';
+    if (lower === 'sms') return 'SMS';
+    if (lower === 'wifi') return 'WiFi';
+    if (lower === 'vcard') return 'vCard';
+    if (lower === 'mecard') return 'MeCard';
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   // Aggregate QR code data by type
@@ -103,7 +112,7 @@ export default function StatsCharts({ days = 30 }: StatsChartsProps) {
   };
 
   const doughnutData = {
-    labels: types.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+    labels: types.map(t => formatQRType(t)),
     datasets: [
       {
         data: typeCounts,
@@ -115,7 +124,7 @@ export default function StatsCharts({ days = 30 }: StatsChartsProps) {
   };
 
   const barData = {
-    labels: types.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+    labels: types.map(t => formatQRType(t)),
     datasets: [
       {
         label: 'Total Scans',

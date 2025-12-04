@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import { QrCode, Settings, Download } from 'lucide-react';
 import { fetchOperatingSystems, fetchScansByQRCode, type OperatingSystemStat, type QRCodeStat } from '../services/statsService';
 
-interface DetailedStatsPanelProps {
-  days?: number;
-}
-
-export default function DetailedStatsPanel({ days = 30 }: DetailedStatsPanelProps) {
+export default function DetailedStatsPanel() {
+  const days = 30;
   const [osStats, setOsStats] = useState<OperatingSystemStat[]>([]);
   const [qrStats, setQrStats] = useState<QRCodeStat[]>([]);
   const [loadingOs, setLoadingOs] = useState(true);
@@ -73,6 +70,88 @@ export default function DetailedStatsPanel({ days = 30 }: DetailedStatsPanelProp
     window.URL.revokeObjectURL(url);
   };
 
+  const exportQRStatsToCSV = () => {
+    const headers = ['Name', 'Type', 'Data', 'Scans', 'Percentage'];
+    const csvContent = [
+      headers.join(','),
+      ...qrStats.map(stat => [
+        stat.name,
+        formatQRType(stat.type),
+        getQRCodeData(stat),
+        stat.scan_count,
+        Number(stat.percentage || 0).toFixed(1) + '%'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr-scans-${days}days.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const formatOsName = (os: string): string => {
+    if (!os) return 'Other';
+    const lower = os.toLowerCase();
+    if (lower === 'windows') return 'Windows';
+    if (lower === 'macos' || lower === 'mac os') return 'macOS';
+    if (lower === 'android') return 'Android';
+    if (lower === 'ios') return 'iOS';
+    if (lower === 'linux') return 'Linux';
+    if (lower === 'unknown') return 'Other';
+    return os.charAt(0).toUpperCase() + os.slice(1);
+  };
+
+  const formatQRType = (type: string): string => {
+    if (!type) return 'Other';
+    const lower = type.toLowerCase();
+    if (lower === 'url') return 'URL';
+    if (lower === 'sms') return 'SMS';
+    if (lower === 'wifi') return 'WiFi';
+    if (lower === 'vcard') return 'vCard';
+    if (lower === 'mecard') return 'MeCard';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  const getQRCodeData = (stat: QRCodeStat): string => {
+    try {
+      if (!stat.content) return 'N/A';
+
+      const contentDecoded = typeof stat.content === 'string'
+        ? JSON.parse(stat.content)
+        : stat.content;
+
+      switch (stat.type.toLowerCase()) {
+        case 'url':
+          return contentDecoded.url || 'N/A';
+        case 'text':
+          const text = contentDecoded.text || '';
+          return text.length > 50 ? text.substring(0, 50) + '...' : text;
+        case 'email':
+          return contentDecoded.email || 'N/A';
+        case 'phone':
+          return contentDecoded.phone || 'N/A';
+        case 'sms':
+          return contentDecoded.number || 'N/A';
+        case 'location':
+          return `${contentDecoded.latitude || ''},${contentDecoded.longitude || ''}`;
+        case 'vcard':
+        case 'mecard':
+          return contentDecoded.name || 'Contact Card';
+        case 'wifi':
+          return contentDecoded.ssid || 'WiFi Network';
+        case 'event':
+          return contentDecoded.title || 'Event';
+        default:
+          return stat.type;
+      }
+    } catch (e) {
+      return stat.content?.substring(0, 50) || 'N/A';
+    }
+  };
+
   const totalOsScans = osStats.reduce((sum, stat) => sum + stat.scan_count, 0);
   const totalQrScans = qrStats.reduce((sum, stat) => sum + stat.scan_count, 0);
 
@@ -121,7 +200,7 @@ export default function DetailedStatsPanel({ days = 30 }: DetailedStatsPanelProp
                     {osStats.map((stat, index) => (
                       <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3 text-gray-600">{index + 1}</td>
-                        <td className="px-4 py-3 text-gray-900 font-medium">{stat.operating_system || 'Unknown'}</td>
+                        <td className="px-4 py-3 text-gray-900 font-medium">{formatOsName(stat.operating_system)}</td>
                         <td className="px-4 py-3 text-gray-900">{stat.scan_count}</td>
                         <td className="px-4 py-3 text-gray-600">{Number(stat.percentage || 0).toFixed(1)}%</td>
                       </tr>
@@ -168,7 +247,7 @@ export default function DetailedStatsPanel({ days = 30 }: DetailedStatsPanelProp
               Scans by QR Code (last {days} days)
             </h3>
             <button
-              onClick={() => exportToCSV(qrStats, `qr-scans-${days}days.csv`, ['Name', 'Type', 'Scans', 'Percentage'])}
+              onClick={exportQRStatsToCSV}
               disabled={qrStats.length === 0}
               className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -191,9 +270,9 @@ export default function DetailedStatsPanel({ days = 30 }: DetailedStatsPanelProp
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b-2 border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">ID</th>
                       <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Name</th>
                       <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Type</th>
+                      <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Content</th>
                       <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">Scans</th>
                       <th className="px-4 py-3 text-left text-gray-900 font-semibold text-sm">%</th>
                     </tr>
@@ -201,9 +280,9 @@ export default function DetailedStatsPanel({ days = 30 }: DetailedStatsPanelProp
                   <tbody>
                     {qrStats.map((stat, index) => (
                       <tr key={stat.qrcodeid} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-gray-600 font-mono text-xs">{stat.qrcodeid.substring(0, 8)}...</td>
                         <td className="px-4 py-3 text-gray-900 font-medium">{stat.name}</td>
-                        <td className="px-4 py-3 text-gray-600 capitalize">{stat.type}</td>
+                        <td className="px-4 py-3 text-gray-600">{formatQRType(stat.type)}</td>
+                        <td className="px-4 py-3 text-gray-600 truncate max-w-xs" title={getQRCodeData(stat)}>{getQRCodeData(stat)}</td>
                         <td className="px-4 py-3 text-gray-900">{stat.scan_count}</td>
                         <td className="px-4 py-3 text-gray-600">{Number(stat.percentage || 0).toFixed(1)}%</td>
                       </tr>
