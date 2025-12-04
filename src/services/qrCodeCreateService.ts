@@ -43,6 +43,7 @@ export async function createQRCode(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        action: 'create',
         name: requestBody.name,
         content: requestBody.content,
         type: requestBody.type,

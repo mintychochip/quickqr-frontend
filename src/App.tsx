@@ -61,7 +61,7 @@ function Navigation() {
                 <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
                   Dashboard
                 </Link>
-                {user.admin && (
+                {!!user.admin && (
                   <Link to="/admin" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
                     Admin
                   </Link>
@@ -147,7 +147,7 @@ function Navigation() {
                     >
                       Dashboard
                     </Link>
-                    {user.admin && (
+                    {!!user.admin && (
                       <Link
                         to="/admin"
                         className="block text-gray-600 hover:text-gray-900 transition-colors font-medium text-lg py-2"
