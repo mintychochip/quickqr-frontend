@@ -53,14 +53,6 @@ function getDisplayName(qr: AdminQRCode): { name: string; isMissing: boolean } {
   return { name: qr.name, isMissing: false };
 }
 
-// Helper function to format QR type display
-function formatQRType(type: string): string {
-  const lower = type.toLowerCase();
-  if (lower === 'url') return 'URL';
-  if (lower === 'sms') return 'SMS';
-  return type.charAt(0).toUpperCase() + type.slice(1);
-}
-
 export default function Admin() {
   const { user } = useAuth();
   const [qrCodes, setQrCodes] = useState<AdminQRCode[]>([]);
@@ -113,22 +105,7 @@ export default function Admin() {
     setEditingId(qr.qrcodeid);
     try {
       const parsed = JSON.parse(qr.content);
-      // Decode URL-encoded values (replace + with spaces and decode URI components)
-      const decoded: Record<string, string> = {};
-      for (const key in parsed) {
-        if (typeof parsed[key] === 'string') {
-          try {
-            // Replace + with spaces and decode URI component
-            decoded[key] = decodeURIComponent(parsed[key].replace(/\+/g, ' '));
-          } catch {
-            // If decoding fails, use original value
-            decoded[key] = parsed[key];
-          }
-        } else {
-          decoded[key] = parsed[key];
-        }
-      }
-      setEditContent(decoded);
+      setEditContent(parsed);
     } catch {
       setEditContent({ text: qr.content });
     }
@@ -316,7 +293,7 @@ export default function Admin() {
                                 <div className={`font-medium text-sm ${displayName.isMissing ? 'text-gray-400 italic' : 'text-gray-900'} truncate`}>
                                   {displayName.name}
                                 </div>
-                                <div className="text-xs text-gray-500">{formatQRType(qr.type)}</div>
+                                <div className="text-xs text-gray-500 capitalize">{qr.type}</div>
                                 <div className="text-xs text-gray-500 lg:hidden truncate">{qr.user_email}</div>
                                 {isEditing && (
                                   <div className="mt-2 space-y-2">
