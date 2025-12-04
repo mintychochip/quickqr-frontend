@@ -29,11 +29,36 @@ const detectOperatingSystem = (): string => {
   const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
   const uaLower = ua.toLowerCase();
 
-  if (uaLower.includes('macintosh')) return 'iOS';
-  if (uaLower.includes('android')) return 'Android';
-  if (uaLower.includes('win')) return 'Windows';
-  if (uaLower.includes('linux')) return 'Linux';
+  // DEBUG: Log the user agent for troubleshooting
+  console.log('🔍 DEBUG - User Agent:', ua);
+  console.log('🔍 DEBUG - Platform:', navigator.platform);
+  console.log('🔍 DEBUG - Vendor:', navigator.vendor);
 
+  // Check for mobile/tablet first (more specific)
+  if (uaLower.includes('iphone') || uaLower.includes('ipad')) {
+    console.log('✅ Detected: iOS (iPhone/iPad)');
+    return 'iOS';
+  }
+  if (uaLower.includes('android')) {
+    console.log('✅ Detected: Android');
+    return 'Android';
+  }
+
+  // Check for desktop
+  if (uaLower.includes('macintosh') || uaLower.includes('mac os')) {
+    console.log('✅ Detected: iOS (Macintosh)');
+    return 'iOS';
+  }
+  if (uaLower.includes('win')) {
+    console.log('✅ Detected: Windows');
+    return 'Windows';
+  }
+  if (uaLower.includes('linux')) {
+    console.log('✅ Detected: Linux');
+    return 'Linux';
+  }
+
+  console.log('❌ Detected: Other (no match)');
   return 'Other';
 };
 
