@@ -31,6 +31,7 @@ export interface QRCodeStat {
   qrcodeid: string;
   name: string;
   type: string;
+  content?: string;
   scan_count: number;
   percentage: number;
 }

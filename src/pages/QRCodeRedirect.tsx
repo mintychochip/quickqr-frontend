@@ -26,37 +26,17 @@ interface ClientDetails {
 
 // Function to detect operating system from user agent
 const detectOperatingSystem = (): string => {
-  const userAgent = navigator.userAgent.toLowerCase();
-  const platform = navigator.platform.toLowerCase();
+  const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+  const uaLower = ua.toLowerCase();
 
-  // Check for Windows first (most specific)
-  if (userAgent.includes('windows nt') || userAgent.includes('win32') || userAgent.includes('win64') || platform.includes('win')) {
-    return 'Windows';
-  }
+  if (uaLower.includes('macintosh')) return 'iOS';
+  if (uaLower.includes('android')) return 'Android';
+  if (uaLower.includes('win')) return 'Windows';
+  if (uaLower.includes('linux')) return 'Linux';
 
-  // Check for macOS
-  if (userAgent.includes('mac os') || userAgent.includes('macintosh') || platform.includes('mac')) {
-    return 'macOS';
-  }
-
-  // Check for Android (must be before Linux since Android UA contains 'Linux')
-  if (userAgent.includes('android')) {
-    return 'Android';
-  }
-
-  // Check for iOS devices
-  if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ipod')) {
-    return 'iOS';
-  }
-
-  // Check for Linux (most specific patterns to avoid false positives)
-  if (userAgent.includes('linux x86_64') || userAgent.includes('linux i686') ||
-      (userAgent.includes('linux') && !userAgent.includes('android') && platform.includes('linux'))) {
-    return 'Linux';
-  }
-
-  return 'Unknown';
+  return 'Other';
 };
+
 
 // Function to get client details
 const getClientDetails = (): ClientDetails => {
@@ -148,7 +128,7 @@ export default function QRCodeRedirect() {
     );
   }
 
-  
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
