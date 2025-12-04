@@ -60,7 +60,7 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
+  const [editContent, setEditContent] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [viewingQRCode, setViewingQRCode] = useState<AdminQRCode | null>(null);
 
@@ -103,35 +103,36 @@ export default function Admin() {
   // Handle edit start
   const handleStartEdit = (qr: AdminQRCode) => {
     setEditingId(qr.qrcodeid);
-    setEditContent(qr.content);
+    try {
+      const parsed = JSON.parse(qr.content);
+      setEditContent(parsed);
+    } catch {
+      setEditContent({ text: qr.content });
+    }
   };
 
   // Handle edit cancel
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditContent('');
+    setEditContent({});
   };
 
   // Handle save edit
   const handleSaveEdit = async (qrcodeid: string) => {
-    if (!editContent.trim()) {
-      alert('Content cannot be empty');
-      return;
-    }
-
     try {
       setSaving(true);
-      const result = await updateQRCode(qrcodeid, editContent);
+      const jsonContent = JSON.stringify(editContent);
+      const result = await updateQRCode(qrcodeid, jsonContent);
 
       if (result.success) {
         // Update local state
         setQrCodes(prevCodes =>
           prevCodes.map(qr =>
-            qr.qrcodeid === qrcodeid ? { ...qr, content: editContent } : qr
+            qr.qrcodeid === qrcodeid ? { ...qr, content: jsonContent } : qr
           )
         );
         setEditingId(null);
-        setEditContent('');
+        setEditContent({});
       } else {
         alert(`Failed to update: ${result.error || 'Unknown error'}`);
       }
@@ -252,26 +253,20 @@ export default function Admin() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-x-auto overflow-y-auto">
-                <table className="w-full min-w-[800px]">
+              <div className="flex-1 overflow-y-auto">
+                <table className="w-full">
                   <thead className="sticky top-0 bg-white z-10 shadow-sm">
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[200px]">
-                        <span className="inline-block ml-[52px]">Name</span>
+                      <th className="text-left py-3 px-2 sm:px-4 text-gray-600 font-semibold text-xs sm:text-sm uppercase tracking-wider">
+                        QR Code
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[200px]">
-                        Content
-                      </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[180px]">
+                      <th className="text-left py-3 px-2 sm:px-4 text-gray-600 font-semibold text-xs sm:text-sm uppercase tracking-wider hidden lg:table-cell">
                         Owner
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[80px]">
+                      <th className="text-left py-3 px-2 sm:px-4 text-gray-600 font-semibold text-xs sm:text-sm uppercase tracking-wider">
                         Scans
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[140px]">
-                        Created
-                      </th>
-                      <th className="text-right py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[120px]">
+                      <th className="text-right py-3 px-2 sm:px-4 text-gray-600 font-semibold text-xs sm:text-sm uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -280,76 +275,153 @@ export default function Admin() {
                     {filteredQRCodes.map((qr) => {
                       const displayName = getDisplayName(qr);
                       const displayContent = getDisplayContent(qr);
+                      const isEditing = editingId === qr.qrcodeid;
 
                       return (
                         <tr key={qr.qrcodeid} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
+                          {/* QR Code Column */}
+                          <td className="py-3 px-2 sm:px-4">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               <button
                                 onClick={() => setViewingQRCode(qr)}
-                                className="w-10 h-10 bg-teal-500 hover:bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer"
+                                className="w-8 h-8 sm:w-10 sm:h-10 bg-teal-500 hover:bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer"
                                 title="View QR Code"
                               >
-                                <QrCode className="w-6 h-6 text-white" />
+                                <QrCode className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                               </button>
-                              <div>
-                                <div className={`font-medium ${displayName.isMissing ? 'text-gray-400 italic' : 'text-gray-900'}`}>
+                              <div className="flex-1 min-w-0">
+                                <div className={`font-medium text-sm ${displayName.isMissing ? 'text-gray-400 italic' : 'text-gray-900'} truncate`}>
                                   {displayName.name}
                                 </div>
                                 <div className="text-xs text-gray-500 capitalize">{qr.type}</div>
+                                <div className="text-xs text-gray-500 lg:hidden truncate">{qr.user_email}</div>
+                                {isEditing && (
+                                  <div className="mt-2 space-y-2">
+                                    {qr.type === 'url' && (
+                                      <input
+                                        type="url"
+                                        value={editContent.url || ''}
+                                        onChange={(e) => setEditContent({ ...editContent, url: e.target.value })}
+                                        placeholder="URL"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                      />
+                                    )}
+                                    {qr.type === 'email' && (
+                                      <>
+                                        <input
+                                          type="email"
+                                          value={editContent.email || ''}
+                                          onChange={(e) => setEditContent({ ...editContent, email: e.target.value })}
+                                          placeholder="Email"
+                                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        />
+                                        <input
+                                          type="text"
+                                          value={editContent.subject || ''}
+                                          onChange={(e) => setEditContent({ ...editContent, subject: e.target.value })}
+                                          placeholder="Subject (optional)"
+                                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        />
+                                        <textarea
+                                          value={editContent.body || ''}
+                                          onChange={(e) => setEditContent({ ...editContent, body: e.target.value })}
+                                          placeholder="Body (optional)"
+                                          rows={2}
+                                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        />
+                                      </>
+                                    )}
+                                    {qr.type === 'sms' && (
+                                      <>
+                                        <input
+                                          type="tel"
+                                          value={editContent.number || ''}
+                                          onChange={(e) => setEditContent({ ...editContent, number: e.target.value })}
+                                          placeholder="Phone Number"
+                                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        />
+                                        <textarea
+                                          value={editContent.message || ''}
+                                          onChange={(e) => setEditContent({ ...editContent, message: e.target.value })}
+                                          placeholder="Message (optional)"
+                                          rows={2}
+                                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        />
+                                      </>
+                                    )}
+                                    {qr.type === 'text' && (
+                                      <textarea
+                                        value={editContent.text || ''}
+                                        onChange={(e) => setEditContent({ ...editContent, text: e.target.value })}
+                                        placeholder="Text content"
+                                        rows={3}
+                                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                      />
+                                    )}
+                                    {qr.type === 'phone' && (
+                                      <input
+                                        type="tel"
+                                        value={editContent.phone || ''}
+                                        onChange={(e) => setEditContent({ ...editContent, phone: e.target.value })}
+                                        placeholder="Phone Number"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                                {!isEditing && (
+                                  <div className="text-xs text-gray-600 mt-1 truncate" title={displayContent}>
+                                    {displayContent}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-4">
-                            {editingId === qr.qrcodeid ? (
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={editContent}
-                                  onChange={(e) => setEditContent(e.target.value)}
-                                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleSaveEdit(qr.qrcodeid)}
-                                  disabled={saving}
-                                  className="p-1 text-green-600 hover:text-green-700 disabled:opacity-50"
-                                  title="Save"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={handleCancelEdit}
-                                  disabled={saving}
-                                  className="p-1 text-gray-600 hover:text-gray-700 disabled:opacity-50"
-                                  title="Cancel"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-600 max-w-md truncate" title={qr.content}>
-                                {displayContent}
-                              </div>
-                            )}
+
+                          {/* Owner Column - Hidden on mobile */}
+                          <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600 hidden lg:table-cell">
+                            {qr.user_email}
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{qr.user_email}</td>
-                          <td className="py-4 px-4 text-sm text-gray-900 font-medium">{qr.scan_count}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{formatDate(qr.createdat)}</td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              {editingId === qr.qrcodeid ? null : (
+
+                          {/* Scans Column */}
+                          <td className="py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900 font-medium">
+                            {qr.scan_count}
+                          </td>
+
+                          {/* Actions Column */}
+                          <td className="py-3 px-2 sm:px-4">
+                            <div className="flex items-center justify-end gap-1">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    onClick={() => handleSaveEdit(qr.qrcodeid)}
+                                    disabled={saving}
+                                    className="p-1.5 sm:p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                    title="Save"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEdit}
+                                    disabled={saving}
+                                    className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                    title="Cancel"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </>
+                              ) : (
                                 <>
                                   <button
                                     onClick={() => handleStartEdit(qr)}
-                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Edit content"
+                                    className="p-1.5 sm:p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Edit"
                                   >
                                     <Edit2 className="w-4 h-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDelete(qr)}
-                                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="p-1.5 sm:p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Delete"
                                   >
                                     <Trash2 className="w-4 h-4" />
