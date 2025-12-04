@@ -173,7 +173,8 @@ export function getQRCodeName(qrCode: QRCode): string {
 
   // Fallback: Generate name from type
   if (qrCode.type) {
-    return qrCode.type.charAt(0).toUpperCase() + qrCode.type.slice(1) + ' QR Code';
+    const typeFormatted = qrCode.type === 'url' ? 'URL' : qrCode.type === 'sms' ? 'SMS' : qrCode.type.charAt(0).toUpperCase() + qrCode.type.slice(1);
+    return typeFormatted + ' QR Code';
   }
 
   // Last fallback: use first 8 chars of qrcodeid

@@ -96,9 +96,8 @@ export default function DetailedStatsPanel() {
     if (!os) return 'Other';
     const lower = os.toLowerCase();
     if (lower === 'windows') return 'Windows';
-    if (lower === 'macos' || lower === 'mac os') return 'macOS';
+    if (lower === 'macos' || lower === 'mac os' || lower === 'iphone' || lower === 'ipad' || lower === 'ios') return 'iOS';
     if (lower === 'android') return 'Android';
-    if (lower === 'ios') return 'iOS';
     if (lower === 'linux') return 'Linux';
     if (lower === 'unknown') return 'Other';
     return os.charAt(0).toUpperCase() + os.slice(1);

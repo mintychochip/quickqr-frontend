@@ -1307,7 +1307,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-gray-900 font-semibold text-base truncate">{qr.name}</h3>
-                <p className="text-gray-500 text-sm">{qr.type === 'url' ? 'URL' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}</p>
+                <p className="text-gray-500 text-sm">{qr.type === 'url' ? 'URL' : qr.type === 'sms' ? 'SMS' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}</p>
               </div>
             </div>
             <button
@@ -1394,7 +1394,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
             <div>
               <div className="text-gray-900 font-medium">{qr.name}</div>
               <div className="text-gray-500 text-sm mt-0.5">
-                {qr.type === 'url' ? 'URL' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}
+                {qr.type === 'url' ? 'URL' : qr.type === 'sms' ? 'SMS' : qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}
               </div>
             </div>
           </div>
