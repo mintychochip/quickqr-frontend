@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Shield, Search, Trash2, Edit2, RefreshCw, X, Check, QrCode } from 'lucide-react';
 import { fetchAllQRCodes, updateQRCode, deleteQRCode, type AdminQRCode } from '../services/adminService';
 import { useAuth } from '../contexts/AuthContext';
+import QRCodeViewModal from '../components/QRCodeViewModal';
 
 // Helper function to parse and display QR code content
 function getDisplayContent(qr: AdminQRCode): string {
@@ -61,6 +62,7 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [viewingQRCode, setViewingQRCode] = useState<AdminQRCode | null>(null);
 
   // Load all QR codes
   const loadQRCodes = async () => {
@@ -283,9 +285,13 @@ export default function Admin() {
                         <tr key={qr.qrcodeid} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <button
+                                onClick={() => setViewingQRCode(qr)}
+                                className="w-10 h-10 bg-teal-500 hover:bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer"
+                                title="View QR Code"
+                              >
                                 <QrCode className="w-6 h-6 text-white" />
-                              </div>
+                              </button>
                               <div>
                                 <div className={`font-medium ${displayName.isMissing ? 'text-gray-400 italic' : 'text-gray-900'}`}>
                                   {displayName.name}
@@ -367,6 +373,12 @@ export default function Admin() {
           )}
         </div>
       </div>
+
+      {/* QR Code View Modal */}
+      <QRCodeViewModal
+        qrCode={viewingQRCode}
+        onClose={() => setViewingQRCode(null)}
+      />
     </div>
   );
 }

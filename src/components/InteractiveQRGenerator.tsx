@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import { QRCodeStylingProps } from '../types/qrcode.types';
+import { proxifyImageUrl } from '../utils/imageProxy';
 
 type DataType =
   | 'url'
@@ -132,7 +133,7 @@ export default function InteractiveQRGenerator() {
           margin: logoMargin,
           crossOrigin: 'anonymous',
         };
-        (options as any).image = logoUrl;
+        (options as any).image = proxifyImageUrl(logoUrl);
       }
 
       qrCodeRef.current = new QRCodeStyling(options as any);
@@ -177,7 +178,7 @@ export default function InteractiveQRGenerator() {
           margin: logoMargin,
           crossOrigin: 'anonymous',
         };
-        (updateOptions as any).image = logoUrl;
+        (updateOptions as any).image = proxifyImageUrl(logoUrl);
       }
 
       qrCodeRef.current.update(updateOptions);
