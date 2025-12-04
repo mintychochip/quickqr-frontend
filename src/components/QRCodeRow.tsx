@@ -922,6 +922,16 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
               </div>
             </div>
 
+            {/* Corner Dots */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-700">Corner Dots</label>
+              <ColorPicker
+                value={fieldValues['styling.cornerDotColor'] || localStylingProps.cornerDotColor || '#20c997'}
+                onChange={(value) => updateStylingField('styling.cornerDotColor', value)}
+                label="Corner Dots"
+              />
+            </div>
+
             {/* Background */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Background</label>
