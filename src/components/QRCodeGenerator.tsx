@@ -283,7 +283,7 @@ export default function QRCodeGenerator({
     }
   };
 
-  const handleDownload = (format: 'png' | 'jpg' | 'webp' | 'svg') => {
+  const handleDownload = (format: 'png' | 'jpeg' | 'webp' | 'svg') => {
     if (qrCodeRef.current) {
       qrCodeRef.current.download({
         name: `qr-code-${dataType}`,
@@ -636,7 +636,7 @@ export default function QRCodeGenerator({
                   SVG
                 </button>
                 <button
-                  onClick={() => handleDownload('jpg')}
+                  onClick={() => handleDownload('jpeg')}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200 text-sm"
                 >
                   <Download className="w-4 h-4" />
