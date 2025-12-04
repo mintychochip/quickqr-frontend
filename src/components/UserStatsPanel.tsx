@@ -4,12 +4,8 @@ import { fetchUserStats, type UserStats } from '../services/statsService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-interface UserStatsPanelProps {
-  days?: number;
-  onDaysChange?: (days: number) => void;
-}
-
-export default function UserStatsPanel({ days = 30, onDaysChange }: UserStatsPanelProps) {
+export default function UserStatsPanel() {
+  const days = 30;
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -159,16 +155,6 @@ export default function UserStatsPanel({ days = 30, onDaysChange }: UserStatsPan
           </p>
         </div>
         <div className="flex gap-3">
-          <select
-            value={days}
-            onChange={(e) => onDaysChange?.(Number(e.target.value))}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all shadow-sm"
-          >
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-            <option value={365}>Last year</option>
-          </select>
           <button
             onClick={exportToPDF}
             className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -243,28 +229,6 @@ export default function UserStatsPanel({ days = 30, onDaysChange }: UserStatsPan
         </div>
       </div>
 
-      {/* Additional Insights */}
-      {stats.total_qrcodes > 0 && (
-        <div className="bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Insights</h3>
-          <ul className="space-y-2 text-sm text-gray-700">
-            {stats.total_scans === 0 ? (
-              <li>• No scans recorded in the last {stats.days_analyzed} days. Try promoting your QR codes!</li>
-            ) : (
-              <>
-                <li>• You have {stats.total_qrcodes} QR code{stats.total_qrcodes !== 1 ? 's' : ''} generating traffic</li>
-                <li>• Average of {stats.avg_scans_per_qrcode.toFixed(1)} scans per QR code</li>
-                {stats.avg_scans_per_qrcode < 1 && (
-                  <li>• Consider optimizing QR code placement to increase scan rates</li>
-                )}
-                {stats.avg_scans_per_qrcode > 10 && (
-                  <li>• Great engagement! Your QR codes are performing well</li>
-                )}
-              </>
-            )}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
