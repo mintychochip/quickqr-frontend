@@ -252,26 +252,26 @@ export default function Admin() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-auto">
-                <table className="w-full">
+              <div className="flex-1 overflow-x-auto overflow-y-auto">
+                <table className="w-full min-w-[800px]">
                   <thead className="sticky top-0 bg-white z-10 shadow-sm">
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider">
+                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[200px]">
                         <span className="inline-block ml-[52px]">Name</span>
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider">
+                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[200px]">
                         Content
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider">
+                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[180px]">
                         Owner
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider">
+                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[80px]">
                         Scans
                       </th>
-                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider">
+                      <th className="text-left py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[140px]">
                         Created
                       </th>
-                      <th className="text-right py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider">
+                      <th className="text-right py-3 px-4 text-gray-600 font-semibold text-sm uppercase tracking-wider min-w-[120px]">
                         Actions
                       </th>
                     </tr>
