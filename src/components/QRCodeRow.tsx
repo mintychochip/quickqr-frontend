@@ -8,6 +8,7 @@ import StylingSection from './QRCodeRow/StylingSection';
 import { getApiUrl, APP_URL } from '../config/api';
 import { UpdateQRCodeData } from '../types/qrcode.types';
 import { QR_SIZES, TIMING } from '../constants/qr.constants';
+import { proxifyImageUrl } from '../utils/imageProxy';
 
 // SelectDropdown component for styling options
 interface SelectDropdownProps {
@@ -1167,7 +1168,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
         margin: localStylingProps.imageMargin || 0,
         crossOrigin: 'anonymous',
       };
-      (options as any).image = localStylingProps.image || localStylingProps.logoUrl;
+      (options as any).image = proxifyImageUrl(localStylingProps.image || localStylingProps.logoUrl);
     }
 
     

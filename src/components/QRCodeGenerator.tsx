@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import { QRCodeStylingProps, QRContentObject } from '../types/qrcode.types';
+import { proxifyImageUrl } from '../utils/imageProxy';
 
 type QRMode = 'static' | 'dynamic';
 
@@ -187,7 +188,7 @@ export default function QRCodeGenerator({
 
         // Only add logo if it exists
         if (logoUrl) {
-          (options as any).image = logoUrl;
+          (options as any).image = proxifyImageUrl(logoUrl);
           (options as any).imageOptions = {
             hideBackgroundDots: true,
             imageSize: logoSize,
@@ -240,7 +241,7 @@ export default function QRCodeGenerator({
 
       // Only add logo if it exists
       if (logoUrl) {
-        (updateOptions as any).image = logoUrl;
+        (updateOptions as any).image = proxifyImageUrl(logoUrl);
         (updateOptions as any).imageOptions = {
           hideBackgroundDots: true,
           imageSize: logoSize,
