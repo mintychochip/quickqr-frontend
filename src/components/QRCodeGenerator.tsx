@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Globe,
-  MessageSquare,
   Mail,
   MessageCircle,
   User,
-  Wifi,
   Save,
   Sparkles,
   Zap,
   Search,
+  Download,
 } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import { QRCodeStylingProps, QRContentObject } from '../types/qrcode.types';
@@ -19,10 +18,8 @@ type QRMode = 'static' | 'dynamic';
 
 type DataType =
   | 'url'
-  | 'text'
   | 'email'
-  | 'sms'
-  | 'wifi';
+  | 'sms';
 
 type DotType = 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
 type CornerSquareType = 'dot' | 'square' | 'extra-rounded';
@@ -76,15 +73,11 @@ export default function QRCodeGenerator({
 
   // Step 2: Content
   const [url, setUrl] = useState('https://example.com');
-  const [text, setText] = useState('');
   const [email, setEmail] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [smsNumber, setSmsNumber] = useState('');
   const [smsMessage, setSmsMessage] = useState('');
-  const [wifiSsid, setWifiSsid] = useState('');
-  const [wifiPassword, setWifiPassword] = useState('');
-  const [wifiEncryption, setWifiEncryption] = useState('WPA');
 
   // Step 4: Expiration
   const [expirationEnabled, setExpirationEnabled] = useState(false);
@@ -96,19 +89,19 @@ export default function QRCodeGenerator({
   const [margin, setMargin] = useState(10);
 
   // Shape/Dots
-  const [dotsType, setDotsType] = useState<DotType>('rounded');
-  const [dotsColor, setDotsColor] = useState('#212529');
+  const [dotsType, setDotsType] = useState<DotType>('square');
+  const [dotsColor, setDotsColor] = useState('#000000');
 
   // Background
   const [bgColor, setBgColor] = useState('#FFFFFF');
 
   // Corner Squares
-  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('extra-rounded');
-  const [cornerSquareColor, setCornerSquareColor] = useState('#20c997');
+  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('square');
+  const [cornerSquareColor, setCornerSquareColor] = useState('#000000');
 
   // Corner Dots
-  const cornerDotType: CornerDotType = 'dot';
-  const [cornerDotColor, setCornerDotColor] = useState('#20c997');
+  const cornerDotType: CornerDotType = 'square';
+  const [cornerDotColor, setCornerDotColor] = useState('#000000');
 
   // Logo
   const [logoUrl, setLogoUrl] = useState('');
@@ -120,24 +113,18 @@ export default function QRCodeGenerator({
 
   const dataTypes = [
     { id: 'url', label: 'Link', icon: Globe },
-    { id: 'text', label: 'Text', icon: MessageSquare },
     { id: 'email', label: 'E-mail', icon: Mail },
     { id: 'sms', label: 'SMS', icon: MessageCircle },
-    { id: 'wifi', label: 'Wi-Fi', icon: Wifi },
   ];
 
   const generateQRValue = (type: DataType): string => {
     switch (type) {
       case 'url':
         return url;
-      case 'text':
-        return text;
       case 'email':
         return `mailto:${email}${emailSubject ? `?subject=${encodeURIComponent(emailSubject)}` : ''}${emailBody ? `${emailSubject ? '&' : '?'}body=${encodeURIComponent(emailBody)}` : ''}`;
       case 'sms':
         return `sms:${smsNumber}${smsMessage ? `?body=${encodeURIComponent(smsMessage)}` : ''}`;
-      case 'wifi':
-        return `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`;
       default:
         return '';
     }
@@ -145,11 +132,8 @@ export default function QRCodeGenerator({
 
   const qrValue = generateQRValue(dataType);
 
-  // Initialize QR Code when Step 3 or 4 is reached
+  // Initialize QR Code
   useEffect(() => {
-    // Only initialize on steps 3 and 4
-    if (currentStep !== 3 && currentStep !== 4) return;
-
     // Use a timeout to ensure DOM is ready
     const timer = setTimeout(() => {
       if (!qrRef.current) {
@@ -206,7 +190,7 @@ export default function QRCodeGenerator({
     }, 100); // Small delay to ensure DOM is ready
 
     return () => clearTimeout(timer);
-  }, [currentStep, qrValue]);
+  }, [qrMode, qrValue]);
 
   // Update QR Code when settings change
   useEffect(() => {
@@ -299,11 +283,11 @@ export default function QRCodeGenerator({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = (format: 'png' | 'jpg' | 'webp' | 'svg') => {
     if (qrCodeRef.current) {
       qrCodeRef.current.download({
         name: `qr-code-${dataType}`,
-        extension: 'png'
+        extension: format
       });
     }
   };
@@ -312,14 +296,10 @@ export default function QRCodeGenerator({
     switch (dataType) {
       case 'url':
         return { url };
-      case 'text':
-        return { text };
       case 'email':
         return { email, subject: emailSubject, body: emailBody };
       case 'sms':
         return { number: smsNumber, message: smsMessage };
-      case 'wifi':
-        return { ssid: wifiSsid, password: wifiPassword, encryption: wifiEncryption };
       default:
         return {};
     }
@@ -334,17 +314,7 @@ export default function QRCodeGenerator({
             value={url}
             onChange={(e) => handleInputChange(setUrl, e.target.value)}
             placeholder="https://example.com"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
-        );
-      case 'text':
-        return (
-          <textarea
-            value={text}
-            onChange={(e) => handleInputChange(setText, e.target.value)}
-            placeholder="Enter your text"
-            rows={4}
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
       case 'email':
@@ -355,21 +325,21 @@ export default function QRCodeGenerator({
               value={email}
               onChange={(e) => handleInputChange(setEmail, e.target.value)}
               placeholder="email@example.com"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <input
               type="text"
               value={emailSubject}
               onChange={(e) => handleInputChange(setEmailSubject, e.target.value)}
               placeholder="Subject (optional)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <textarea
               value={emailBody}
               onChange={(e) => handleInputChange(setEmailBody, e.target.value)}
               placeholder="Message (optional)"
               rows={3}
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             />
           </div>
         );
@@ -381,49 +351,15 @@ export default function QRCodeGenerator({
               value={smsNumber}
               onChange={(e) => handleInputChange(setSmsNumber, e.target.value)}
               placeholder="+1234567890"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             <textarea
               value={smsMessage}
               onChange={(e) => handleInputChange(setSmsMessage, e.target.value)}
               placeholder="Message (optional)"
               rows={3}
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             />
-          </div>
-        );
-      case 'wifi':
-        return (
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={wifiSsid}
-              onChange={(e) => handleInputChange(setWifiSsid, e.target.value)}
-              placeholder="Network Name (SSID)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={wifiPassword}
-              onChange={(e) => handleInputChange(setWifiPassword, e.target.value)}
-              placeholder="Password"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <select
-              value={wifiEncryption}
-              onChange={(e) => handleInputChange(setWifiEncryption, e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none cursor-pointer"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                backgroundPosition: 'right 12px center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '20px'
-              }}
-            >
-              <option value="WPA">WPA/WPA2</option>
-              <option value="WEP">WEP</option>
-              <option value="nopass">None</option>
-            </select>
           </div>
         );
       default:
@@ -432,631 +368,360 @@ export default function QRCodeGenerator({
   };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return renderStep1ModeSelection(); // Choose Static vs Dynamic
-      case 2:
-        return renderStep2Design(); // Content Type + Content + Styling all in one
-      case 3:
-        return renderStep3Finalize(); // Finalize (expiration for dynamic) or Download (for static)
-      default:
-        return null;
-    }
+    return renderAllInOne();
   };
 
-  const renderStep1ModeSelection = () => (
-    <div className="space-y-6">
-      {/* QR Mode Selection */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6">QR Code Type</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <button
-            onClick={() => setQrMode('static')}
-            className={`relative p-8 rounded-xl border-2 transition-all text-left ${
-              qrMode === 'static'
-                ? 'border-teal-500 bg-teal-50 shadow-lg'
-                : 'border-gray-200 bg-white hover:border-teal-300'
-            }`}
-          >
-            <div className="flex flex-col gap-4">
-              <Zap className={`w-10 h-10 transition-all duration-300 ${
-                qrMode === 'static'
-                  ? 'text-teal-500'
-                  : 'text-gray-600'
-              }`} />
-              <div>
-                <div className="text-xl font-bold text-gray-900 mb-2">Static QR Code</div>
-                <div className="text-sm text-gray-600 mb-4">Perfect for permanent content</div>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>100% Free forever</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>Works offline - content embedded in code</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>No tracking or analytics</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-red-500 mt-0.5">✗</span>
-                    <span>Cannot be edited after creation</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            {qrMode === 'static' && (
-              <div className="absolute top-4 right-4 w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center shadow-md">
-                <div className="w-3 h-3 bg-white rounded-full"></div>
-              </div>
-            )}
-          </button>
-
-          <button
-            onClick={() => setQrMode('dynamic')}
-            className={`relative p-8 rounded-xl border-2 transition-all text-left ${
-              qrMode === 'dynamic'
-                ? 'border-amber-500 bg-amber-50 shadow-lg'
-                : 'border-gray-200 bg-white hover:border-amber-300'
-            }`}
-          >
-            <div className="flex flex-col gap-4">
-              <Sparkles className={`w-10 h-10 transition-all duration-300 ${
-                qrMode === 'dynamic'
-                  ? 'text-amber-500'
-                  : 'text-gray-600'
-              }`} />
-              <div>
-                <div className="text-xl font-bold text-gray-900 mb-2">Dynamic QR Code</div>
-                <div className="text-sm text-gray-600 mb-4">Flexible and trackable</div>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>Edit content anytime without reprinting</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>Full scan tracking & analytics</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-green-500 mt-0.5">✓</span>
-                    <span>Location, device & time data</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-gray-700">
-                    <span className="text-amber-500 mt-0.5">💰</span>
-                    <span>Paid feature - pricing based on scans</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            {qrMode === 'dynamic' && (
-              <div className="absolute top-4 right-4 w-7 h-7 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
-                <div className="w-3 h-3 bg-white rounded-full"></div>
-              </div>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Next Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => onStepChange(2)}
-          className="px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md transition-all"
-        >
-          Continue to Design
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderOldStep2DataTypeSelection = () => {
-    // Filter data types based on search query
-    const filteredDataTypes = dataTypes.filter((type) =>
-      type.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
+  const renderAllInOne = () => {
     return (
-      <div className="space-y-6">
-        {/* Step 2: Data Type */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Choose Content Type</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+        {/* Left Column - All Controls */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="space-y-6">
+            {/* QR Type & Content Type */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* QR Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-3">Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setQrMode('static')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${
+                      qrMode === 'static'
+                        ? 'border-teal-500 bg-teal-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Zap className="w-4 h-4" />
+                      <span className={`text-sm font-medium ${qrMode === 'static' ? 'text-teal-700' : 'text-gray-700'}`}>Static</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Free, permanent</p>
+                  </button>
+                  <button
+                    onClick={() => setQrMode('dynamic')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-left ${
+                      qrMode === 'dynamic'
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="w-4 h-4" />
+                      <span className={`text-sm font-medium ${qrMode === 'dynamic' ? 'text-amber-700' : 'text-gray-700'}`}>Dynamic</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Editable, trackable</p>
+                  </button>
+                </div>
+              </div>
 
-          {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search QR code types..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              />
+              {/* Content Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-3">Content</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {dataTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => setDataType(type.id as DataType)}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                          dataType === type.id
+                            ? 'border-teal-500 bg-teal-50 text-teal-700'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 inline mr-2" />
+                        {type.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Content Form */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Content</h3>
+              {renderContentForm()}
+            </div>
+
+            {/* Styling */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Style</h3>
+              <div className="space-y-4">
+                {/* Styles Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Dot Style</label>
+                    <select
+                      value={dotsType}
+                      onChange={(e) => setDotsType(e.target.value as DotType)}
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                        backgroundPosition: 'right 12px center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '16px'
+                      }}
+                    >
+                      <option value="rounded">Rounded</option>
+                      <option value="dots">Dots</option>
+                      <option value="classy">Classy</option>
+                      <option value="square">Square</option>
+                      <option value="extra-rounded">Extra Rounded</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Corner Style</label>
+                    <select
+                      value={cornerSquareType}
+                      onChange={(e) => setCornerSquareType(e.target.value as CornerSquareType)}
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                        backgroundPosition: 'right 12px center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '16px'
+                      }}
+                    >
+                      <option value="dot">Dot</option>
+                      <option value="square">Square</option>
+                      <option value="extra-rounded">Extra Rounded</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Colors */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Dots</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={dotsColor}
+                        onChange={(e) => setDotsColor(e.target.value)}
+                        className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={dotsColor}
+                        onChange={(e) => setDotsColor(e.target.value)}
+                        className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Background</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={bgColor}
+                        onChange={(e) => setBgColor(e.target.value)}
+                        className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={bgColor}
+                        onChange={(e) => setBgColor(e.target.value)}
+                        className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Corner Square</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={cornerSquareColor}
+                        onChange={(e) => setCornerSquareColor(e.target.value)}
+                        className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={cornerSquareColor}
+                        onChange={(e) => setCornerSquareColor(e.target.value)}
+                        className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Corner Dot</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={cornerDotColor}
+                        onChange={(e) => setCornerDotColor(e.target.value)}
+                        className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={cornerDotColor}
+                        onChange={(e) => setCornerDotColor(e.target.value)}
+                        className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Size and Margin */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Size: {qrSize}px</label>
+                    <input
+                      type="range"
+                      min="200"
+                      max="500"
+                      value={qrSize}
+                      onChange={(e) => setQrSize(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Margin: {margin}px</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="20"
+                      value={margin}
+                      onChange={(e) => setMargin(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Logo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+                  <input
+                    type="url"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {filteredDataTypes.map((type) => {
-              const Icon = type.icon;
-              return (
+        {/* Right Column - Preview (Static) or Settings (Dynamic) */}
+        <div className="space-y-6">
+          {qrMode === 'static' ? (
+            /* Static Mode - Preview & Download */
+            <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-6">
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Preview</h3>
+              <div className="flex justify-center items-center p-6 mb-6">
+                <div ref={qrRef} className="flex justify-center items-center shadow-lg"></div>
+              </div>
+
+              {/* Download Buttons */}
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  key={type.id}
-                  onClick={() => setDataType(type.id as DataType)}
-                  className={`relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-300 ${
-                    dataType === type.id
-                      ? 'bg-teal-50 border-teal-500 shadow-lg text-gray-900'
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300 hover:text-gray-900'
-                  }`}
+                  onClick={() => handleDownload('png')}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md transition-all duration-200 text-sm"
                 >
-                  <Icon className={`w-9 h-9 transition-all duration-300 ${
-                    dataType === type.id
-                      ? 'text-teal-500'
-                      : 'text-current'
-                  }`} />
-                  <span className={`text-sm font-medium transition-all duration-300 ${
-                    dataType === type.id
-                      ? 'text-gray-900'
-                      : 'text-current'
-                  }`}>{type.label}</span>
+                  <Download className="w-4 h-4" />
+                  PNG
                 </button>
-              );
-            })}
-          </div>
-
-          {filteredDataTypes.length === 0 && (
-            <div className="text-center py-8 text-gray-600">
-              No QR code types found matching "{searchQuery}"
+                <button
+                  onClick={() => handleDownload('svg')}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200 text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  SVG
+                </button>
+                <button
+                  onClick={() => handleDownload('jpg')}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200 text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  JPEG
+                </button>
+                <button
+                  onClick={() => handleDownload('webp')}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium text-gray-900 hover:bg-gray-100 transition-all duration-200 text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  WebP
+                </button>
+              </div>
             </div>
+          ) : (
+            /* Dynamic Mode - Name & Expiration */
+            <>
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">QR Code Name</h3>
+                <input
+                  type="text"
+                  value={qrName}
+                  onChange={(e) => onNameChange?.(e.target.value)}
+                  placeholder="Enter a name"
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-900">Expiration</h3>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={expirationEnabled}
+                      onChange={(e) => setExpirationEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500 relative"></div>
+                    <span className="text-sm text-gray-600">Enable</span>
+                  </label>
+                </div>
+
+                {expirationEnabled && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                      <input
+                        type="date"
+                        value={expirationDate}
+                        onChange={(e) => setExpirationDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                      <input
+                        type="time"
+                        value={expirationTime}
+                        onChange={(e) => setExpirationTime(e.target.value)}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Save Button for Dynamic */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !qrName?.trim()}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Saving...' : 'Save QR Code'}
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
     );
   };
-
-  const renderStep2Design = () => {
-    // Filter data types based on search query
-    const filteredDataTypes = dataTypes.filter((type) =>
-      type.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-      <div className="space-y-6">
-        {/* Content Type Selection */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">1. Choose Content Type</h3>
-
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search QR code types..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredDataTypes.map((type) => {
-              const Icon = type.icon;
-              return (
-                <button
-                  key={type.id}
-                  onClick={() => setDataType(type.id as DataType)}
-                  className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    dataType === type.id
-                      ? 'bg-teal-50 border-teal-500 shadow-lg text-gray-900'
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-teal-300'
-                  }`}
-                >
-                  <Icon className={`w-7 h-7 ${dataType === type.id ? 'text-teal-500' : 'text-current'}`} />
-                  <span className="text-xs font-medium">{type.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Content & Styling */}
-          <div className="lg:col-span-2 space-y-6">
-          {/* Content Form */}
-          <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">2. Enter Content</h3>
-            {renderContentForm()}
-          </div>
-
-        {/* Styling */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">3. Customize Style</h3>
-
-          <div className="space-y-6">
-            {/* Dot Style */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Dot Style</label>
-              <select
-                value={dotsType}
-                onChange={(e) => setDotsType(e.target.value as DotType)}
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                  backgroundPosition: 'right 12px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '20px'
-                }}
-              >
-                <option value="rounded">Rounded</option>
-                <option value="dots">Dots</option>
-                <option value="classy">Classy</option>
-                <option value="classy-rounded">Classy Rounded</option>
-                <option value="square">Square</option>
-                <option value="extra-rounded">Extra Rounded</option>
-              </select>
-            </div>
-
-            {/* Corner Square Style */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Corner Style</label>
-              <select
-                value={cornerSquareType}
-                onChange={(e) => setCornerSquareType(e.target.value as CornerSquareType)}
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                  backgroundPosition: 'right 12px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '20px'
-                }}
-              >
-                <option value="dot">Dot</option>
-                <option value="square">Square</option>
-                <option value="extra-rounded">Extra Rounded</option>
-              </select>
-            </div>
-
-            {/* Dots Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Dots Color</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={dotsColor}
-                  onChange={(e) => setDotsColor(e.target.value)}
-                  className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={dotsColor}
-                  onChange={(e) => setDotsColor(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-            </div>
-
-            {/* Corner Square Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Corner Square Color</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={cornerSquareColor}
-                  onChange={(e) => setCornerSquareColor(e.target.value)}
-                  className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={cornerSquareColor}
-                  onChange={(e) => setCornerSquareColor(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-            </div>
-
-            {/* Corner Dot Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Corner Dot Color</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={cornerDotColor}
-                  onChange={(e) => setCornerDotColor(e.target.value)}
-                  className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={cornerDotColor}
-                  onChange={(e) => setCornerDotColor(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-            </div>
-
-            {/* Background Color */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Background Color</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={bgColor}
-                  onChange={(e) => setBgColor(e.target.value)}
-                  className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={bgColor}
-                  onChange={(e) => setBgColor(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-            </div>
-
-            {/* QR Size and Margin */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">QR Size</label>
-                <input
-                  type="range"
-                  min="200"
-                  max="500"
-                  value={qrSize}
-                  onChange={(e) => setQrSize(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="text-sm text-gray-600 text-center">{qrSize}px</div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">Margin</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  value={margin}
-                  onChange={(e) => setMargin(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="text-sm text-gray-600 text-center">{margin}px</div>
-              </div>
-            </div>
-
-            {/* Error Correction Level */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Error Correction Level</label>
-              <select
-                value={errorCorrectionLevel}
-                onChange={(e) => setErrorCorrectionLevel(e.target.value as 'L' | 'M' | 'Q' | 'H')}
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                  backgroundPosition: 'right 12px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '20px'
-                }}
-              >
-                <option value="L">Low (7%)</option>
-                <option value="M">Medium (15%)</option>
-                <option value="Q">Quartile (25%)</option>
-                <option value="H">High (30%)</option>
-              </select>
-            </div>
-
-            {/* Logo Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Logo URL</label>
-              <input
-                type="url"
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://example.com/logo.png"
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-              {logoUrl && (
-                <div className="mt-2 grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Logo Size</label>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="0.5"
-                      step="0.1"
-                      value={logoSize}
-                      onChange={(e) => setLogoSize(Number(e.target.value))}
-                      className="w-full"
-                    />
-                    <div className="text-xs text-gray-600 text-center">{Math.round(logoSize * 100)}%</div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Logo Margin</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      value={logoMargin}
-                      onChange={(e) => setLogoMargin(Number(e.target.value))}
-                      className="w-full"
-                    />
-                    <div className="text-xs text-gray-600 text-center">{logoMargin}px</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        </div>
-
-        {/* Right Column - QR Preview (Sticky) */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-52 space-y-6">
-            {qrMode === 'static' && (
-              <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Preview</h3>
-                <div className="flex justify-center">
-                  <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-md" />
-                </div>
-                <p className="text-xs text-gray-600 text-center mt-4">
-                  Static QR Code
-                </p>
-              </div>
-            )}
-
-            {/* Continue to Finalize Button */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-md p-6">
-              <button
-                onClick={() => onStepChange(3)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md transition-all"
-              >
-                {qrMode === 'dynamic' ? 'Continue to Finalize' : 'Continue to Download'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    );
-  };
-
-  const renderStep3Finalize = () => (
-    <div className="space-y-6">
-      {qrMode === 'static' ? (
-        // Static QR - Just download
-        <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Download Your QR Code</h3>
-          <p className="text-gray-600 mb-6">
-            Your static QR code is ready! Download it and use it anywhere.
-          </p>
-
-          <div className="flex gap-4">
-            <button
-              onClick={() => onStepChange(2)}
-              className="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg font-medium text-gray-900 transition-all"
-            >
-              Back to Design
-            </button>
-            <button
-              onClick={handleDownload}
-              className="flex-1 px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md transition-all"
-            >
-              Download QR Code
-            </button>
-          </div>
-        </div>
-      ) : (
-        // Dynamic QR - Name + Expiration + Save
-        <>
-          {/* QR Name */}
-          <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Name Your QR Code</h3>
-            <input
-              type="text"
-              value={qrName}
-              onChange={(e) => onNameChange?.(e.target.value)}
-              placeholder="Enter a name for your QR code"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          {/* Expiration */}
-          <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Set Expiration (Optional)</h3>
-            <p className="text-gray-600 mb-6">
-              Set an expiration date for your QR code. After this date, the QR code will no longer work.
-            </p>
-
-        {/* Enable Expiration Toggle */}
-        <div className="mb-6">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={expirationEnabled}
-                onChange={(e) => setExpirationEnabled(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-500/50 rounded-full peer peer-checked:after:translate-x-6 after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-teal-500"></div>
-            </div>
-            <span className="text-gray-900 font-medium">Enable Expiration</span>
-          </label>
-        </div>
-
-        {/* Expiration Date & Time Fields */}
-        {expirationEnabled && (
-          <div className="space-y-4 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Date Picker */}
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">Expiration Date</label>
-                <input
-                  type="date"
-                  value={expirationDate}
-                  onChange={(e) => setExpirationDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Time Picker */}
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">Expiration Time</label>
-                <input
-                  type="time"
-                  value={expirationTime}
-                  onChange={(e) => setExpirationTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Preview of expiration */}
-            {expirationDate && (
-              <div className="mt-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
-                <p className="text-sm text-teal-700">
-                  <span className="font-semibold">QR Code will expire on:</span>
-                  <br />
-                  {new Date(`${expirationDate}T${expirationTime}`).toLocaleString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-          </div>
-
-          {/* Save Button */}
-          <div className="bg-white border border-gray-200 rounded-xl shadow-md p-6">
-            <div className="flex gap-4">
-              <button
-                onClick={() => onStepChange(2)}
-                className="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg font-medium text-gray-900 transition-all"
-              >
-                Back to Design
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || !qrName?.trim()}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-5 h-5" />
-                {saving ? 'Saving...' : 'Save QR Code'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
 
 
   return renderStepContent();

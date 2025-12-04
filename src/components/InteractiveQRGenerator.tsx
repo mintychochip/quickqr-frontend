@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Globe,
-  MessageSquare,
   Mail,
   MessageCircle,
-  Wifi,
   Download,
 } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
@@ -13,10 +11,8 @@ import { proxifyImageUrl } from '../utils/imageProxy';
 
 type DataType =
   | 'url'
-  | 'text'
   | 'email'
-  | 'sms'
-  | 'wifi';
+  | 'sms';
 
 type CustomizationTab = 'shape' | 'colors' | 'logo';
 type DotType = 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
@@ -32,15 +28,11 @@ export default function InteractiveQRGenerator() {
 
   // Step 2: Content
   const [url, setUrl] = useState('https://quickqr.example.com');
-  const [text, setText] = useState('Hello, World!');
   const [email, setEmail] = useState('contact@example.com');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [smsNumber, setSmsNumber] = useState('+1234567890');
   const [smsMessage, setSmsMessage] = useState('');
-  const [wifiSsid, setWifiSsid] = useState('MyNetwork');
-  const [wifiPassword, setWifiPassword] = useState('password123');
-  const [wifiEncryption, setWifiEncryption] = useState('WPA');
 
   // Step 3: Design
   const [customizationTab, setCustomizationTab] = useState<CustomizationTab>('shape');
@@ -48,19 +40,19 @@ export default function InteractiveQRGenerator() {
   const [margin, setMargin] = useState(10);
 
   // Shape/Dots
-  const [dotsType, setDotsType] = useState<DotType>('rounded');
-  const [dotsColor, setDotsColor] = useState('#212529');
+  const [dotsType, setDotsType] = useState<DotType>('square');
+  const [dotsColor, setDotsColor] = useState('#000000');
 
   // Background
   const [bgColor, setBgColor] = useState('#FFFFFF');
 
   // Corner Squares
-  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('extra-rounded');
-  const [cornerSquareColor, setCornerSquareColor] = useState('#20c997');
+  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('square');
+  const [cornerSquareColor, setCornerSquareColor] = useState('#000000');
 
   // Corner Dots
-  const [cornerDotType, setCornerDotType] = useState<CornerDotType>('dot');
-  const [cornerDotColor, setCornerDotColor] = useState('#20c997');
+  const [cornerDotType, setCornerDotType] = useState<CornerDotType>('square');
+  const [cornerDotColor, setCornerDotColor] = useState('#000000');
 
   // Logo
   const [logoUrl, setLogoUrl] = useState('');
@@ -69,24 +61,18 @@ export default function InteractiveQRGenerator() {
 
   const dataTypes = [
     { id: 'url', label: 'Link', icon: Globe },
-    { id: 'text', label: 'Text', icon: MessageSquare },
     { id: 'email', label: 'E-mail', icon: Mail },
     { id: 'sms', label: 'SMS', icon: MessageCircle },
-    { id: 'wifi', label: 'Wi-Fi', icon: Wifi },
   ];
 
   const generateQRValue = (type: DataType): string => {
     switch (type) {
       case 'url':
         return url;
-      case 'text':
-        return text;
       case 'email':
         return `mailto:${email}${emailSubject ? `?subject=${encodeURIComponent(emailSubject)}` : ''}${emailBody ? `${emailSubject ? '&' : '?'}body=${encodeURIComponent(emailBody)}` : ''}`;
       case 'sms':
         return `sms:${smsNumber}${smsMessage ? `?body=${encodeURIComponent(smsMessage)}` : ''}`;
-      case 'wifi':
-        return `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;`;
       default:
         return '';
     }
@@ -226,16 +212,6 @@ export default function InteractiveQRGenerator() {
             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         );
-      case 'text':
-        return (
-          <textarea
-            value={text}
-            onChange={(e) => handleInputChange(setText, e.target.value)}
-            placeholder="Enter your text"
-            rows={3}
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
-          />
-        );
       case 'email':
         return (
           <div className="space-y-3">
@@ -279,34 +255,6 @@ export default function InteractiveQRGenerator() {
               rows={2}
               className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             />
-          </div>
-        );
-      case 'wifi':
-        return (
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={wifiSsid}
-              onChange={(e) => handleInputChange(setWifiSsid, e.target.value)}
-              placeholder="Network Name (SSID)"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              value={wifiPassword}
-              onChange={(e) => handleInputChange(setWifiPassword, e.target.value)}
-              placeholder="Password"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-            <select
-              value={wifiEncryption}
-              onChange={(e) => handleInputChange(setWifiEncryption, e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent [&>option]:bg-white [&>option]:text-gray-900"
-            >
-              <option value="WPA">WPA/WPA2</option>
-              <option value="WEP">WEP</option>
-              <option value="nopass">None</option>
-            </select>
           </div>
         );
       default:

@@ -18,8 +18,9 @@ function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
   const isRedirectPage = location.pathname.startsWith('/code/');
+  const isCreatePage = location.pathname === '/create';
 
-  if (isAuthPage || isRedirectPage) return null;
+  if (isAuthPage || isRedirectPage || isCreatePage) return null;
 
   const handleLogout = async () => {
     await logout();
