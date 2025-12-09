@@ -8,6 +8,7 @@ export interface QRCodeData {
   type: string;
   content: QRContentObject;
   styling?: QRCodeStylingProps;
+  expirytime?: string | null;
 }
 
 export type CreateQRCodeResponse = QRCreateResponse;
@@ -16,7 +17,8 @@ export async function createQRCode(
   name: string,
   contentObject: QRContentObject | string,
   type: string,
-  styling?: QRCodeStylingProps
+  styling?: QRCodeStylingProps,
+  expirytime?: string | null
 ): Promise<CreateQRCodeResponse> {
   try {
     // First check if user is authenticated
@@ -34,8 +36,17 @@ export async function createQRCode(
       name: name,
       content: typeof contentObject === 'string' ? contentObject : JSON.stringify(contentObject),
       type: type,
-      styling: styling ? JSON.stringify(styling) : null
+      styling: styling ? JSON.stringify(styling) : null,
+      expirytime: expirytime || null
     };
+
+    // Debug logging to verify what we're sending
+    console.log('Creating QR Code with data:', {
+      name: requestBody.name,
+      type: requestBody.type,
+      expirytime: requestBody.expirytime,
+      hasStyling: !!requestBody.styling
+    });
 
     const response = await fetch(getApiUrl('create'), {
       method: 'POST',
@@ -47,7 +58,8 @@ export async function createQRCode(
         name: requestBody.name,
         content: requestBody.content,
         type: requestBody.type,
-        styling: requestBody.styling
+        styling: requestBody.styling,
+        expirytime: requestBody.expirytime
       }),
       credentials: 'include', // Include cookies/session for authentication
     });
@@ -57,6 +69,9 @@ export async function createQRCode(
     }
 
     const data = await response.json();
+
+    // Debug logging to see what backend returned
+    console.log('Backend response:', data);
 
     // Handle response format differences
     if (data.success && data.data) {

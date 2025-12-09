@@ -6,7 +6,7 @@ import ShapeIndicator from './QRCodeRow/ShapeIndicator';
 import LogoThumbnail from './QRCodeRow/LogoThumbnail';
 import StylingSection from './QRCodeRow/StylingSection';
 import { getApiUrl, APP_URL } from '../config/api';
-import { UpdateQRCodeData } from '../types/qrcode.types';
+import { UpdateQRCodeData, QRCodeData } from '../types/qrcode.types';
 import { QR_SIZES, TIMING } from '../constants/qr.constants';
 import { proxifyImageUrl } from '../utils/imageProxy';
 
@@ -73,21 +73,12 @@ function ColorPicker({ value, onChange, label }: ColorPickerProps) {
 }
 
 interface QRCodeRowProps {
-  qr: {
-    id: number;
-    qrcodeid?: string;
-    name: string;
-    url: string;
-    scans: number;
-    created: string;
-    status: string;
-    content: string;
-    type: string;
-    styling: string | null;
-  };
+  qr: QRCodeData;
   formatDate: (dateString: string) => string;
+  formatExpiryDate?: (dateString: string | null) => string;
   onDelete?: (qrId: string | number) => void;
-  onUpdate?: (qrId: string, updatedData: Partial<QRCodeRowProps['qr']>) => void;
+  onUpdate?: (qrId: string, updatedData: Partial<QRCodeData>) => void;
+  isMobile: boolean;
 }
 
 // EditableField component for inline editing
@@ -239,7 +230,7 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCodeRowProps) {
+export default function QRCodeRow({ qr, formatDate, formatExpiryDate, onDelete, onUpdate, isMobile }: QRCodeRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -1295,10 +1286,12 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
   }, [qrRegenerationKey, isExpanded]); // Only depend on regeneration key and expansion
 
   
-  return (
-    <>
-      {/* Mobile Card Layout */}
-      <div className="lg:hidden bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+  // If mobile, render the mobile card layout
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile Card Layout */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-4" onClick={handleRowClick}>
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3 flex-1">
@@ -1327,12 +1320,23 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4">
-              <div>
-                <span className="text-gray-500">Scans: </span>
-                <span className="text-gray-900 font-semibold">{qr.scans.toLocaleString()}</span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-4">
+                <div>
+                  <span className="text-gray-500">Scans: </span>
+                  <span className="text-gray-900 font-semibold">{qr.scans.toLocaleString()}</span>
+                </div>
+                <div className="text-gray-500">{formatDate(qr.created)}</div>
               </div>
-              <div className="text-gray-500">{formatDate(qr.created)}</div>
+              <div className={`text-xs font-medium ${
+                qr.expirytime && new Date(qr.expirytime) < new Date()
+                  ? 'text-red-600'
+                  : qr.expirytime && new Date(qr.expirytime).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000
+                  ? 'text-yellow-600'
+                  : 'text-gray-500'
+              }`}>
+                Expires: {formatExpiryDate ? formatExpiryDate(qr.expirytime || null) : qr.expirytime ? new Date(qr.expirytime).toLocaleDateString() : 'Never'}
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -1379,8 +1383,14 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </>
+    );
+  }
 
+  // Desktop view - return table row elements
+  return (
+    <>
       {/* Desktop Table Row */}
       <tr
         className="hidden lg:table-row border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -1404,6 +1414,17 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
         </td>
         <td className="py-4 px-4">
           <span className="text-gray-600 text-sm">{formatDate(qr.created)}</span>
+        </td>
+        <td className="py-4 px-4">
+          <span className={`text-sm font-medium ${
+            qr.expirytime && new Date(qr.expirytime) < new Date()
+              ? 'text-red-600'
+              : qr.expirytime && new Date(qr.expirytime).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000
+              ? 'text-yellow-600'
+              : 'text-gray-600'
+          }`}>
+            {formatExpiryDate ? formatExpiryDate(qr.expirytime || null) : qr.expirytime ? new Date(qr.expirytime).toLocaleDateString() : 'Never'}
+          </span>
         </td>
         <td className="py-4 px-4">
           <div className="flex items-center justify-end gap-2">
@@ -1450,7 +1471,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
       </tr>
       {isExpanded && (
         <tr className="hidden lg:table-row border-b border-gray-200 bg-gray-50">
-          <td colSpan={4} className="py-4 lg:py-6 px-3 lg:px-4 w-full">
+          <td colSpan={5} className="py-4 lg:py-6 px-3 lg:px-4 w-full">
             <div className="w-full max-w-full overflow-x-hidden">
             {/* Desktop Layout - Cleaner organization */}
             <div className="hidden lg:flex gap-6 items-start w-full">
@@ -1519,7 +1540,7 @@ export default function QRCodeRow({ qr, formatDate, onDelete, onUpdate }: QRCode
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <tr>
-          <td colSpan={5} className="p-0">
+          <td colSpan={6} className="p-0">
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
               <div className="relative max-w-md w-full mx-4">
                 {/* Modal content */}

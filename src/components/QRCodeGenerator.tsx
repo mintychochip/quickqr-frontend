@@ -31,6 +31,7 @@ interface SaveData {
   type: string;
   styling: QRCodeStylingProps;
   mode: 'static' | 'dynamic';
+  expirytime?: string | null;
 }
 
 interface QRCodeGeneratorProps {
@@ -261,6 +262,14 @@ export default function QRCodeGenerator({
   };
 
   const handleSave = () => {
+    // Calculate expiry time if enabled
+    let expirytime: string | null = null;
+    if (expirationEnabled && expirationDate) {
+      // Combine date and time to create ISO string
+      const expiryDateTime = new Date(`${expirationDate}T${expirationTime || '23:59'}:00`);
+      expirytime = expiryDateTime.toISOString().slice(0, 19).replace('T', ' '); // Format for MySQL
+    }
+
     const qrData: SaveData = {
       name: '', // Will be filled by parent component
       type: dataType,
@@ -275,7 +284,8 @@ export default function QRCodeGenerator({
         cornerDotColor,
         logoUrl
       },
-      mode: qrMode
+      mode: qrMode,
+      expirytime: expirytime
     };
 
     if (onSave) {
