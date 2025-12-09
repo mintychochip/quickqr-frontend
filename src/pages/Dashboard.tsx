@@ -7,6 +7,7 @@ import UserStatsPanel from '../components/UserStatsPanel';
 import DetailedStatsPanel from '../components/DetailedStatsPanel';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchUserQRCodes, getQRCodeDisplayUrl, getQRCodeName, deleteQRCode, type QRCode as QRCodeType } from '../services/qrCodeService';
+import { QRCodeData } from '../types/qrcode.types';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -81,7 +82,7 @@ export default function Dashboard() {
 
   // Transform API data to component format
   const allQRCodes = useMemo(() => {
-    const transformed = qrCodes.map((qr, index) => {
+    const transformed = qrCodes.map((qr, index): QRCodeData => {
       const name = getQRCodeName(qr);
       const url = getQRCodeDisplayUrl(qr);
       return {
@@ -96,6 +97,8 @@ export default function Dashboard() {
         content: qr.content,
         type: qr.type,
         styling: qr.styling,
+        expirytime: qr.expirytime,
+        mode: 'dynamic', // Default to dynamic mode
       };
     });
     return transformed;
@@ -145,6 +148,23 @@ export default function Dashboard() {
     if (diffDays < 14) return '1 week ago';
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     return date.toLocaleDateString();
+  };
+
+  const formatExpiryDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+
+    const expiryDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = expiryDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return 'Expired';
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays < 7) return `${diffDays} days`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
+    return `${Math.floor(diffDays / 365)} years`;
   };
 
   return (
@@ -389,6 +409,9 @@ export default function Dashboard() {
                                     <ArrowUpDown className="w-4 h-4" />
                                   </button>
                                 </th>
+                                <th className="text-left py-3 px-4">
+                                  <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Expires</span>
+                                </th>
                                 <th className="text-right py-3 px-4">
                                   <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Actions</span>
                                 </th>
@@ -400,8 +423,10 @@ export default function Dashboard() {
                                   key={qr.id}
                                   qr={qr}
                                   formatDate={formatDate}
+                                  formatExpiryDate={formatExpiryDate}
                                   onDelete={handleDeleteQRCode}
                                   onUpdate={handleUpdateQRCode}
+                                  isMobile={false}
                                 />
                               ))}
                             </tbody>
@@ -415,8 +440,10 @@ export default function Dashboard() {
                               key={qr.id}
                               qr={qr}
                               formatDate={formatDate}
+                              formatExpiryDate={formatExpiryDate}
                               onDelete={handleDeleteQRCode}
                               onUpdate={handleUpdateQRCode}
+                              isMobile={true}
                             />
                           ))}
                         </div>

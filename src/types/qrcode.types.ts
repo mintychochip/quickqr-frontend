@@ -67,6 +67,7 @@ export interface QRCodeData {
   type: QRContentType;
   styling: string | null;
   mode: 'static' | 'dynamic';
+  expirytime?: string | null;
 }
 
 export interface QRContentObject {
@@ -102,4 +103,5 @@ export interface UpdateQRCodeData {
   content?: string;
   type?: string;
   styling?: string;
+  expirytime?: string | null;
 }

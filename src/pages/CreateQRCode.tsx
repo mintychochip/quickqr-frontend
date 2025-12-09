@@ -13,7 +13,7 @@ export default function CreateQRCode() {
   const [qrName, setQrName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const handleSave = async (qrData: { content: QRContentObject | string; type: string; styling: QRCodeStylingProps; mode: 'static' | 'dynamic' }) => {
+  const handleSave = async (qrData: { content: QRContentObject | string; type: string; styling: QRCodeStylingProps; mode: 'static' | 'dynamic'; expirytime?: string | null }) => {
     if (!qrName.trim()) {
       alert('Please enter a name for your QR code');
       return;
@@ -21,12 +21,13 @@ export default function CreateQRCode() {
 
     setSaving(true);
     try {
-      // Call the API with the content object directly
+      // Call the API with the content object directly and pass expiry time
       const result = await createQRCode(
         qrName,
         qrData.content,
         qrData.type,
-        qrData.styling
+        qrData.styling,
+        qrData.expirytime || null // Pass the expiry time from the form, or null if not set
       );
 
       if (result.success) {
