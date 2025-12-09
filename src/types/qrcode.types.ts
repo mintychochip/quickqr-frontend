@@ -64,7 +64,7 @@ export interface QRCodeData {
   created: string;
   status: QRStatus;
   content: string;
-  type: QRContentType;
+  type: string; // Changed from QRContentType to string to support any type
   styling: string | null;
   mode: 'static' | 'dynamic';
   expirytime?: string | null;
