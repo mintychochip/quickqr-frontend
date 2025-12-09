@@ -3,7 +3,7 @@
 export type QRDotType = 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
 export type QRCornerSquareType = 'dot' | 'square' | 'extra-rounded';
 export type QRCornerDotType = 'dot' | 'square';
-export type QRContentType = 'url' | 'text' | 'email' | 'phone' | 'vcard' | 'wifi' | 'sms' | 'mecard' | 'me-card' | 'location' | 'event' | 'facebook' | 'twitter' | 'youtube';
+export type QRContentType = 'url' | 'text' | 'email';
 export type QRStatus = 'active' | 'inactive';
 
 export interface DotsOptions {
