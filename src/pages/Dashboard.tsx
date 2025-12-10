@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { QrCode, Download, Settings, Plus, BarChart3, Search, ArrowUpDown, CreditCard, RefreshCw } from 'lucide-react';
+import { QrCode, Download, Settings, Plus, BarChart3, Search, ArrowUpDown, CreditCard, RefreshCw, Clock } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import QRCodeRow from '../components/QRCodeRow';
 import StatsCharts from '../components/StatsCharts';
@@ -85,6 +85,8 @@ export default function Dashboard() {
     const transformed = qrCodes.map((qr, index): QRCodeData => {
       const name = getQRCodeName(qr);
       const url = getQRCodeDisplayUrl(qr);
+      const expiryTime = qr.expirytime;
+
       return {
         id: index + 1,
         qrcodeid: qr.qrcodeid,
@@ -97,8 +99,10 @@ export default function Dashboard() {
         content: qr.content,
         type: qr.type,
         styling: qr.styling,
-        expirytime: qr.expirytime,
+        expirytime: expiryTime,
         mode: 'dynamic', // Default to dynamic mode
+        // Store the expired status from payload
+        expired: qr.expired || 0,
       };
     });
     return transformed;
@@ -106,9 +110,15 @@ export default function Dashboard() {
 
   // Filter and sort QR codes
   const filteredAndSortedQRCodes = useMemo(() => {
-    let filtered = allQRCodes.filter(qr =>
-      qr.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let filtered = allQRCodes.filter(qr => {
+      const matchesSearch = qr.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+      if (activeView === 'expired') {
+        return matchesSearch && qr.expired === 1;
+      } else {
+        return matchesSearch && qr.expired !== 1;
+      }
+    });
 
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -125,7 +135,7 @@ export default function Dashboard() {
     });
 
     return filtered;
-  }, [allQRCodes, searchQuery, sortBy, sortOrder]);
+  }, [allQRCodes, searchQuery, sortBy, sortOrder, activeView]);
 
   const handleSort = (column: 'name' | 'scans' | 'created') => {
     if (sortBy === column) {
@@ -156,15 +166,41 @@ export default function Dashboard() {
     const expiryDate = new Date(dateString);
     const today = new Date();
     const diffTime = expiryDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const isExpired = diffTime < 0;
+    const absDiffTime = Math.abs(diffTime);
 
-    if (diffDays < 0) return 'Expired';
+    const diffDays = Math.ceil(absDiffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.ceil(absDiffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.ceil(absDiffTime / (1000 * 60));
+
+    if (isExpired) {
+      if (diffMinutes < 60) {
+        return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+      }
+      if (diffHours < 24) {
+        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      }
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
+      return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`;
+    }
+
+    // Not expired - future dates
+    if (diffMinutes < 60) {
+      return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+    }
+    if (diffHours < 24) {
+      return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+    }
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     if (diffDays < 7) return `${diffDays} days`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
-    return `${Math.floor(diffDays / 365)} years`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''}`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''}`;
+    return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''}`;
   };
 
   return (
@@ -187,6 +223,17 @@ export default function Dashboard() {
                 >
                   <QrCode className="w-5 h-5" />
                   <span className="font-medium">Active</span>
+                </button>
+                <button
+                  onClick={() => setActiveView('expired')}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                    activeView === 'expired'
+                      ? 'bg-teal-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <Clock className="w-5 h-5" />
+                  <span className="font-medium">Expired</span>
                 </button>
                 <button
                   onClick={() => setActiveView('stats')}
@@ -250,6 +297,17 @@ export default function Dashboard() {
                 <span className="text-sm font-medium">Active</span>
               </button>
               <button
+                onClick={() => setActiveView('expired')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                  activeView === 'expired'
+                    ? 'bg-teal-500 text-white shadow-sm'
+                    : 'bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-medium">Expired</span>
+              </button>
+              <button
                 onClick={() => setActiveView('stats')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
                   activeView === 'stats'
@@ -289,12 +347,14 @@ export default function Dashboard() {
           <div className="mb-8 hidden lg:block">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               {activeView === 'active' && 'Active QR Codes'}
+              {activeView === 'expired' && 'Expired QR Codes'}
               {activeView === 'stats' && 'Statistics'}
               {activeView === 'settings' && 'Settings'}
               {activeView === 'billing' && 'Billing'}
             </h1>
             <p className="text-gray-600">
               {activeView === 'active' && 'Manage your QR codes and track analytics'}
+              {activeView === 'expired' && 'View and manage your expired QR codes'}
               {activeView === 'stats' && 'View detailed analytics and performance'}
               {activeView === 'settings' && 'Manage your account and preferences'}
               {activeView === 'billing' && 'Manage your subscription and payment methods'}
@@ -454,6 +514,156 @@ export default function Dashboard() {
                   {/* Results count */}
                   <div className="mt-4 text-sm text-gray-600">
                     Showing {filteredAndSortedQRCodes.length} of {allQRCodes.length} QR codes
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeView === 'expired' && (
+            <>
+              {/* Expired QR Codes Table */}
+              <div className="relative">
+                <div className="relative bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                  {/* Header with Search and Refresh Button */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 hidden lg:block">Expired QR Codes</h2>
+                    <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+                      <button
+                        onClick={loadQRCodes}
+                        disabled={loading}
+                        className="flex items-center justify-center p-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        title="Refresh QR codes"
+                      >
+                        <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className="mb-6">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type="text"
+                        placeholder="Search expired QR codes by name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Table/Cards Container */}
+                  <div>
+                    {loading ? (
+                      <div className="text-center py-12">
+                        <div className="inline-block w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-gray-600">Loading expired QR codes...</p>
+                      </div>
+                    ) : error ? (
+                      <div className="text-center py-12">
+                        <p className="text-red-600 mb-4">{error}</p>
+                        <button
+                          onClick={loadQRCodes}
+                          disabled={loading}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                          Retry
+                        </button>
+                      </div>
+                    ) : filteredAndSortedQRCodes.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Clock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        {searchQuery ? (
+                          <p className="text-gray-600">No expired QR codes found matching "{searchQuery}"</p>
+                        ) : (
+                          <>
+                            <p className="text-gray-600 mb-4">No expired QR codes found</p>
+                            <p className="text-gray-500 text-sm">Your QR codes with expiry dates will appear here once they expire.</p>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-4">
+                                  <button
+                                    onClick={() => handleSort('name')}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
+                                  >
+                                    Name
+                                    <ArrowUpDown className="w-4 h-4" />
+                                  </button>
+                                </th>
+                                <th className="text-left py-3 px-4">
+                                  <button
+                                    onClick={() => handleSort('scans')}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
+                                  >
+                                    Scans
+                                    <ArrowUpDown className="w-4 h-4" />
+                                  </button>
+                                </th>
+                                <th className="text-left py-3 px-4">
+                                  <button
+                                    onClick={() => handleSort('created')}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-semibold text-sm uppercase tracking-wider"
+                                  >
+                                    Created
+                                    <ArrowUpDown className="w-4 h-4" />
+                                  </button>
+                                </th>
+                                <th className="text-left py-3 px-4">
+                                  <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Expired</span>
+                                </th>
+                                <th className="text-right py-3 px-4">
+                                  <span className="text-gray-600 font-semibold text-sm uppercase tracking-wider">Actions</span>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredAndSortedQRCodes.map((qr) => (
+                                <QRCodeRow
+                                  key={qr.id}
+                                  qr={qr}
+                                  formatDate={formatDate}
+                                  formatExpiryDate={formatExpiryDate}
+                                  onDelete={handleDeleteQRCode}
+                                  onUpdate={handleUpdateQRCode}
+                                  isMobile={false}
+                                />
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden space-y-4">
+                          {filteredAndSortedQRCodes.map((qr) => (
+                            <QRCodeRow
+                              key={qr.id}
+                              qr={qr}
+                              formatDate={formatDate}
+                              formatExpiryDate={formatExpiryDate}
+                              onDelete={handleDeleteQRCode}
+                              onUpdate={handleUpdateQRCode}
+                              isMobile={true}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Results count */}
+                  <div className="mt-4 text-sm text-gray-600">
+                    Showing {filteredAndSortedQRCodes.length} expired QR codes
                   </div>
                 </div>
               </div>
