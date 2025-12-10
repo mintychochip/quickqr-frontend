@@ -68,6 +68,7 @@ export interface QRCodeData {
   styling: string | null;
   mode: 'static' | 'dynamic';
   expirytime?: string | null;
+  expired?: number;
 }
 
 export interface QRContentObject {

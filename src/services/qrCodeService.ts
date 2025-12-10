@@ -15,6 +15,7 @@ export interface QRCode {
   name: string;
   type: string;
   scan_count: number;
+  expired?: number;
 }
 
 export interface FetchCodesResponse {
