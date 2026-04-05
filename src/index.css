@@ -31,11 +31,12 @@ body {
 }
 
 .animate-slide-in {
-  animation: slide-in-mobile 300ms ease-out;
+  animation: slide-in-mobile 300ms ease-out forwards;
 }
 
 @media (min-width: 640px) {
   .animate-slide-in {
     animation-name: slide-in-desktop;
+    animation: slide-in-desktop 300ms ease-out forwards;
   }
 }
