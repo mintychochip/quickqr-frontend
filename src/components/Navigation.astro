@@ -1,0 +1,189 @@
+---
+import { supabase } from '../lib/supabase';
+
+interface User {
+  id: string;
+  email: string;
+  admin?: boolean;
+}
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = Astro.url.pathname } = Astro.props;
+
+// Check if on hidden routes
+const isHiddenRoute = currentPath.startsWith('/code/') || currentPath === '/create';
+
+// Get session on server side
+const { data: { session } } = await supabase.auth.getSession();
+const user: User | null = session?.user ? {
+  id: session.user.id,
+  email: session.user.email || '',
+  admin: false // We'll need to fetch this client-side for accuracy
+} : null;
+---
+
+{!isHiddenRoute && (
+  <nav class="nav">
+    <div class="nav-inner">
+      {/* Left Section: Logo + Nav Links */}
+      <div class="nav-left">
+        <a href="/" class="nav-logo">
+          <div class="nav-logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <span class="nav-logo-text">QuickQR</span>
+        </a>
+
+        <div class="nav-links">
+          <a href="/pricing" class="nav-link">Pricing</a>
+        </div>
+      </div>
+
+      {/* Right Section: CTA */}
+      {user ? (
+        <div class="nav-right">
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <div class="nav-user-badge">
+            <div class="nav-user-dot"></div>
+            <span class="nav-user-name">{user.email.split('@')[0]}</span>
+          </div>
+          <button id="logout-btn" class="nav-btn nav-btn-secondary nav-btn-logout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="hidden lg:inline">Logout</span>
+          </button>
+        </div>
+      ) : (
+        <div class="nav-right hidden md:flex">
+          <a href="/signin" class="nav-btn nav-btn-ghost">Sign In</a>
+          <a href="/signup" class="nav-btn nav-btn-primary">Get Started</a>
+        </div>
+      )}
+
+      {/* Mobile Menu Button */}
+      <button id="mobile-menu-btn" class="nav-mobile-btn" aria-label="Toggle menu">
+        <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+        <svg id="close-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  {/* Mobile Menu Overlay */}
+  <div id="mobile-menu" class="nav-mobile-overlay hidden">
+    <div id="mobile-backdrop" class="nav-mobile-backdrop"></div>
+    <div class="nav-mobile-panel animate-slide-in">
+      <div class="nav-mobile-content">
+        {/* Mobile Header */}
+        <div class="nav-mobile-header">
+          <div class="nav-mobile-logo">
+            <div class="nav-logo-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <span class="nav-logo-text">QuickQR</span>
+          </div>
+        </div>
+
+        {/* Mobile Nav Links */}
+        <div class="nav-mobile-links">
+          <a href="/pricing" class="nav-mobile-link">Pricing</a>
+          {user && (
+            <a href="/dashboard" class="nav-mobile-link">Dashboard</a>
+          )}
+        </div>
+
+        {/* Mobile User Info / CTA */}
+        <div class="nav-mobile-actions">
+          {user ? (
+            <>
+              <div class="nav-mobile-user">
+                <div class="nav-mobile-user-info">
+                  <div class="nav-mobile-user-dot"></div>
+                  <div>
+                    <div class="nav-mobile-user-name">{user.email.split('@')[0]}</div>
+                    <div class="nav-mobile-user-email">{user.email}</div>
+                  </div>
+                </div>
+              </div>
+              <button id="mobile-logout-btn" class="nav-mobile-action-btn nav-btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <a href="/signin" class="nav-mobile-action-btn nav-mobile-action-btn-ghost">Sign In</a>
+              <a href="/signup" class="nav-mobile-action-btn nav-mobile-action-btn-primary">Get Started</a>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileBackdrop = document.getElementById('mobile-backdrop');
+  const menuIcon = document.getElementById('menu-icon');
+  const closeIcon = document.getElementById('close-icon');
+  const logoutBtn = document.getElementById('logout-btn');
+  const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+
+  function toggleMobileMenu() {
+    const isOpen = !mobileMenu?.classList.contains('hidden');
+
+    if (isOpen) {
+      mobileMenu?.classList.add('hidden');
+      menuIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+      document.body.style.overflow = '';
+    } else {
+      mobileMenu?.classList.remove('hidden');
+      menuIcon?.classList.add('hidden');
+      closeIcon?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeMobileMenu() {
+    mobileMenu?.classList.add('hidden');
+    menuIcon?.classList.remove('hidden');
+    closeIcon?.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
+  mobileBackdrop?.addEventListener('click', closeMobileMenu);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  }
+
+  logoutBtn?.addEventListener('click', handleLogout);
+  mobileLogoutBtn?.addEventListener('click', handleLogout);
+</script>
