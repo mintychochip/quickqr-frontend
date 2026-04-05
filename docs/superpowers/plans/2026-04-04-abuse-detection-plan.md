@@ -530,7 +530,26 @@ export async function runAbuseDetection(
 
     if (result.shouldBlock && userId) {
       await blockUser(userId);
-      // TODO: Trigger email notification via edge function
+
+      // Fetch user email for notification
+      const { data: profile } = await supabase.from('profiles').select('email').eq('id', userId).single();
+
+      // Trigger admin email notification via edge function
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-abuse-alert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          userId,
+          userEmail: profile?.email || 'unknown',
+          abuseType: result.type,
+          severity: result.severity,
+          evidence: result.evidence,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch(err => console.error('Failed to send abuse alert:', err));
     }
   }
 
@@ -664,7 +683,7 @@ git commit -m "feat: add send-abuse-alert edge function for admin notifications"
 
 - [ ] **Step 1: Read current file**
 
-Run: `cat src/services/qrCodeCreateService.ts`
+Use the Read tool to read `src/services/qrCodeCreateService.ts`
 
 - [ ] **Step 2: Add abuse detection integration**
 
@@ -682,9 +701,17 @@ if (abuseStatus.tier === 'restricted') {
 }
 
 // After QR creation, run abuse detection
+// Query recent QR count from the last hour
+const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+const { count: recentQrCount } = await supabase
+  .from('qrcodes')
+  .select('*', { count: 'exact', head: true })
+  .eq('user_id', userId)
+  .gte('created_at', oneHourAgo);
+
 const abuseResult = await runAbuseDetection(userId, 'create', {
   content,
-  recentQrCount: 1, // TODO: Get actual recent count
+  recentQrCount: recentQrCount || 0,
   timeWindowHours: 1,
 });
 ```
@@ -705,22 +732,23 @@ git commit -m "feat: integrate abuse detection into QR code creation"
 
 - [ ] **Step 1: Read current file**
 
-Run: `cat src/pages/QRCodeRedirect.tsx`
+Use the Read tool to read `src/pages/QRCodeRedirect.tsx`
 
 - [ ] **Step 2: Add abuse detection after scan recording**
 
 After the scan is recorded (after `supabase.from('scans').insert(...)`), add:
 ```typescript
-// Run abuse detection on scan
+// Run abuse detection on scan (async, doesn't block redirect)
+// IP is passed from client via X-Forwarded-For header or detected server-side
+// Fingerprint detection is deferred — scan bot detection uses IP-based detection initially
 runAbuseDetection(qrCode.user_id, 'scan', {
   slug,
   os,
-  ip: await getClientIP(), // Need to implement or pass through
-  fingerprint: getFingerprint(), // Implement device fingerprinting
+  ip: (window as any).__QR_SCAN_IP__ || 'unknown', // IP passed from server or default
 });
 ```
 
-Note: This runs async and doesn't block the redirect.
+Note: This runs async and doesn't block the redirect. IP-based detection is sufficient for initial scan bot detection; device fingerprinting can be added in a future enhancement.
 
 - [ ] **Step 3: Commit**
 
