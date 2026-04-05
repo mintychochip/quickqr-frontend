@@ -26,6 +26,7 @@ const user: User | null = session?.user ? {
 ---
 
 {!isHiddenRoute && (
+  <>
   <nav class="nav">
     <div class="nav-inner">
       {/* Left Section: Logo + Nav Links */}
@@ -140,6 +141,7 @@ const user: User | null = session?.user ? {
       </div>
     </div>
   </div>
+  </>
 )}
 
 <script>
