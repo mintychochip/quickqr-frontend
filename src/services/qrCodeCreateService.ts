@@ -1,6 +1,7 @@
 // QR Code Creation Service
 import { supabase } from '../config/supabase';
 import { getCurrentUser } from './authService';
+import { runAbuseDetection, getUserAbuseStatus } from './abuseDetectionService';
 import type { QRCodeStylingProps, CreateQRCodeResponse as QRCreateResponse } from '../types/qrcode.types';
 
 export interface QRCodeData {
@@ -29,6 +30,17 @@ export async function createQRCode(
       };
     }
 
+    const userId = authCheck.user.id;
+
+    // Check user abuse status before creating
+    const abuseStatus = await getUserAbuseStatus(userId);
+    if (abuseStatus.isBlocked) {
+      return { success: false, error: 'Account temporarily suspended. Contact support.' };
+    }
+    if (abuseStatus.tier === 'restricted') {
+      return { success: false, error: 'Account has restrictions. Please reduce QR creation rate.' };
+    }
+
     const content = typeof contentObject === 'string' ? contentObject : JSON.stringify(contentObject);
 
     const { data, error } = await supabase
@@ -48,6 +60,21 @@ export async function createQRCode(
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // After QR creation, run abuse detection
+    // Query recent QR count from the last hour
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count: recentQrCount } = await supabase
+      .from('qrcodes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', oneHourAgo);
+
+    const abuseResult = await runAbuseDetection(userId, 'create', {
+      content,
+      recentQrCount: recentQrCount || 0,
+      timeWindowHours: 1,
+    });
 
     return {
       success: true,
