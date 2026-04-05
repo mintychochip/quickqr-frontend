@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../config/supabase';
+import { runAbuseDetection } from '../services/abuseDetectionService';
 
 const detectOperatingSystem = (): string => {
   const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
@@ -68,6 +69,14 @@ export default function QRCodeRedirect() {
             if (scanError) {
               console.error('Failed to record scan:', scanError);
             }
+            // Run abuse detection on scan (async, doesn't block redirect)
+            // IP is passed from client via X-Forwarded-For header or detected server-side
+            // Fingerprint detection is deferred — scan bot detection uses IP-based detection initially
+            runAbuseDetection(slug, 'scan', {
+              slug,
+              os,
+              ip: (window as any).__QR_SCAN_IP__ || 'unknown',
+            });
           });
 
         // Increment scan count
