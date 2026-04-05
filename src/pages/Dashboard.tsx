@@ -93,15 +93,14 @@ export default function Dashboard() {
         name: name,
         url: url,
         scans: qr.scan_count || 0,
-        created: qr.createdat,
+        created: qr.createdat || '',
         status: 'active',
         // Pass the raw content and type for detailed display
-        content: qr.content,
+        content: JSON.stringify(qr.content),
         type: qr.type,
-        styling: qr.styling,
+        styling: qr.styling ? JSON.stringify(qr.styling) : null,
         expirytime: expiryTime,
-        mode: 'dynamic', // Default to dynamic mode
-        // Store the expired status from payload
+        mode: 'dynamic' as const,
         expired: qr.expired || 0,
       };
     });

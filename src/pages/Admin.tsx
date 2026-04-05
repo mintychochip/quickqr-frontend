@@ -11,37 +11,37 @@ function getDisplayContent(qr: AdminQRCode): string {
       return 'No content';
     }
 
-    // Try to parse as JSON
-    const contentDecoded = JSON.parse(qr.content);
+    // Content is already an object from Supabase JSONB
+    const content = qr.content as Record<string, unknown>;
 
     // Return appropriate display based on type
     switch (qr.type) {
       case 'url':
-        return contentDecoded.url || 'URL';
+        return (content.url as string) || 'URL';
       case 'text':
-        const text = contentDecoded.text || '';
+        const text = (content.text as string) || '';
         return text.length > 50 ? text.substring(0, 50) + '...' : text;
       case 'email':
-        return contentDecoded.email || 'Email';
+        return (content.email as string) || 'Email';
       case 'phone':
-        return contentDecoded.phone || 'Phone';
+        return (content.phone as string) || 'Phone';
       case 'sms':
-        return contentDecoded.number || 'SMS';
+        return (content.number as string) || 'SMS';
       case 'location':
-        return `${contentDecoded.latitude || ''},${contentDecoded.longitude || ''}`;
+        return `${content.latitude || ''},${content.longitude || ''}`;
       case 'vcard':
       case 'mecard':
-        return contentDecoded.name || 'Contact Card';
+        return (content.name as string) || 'Contact Card';
       case 'wifi':
-        return contentDecoded.ssid || 'WiFi';
+        return (content.ssid as string) || 'WiFi';
       case 'event':
-        return contentDecoded.title || 'Event';
+        return (content.title as string) || 'Event';
       default:
         return qr.type;
     }
   } catch (e) {
-    // If not JSON, return raw content (truncated)
-    return qr.content.substring(0, 50) + (qr.content.length > 50 ? '...' : '');
+    // Fallback to stringified content
+    return JSON.stringify(qr.content).substring(0, 50);
   }
 }
 
@@ -102,21 +102,17 @@ export default function Admin() {
     const query = searchQuery.toLowerCase();
     return qrCodes.filter(qr =>
       qr.name.toLowerCase().includes(query) ||
-      qr.content.toLowerCase().includes(query) ||
-      qr.user_email.toLowerCase().includes(query) ||
-      qr.qrcodeid.toLowerCase().includes(query)
+      JSON.stringify(qr.content).toLowerCase().includes(query) ||
+      (qr.user_email?.toLowerCase() || '').includes(query) ||
+      (qr.qrcodeid?.toLowerCase() || '').includes(query)
     );
   }, [qrCodes, searchQuery]);
 
   // Handle edit start
   const handleStartEdit = (qr: AdminQRCode) => {
-    setEditingId(qr.qrcodeid);
-    try {
-      const parsed = JSON.parse(qr.content);
-      setEditContent(parsed);
-    } catch {
-      setEditContent({ text: qr.content });
-    }
+    setEditingId(qr.qrcodeid || qr.id);
+    // Content is already an object from Supabase JSONB
+    setEditContent(qr.content as Record<string, string>);
   };
 
   // Handle edit cancel
@@ -136,7 +132,7 @@ export default function Admin() {
         // Update local state
         setQrCodes(prevCodes =>
           prevCodes.map(qr =>
-            qr.qrcodeid === qrcodeid ? { ...qr, content: jsonContent } : qr
+            (qr.qrcodeid || qr.id) === qrcodeid ? { ...qr, content: editContent } : qr
           )
         );
         setEditingId(null);
@@ -158,10 +154,11 @@ export default function Admin() {
     }
 
     try {
-      const result = await deleteQRCode(qr.qrcodeid);
+      const qrId = qr.qrcodeid || qr.id;
+      const result = await deleteQRCode(qrId);
 
       if (result.success) {
-        setQrCodes(prevCodes => prevCodes.filter(code => code.qrcodeid !== qr.qrcodeid));
+        setQrCodes(prevCodes => prevCodes.filter(code => (code.qrcodeid || code.id) !== qrId));
       } else {
         alert(`Failed to delete: ${result.error || 'Unknown error'}`);
       }
@@ -402,7 +399,7 @@ export default function Admin() {
                               {isEditing ? (
                                 <>
                                   <button
-                                    onClick={() => handleSaveEdit(qr.qrcodeid)}
+                                    onClick={() => handleSaveEdit(qr.qrcodeid || qr.id)}
                                     disabled={saving}
                                     className="p-1.5 sm:p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
                                     title="Save"

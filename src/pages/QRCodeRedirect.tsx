@@ -1,81 +1,25 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { supabase } from '../config/supabase';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr';
-
-interface RedirectResponse {
-  type: string;
-  content: string;
-  contentDecoded: {
-    [key: string]: any;
-  };
-  scanid: string | number;
-  redirect: string;
-}
-
-interface ClientDetails {
-  userAgent: string;
-  platform: string;
-  operating_system: string;
-  language: string;
-  screenResolution: string;
-  timezone: string;
-  referrer: string;
-  timestamp: string;
-}
-
-// Function to detect operating system from user agent
 const detectOperatingSystem = (): string => {
   const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
   const uaLower = ua.toLowerCase();
 
-  // DEBUG: Log the user agent for troubleshooting
-  console.log('🔍 DEBUG - User Agent:', ua);
-  console.log('🔍 DEBUG - Platform:', navigator.platform);
-  console.log('🔍 DEBUG - Vendor:', navigator.vendor);
-
-  // Check for mobile/tablet first (more specific)
-  if (uaLower.includes('iphone') || uaLower.includes('ipad')) {
-    console.log('✅ Detected: iOS (iPhone/iPad)');
-    return 'iOS';
-  }
-  if (uaLower.includes('android')) {
-    console.log('✅ Detected: Android');
-    return 'Android';
-  }
-
-  // Check for desktop
-  if (uaLower.includes('macintosh') || uaLower.includes('mac os')) {
-    console.log('✅ Detected: iOS (Macintosh)');
-    return 'iOS';
-  }
-  if (uaLower.includes('win')) {
-    console.log('✅ Detected: Windows');
-    return 'Windows';
-  }
-  if (uaLower.includes('linux')) {
-    console.log('✅ Detected: Linux');
-    return 'Linux';
-  }
-
-  console.log('❌ Detected: Other (no match)');
+  if (uaLower.includes('iphone') || uaLower.includes('ipad')) return 'iOS';
+  if (uaLower.includes('android')) return 'Android';
+  if (uaLower.includes('macintosh') || uaLower.includes('mac os')) return 'iOS';
+  if (uaLower.includes('win')) return 'Windows';
+  if (uaLower.includes('linux')) return 'Linux';
   return 'Other';
 };
 
-
-// Function to get client details
-const getClientDetails = (): ClientDetails => {
-  return {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    operating_system: detectOperatingSystem(),
-    language: navigator.language,
-    screenResolution: `${window.screen.width}x${window.screen.height}`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    referrer: document.referrer,
-    timestamp: new Date().toISOString(),
-  };
-};
+interface QRCodeData {
+  type: string;
+  content: Record<string, unknown>;
+  expirytime: string | null;
+  scan_count: number;
+}
 
 export default function QRCodeRedirect() {
   const { slug } = useParams<{ slug: string }>();
@@ -83,52 +27,88 @@ export default function QRCodeRedirect() {
   const hasExecuted = useRef(false);
 
   useEffect(() => {
-    // Prevent double execution in React StrictMode
     if (hasExecuted.current) return;
     hasExecuted.current = true;
 
-    const fetchRedirectUrl = async () => {
+    const handleRedirect = async () => {
       if (!slug) {
         setError('Invalid QR code');
         return;
       }
 
       try {
-        const clientDetails = getClientDetails();
+        const os = detectOperatingSystem();
 
-        // Send client details and operating_system in POST body
-        const response = await fetch(`${API_BASE_URL}/redirect.php`, {
-          method: 'POST',
-          credentials: 'include',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            qrcodeid: slug,
-            operating_system: clientDetails.operating_system,
-            clientDetails: clientDetails,
-          }),
-        });
+        // Fetch QR code data
+        const { data: qrCode, error: fetchError } = await supabase
+          .from('qrcodes')
+          .select('type, content, expirytime')
+          .eq('id', slug)
+          .single();
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (fetchError || !qrCode) {
+          setError('QR code not found');
+          return;
         }
 
-        const data: RedirectResponse = await response.json();
-
-        // Use the redirect URL provided by the PHP script
-        if (data.redirect) {
-          window.location.href = data.redirect;
-        } else {
-          setError('Invalid redirect URL received');
+        // Check if expired
+        if (qrCode.expirytime && new Date(qrCode.expirytime) < new Date()) {
+          setError('This QR code has expired');
+          return;
         }
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Failed to load QR code');
+
+        // Record scan (fire and forget, don't block redirect)
+        supabase
+          .from('scans')
+          .insert({
+            qrcode_id: slug,
+            os,
+          })
+          .then(({ error: scanError }) => {
+            if (scanError) {
+              console.error('Failed to record scan:', scanError);
+            }
+          });
+
+        // Increment scan count
+        supabase
+          .rpc('increment_scan_count', { qr_id: slug })
+          .then(({ error: rpcError }) => {
+            if (rpcError) console.error('Failed to increment scan count:', rpcError);
+          });
+
+        // Redirect based on type
+        const content = qrCode.content as Record<string, unknown>;
+
+        switch (qrCode.type) {
+          case 'url':
+            if (content.url) {
+              window.location.href = content.url as string;
+            } else {
+              setError('No URL found in QR code');
+            }
+            break;
+          case 'email':
+            window.location.href = `mailto:${content.email as string}`;
+            break;
+          case 'phone':
+            window.location.href = `tel:${content.phone as string}`;
+            break;
+          case 'sms':
+            window.location.href = `sms:${content.number as string}`;
+            break;
+          case 'location':
+            window.location.href = `https://www.google.com/maps?q=${content.latitude},${content.longitude}`;
+            break;
+          default:
+            setError('Unsupported QR code type');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load QR code');
       }
     };
 
-    fetchRedirectUrl();
+    handleRedirect();
   }, [slug]);
 
   if (error) {
@@ -152,7 +132,6 @@ export default function QRCodeRedirect() {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

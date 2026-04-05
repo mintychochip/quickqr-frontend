@@ -1,12 +1,11 @@
 /**
  * Stats Service
- * Handles fetching user scan statistics
+ * Handles fetching user scan statistics via Supabase
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
+import { supabase } from '../config/supabase';
 
 export interface UserStats {
-  userid: number;
+  userid: string;
   days_analyzed: number;
   total_qrcodes: number;
   total_scans: number;
@@ -31,7 +30,7 @@ export interface QRCodeStat {
   qrcodeid: string;
   name: string;
   type: string;
-  content?: string;
+  content?: Record<string, unknown>;
   scan_count: number;
   percentage: number;
 }
@@ -43,46 +42,54 @@ export interface TimelineStat {
 
 export interface ListStatsResponse {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: string;
 }
 
 /**
  * Fetches user scan statistics for a given time period
- * @param days - Number of days to analyze (default: 30)
  */
 export async function fetchUserStats(days: number = 30): Promise<StatsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/stats.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get total qrcodes
+    const { count: totalQrcodes } = await supabase
+      .from('qrcodes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    // Get total scans
+    const { data: scans } = await supabase
+      .from('scans')
+      .select('*, qrcodes!inner(user_id)')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    const totalScans = scans?.length || 0;
+    const lastScan = scans?.sort((a, b) =>
+      new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime()
+    )[0];
+    const firstScan = scans?.sort((a, b) =>
+      new Date(a.scanned_at).getTime() - new Date(b.scanned_at).getTime()
+    )[0];
+
+    return {
+      success: true,
+      stats: {
+        userid: user.id,
+        days_analyzed: days,
+        total_qrcodes: totalQrcodes || 0,
+        total_scans: totalScans,
+        avg_scans_per_qrcode: totalQrcodes ? totalScans / totalQrcodes : 0,
+        last_scan_time: lastScan?.scanned_at || null,
+        first_scan_time: firstScan?.scanned_at || null,
       },
-      body: JSON.stringify({
-        action: 'get_user_stats',
-        days: days,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success && result.stats) {
-      return {
-        success: true,
-        stats: result.stats,
-      };
-    } else {
-      return {
-        success: false,
-        error: result.error || 'Failed to fetch statistics',
-      };
-    }
+    };
   } catch (error) {
     return {
       success: false,
@@ -93,84 +100,93 @@ export async function fetchUserStats(days: number = 30): Promise<StatsResponse> 
 
 /**
  * Fetches operating systems breakdown
- * @param days - Number of days to analyze (default: 30)
  */
 export async function fetchOperatingSystems(days: number = 30): Promise<ListStatsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/stats.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'get_operating_systems',
-        days: days,
-      }),
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('os, qrcodes!inner(user_id)')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    if (error) return { success: false, error: error.message };
+
+    // Aggregate by OS
+    const osMap: Record<string, number> = {};
+    const total = scans?.length || 0;
+
+    scans?.forEach(scan => {
+      const os = scan.os || 'Unknown';
+      osMap[os] = (osMap[os] || 0) + 1;
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const data: OperatingSystemStat[] = Object.entries(osMap).map(([operating_system, scan_count]) => ({
+      operating_system,
+      scan_count,
+      percentage: total ? (scan_count / total) * 100 : 0,
+    }));
 
-    const result = await response.json();
-
-    if (result.success) {
-      return {
-        success: true,
-        data: result.data || [],
-      };
-    } else {
-      return {
-        success: false,
-        error: result.error || 'Failed to fetch operating systems statistics',
-      };
-    }
+    return { success: true, data };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch operating systems statistics',
+      error: error instanceof Error ? error.message : 'Failed to fetch operating systems',
     };
   }
 }
 
 /**
  * Fetches scans by QR code
- * @param days - Number of days to analyze (default: 30)
  */
 export async function fetchScansByQRCode(days: number = 30): Promise<ListStatsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/stats.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'get_scans_by_qrcode',
-        days: days,
-      }),
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('qrcode_id, qrcodes(name, type, content)')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    if (error) return { success: false, error: error.message };
+
+    // Aggregate by QR code
+    const qrMap: Record<string, QRCodeStat> = {};
+    const total = scans?.length || 0;
+
+    scans?.forEach(scan => {
+      const qid = scan.qrcode_id;
+      // qrcodes is returned as an array from Supabase
+      const qrData = Array.isArray(scan.qrcodes) ? scan.qrcodes[0] : scan.qrcodes;
+      if (!qrMap[qid]) {
+        qrMap[qid] = {
+          qrcodeid: qid,
+          name: qrData?.name || 'Unknown',
+          type: qrData?.type || 'unknown',
+          content: qrData?.content,
+          scan_count: 0,
+          percentage: 0,
+        };
+      }
+      qrMap[qid].scan_count++;
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const data = Object.values(qrMap).map(item => ({
+      ...item,
+      percentage: total ? (item.scan_count / total) * 100 : 0,
+    }));
 
-    const result = await response.json();
-
-    if (result.success) {
-      return {
-        success: true,
-        data: result.data || [],
-      };
-    } else {
-      return {
-        success: false,
-        error: result.error || 'Failed to fetch scans by QR code',
-      };
-    }
+    return { success: true, data };
   } catch (error) {
     return {
       success: false,
@@ -181,40 +197,36 @@ export async function fetchScansByQRCode(days: number = 30): Promise<ListStatsRe
 
 /**
  * Fetches scans timeline
- * @param days - Number of days to analyze (default: 30)
  */
 export async function fetchScansTimeline(days: number = 30): Promise<ListStatsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/stats.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'get_scans_timeline',
-        days: days,
-      }),
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('scanned_at')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    if (error) return { success: false, error: error.message };
+
+    // Aggregate by date
+    const dateMap: Record<string, number> = {};
+
+    scans?.forEach(scan => {
+      const date = new Date(scan.scanned_at).toISOString().split('T')[0];
+      dateMap[date] = (dateMap[date] || 0) + 1;
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const data: TimelineStat[] = Object.entries(dateMap)
+      .map(([scan_date, scan_count]) => ({ scan_date, scan_count }))
+      .sort((a, b) => a.scan_date.localeCompare(b.scan_date));
 
-    const result = await response.json();
-
-    if (result.success) {
-      return {
-        success: true,
-        data: result.data || [],
-      };
-    } else {
-      return {
-        success: false,
-        error: result.error || 'Failed to fetch scans timeline',
-      };
-    }
+    return { success: true, data };
   } catch (error) {
     return {
       success: false,

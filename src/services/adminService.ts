@@ -1,21 +1,24 @@
 /**
  * Admin Service
- * Handles admin operations for managing all QR codes
+ * Handles admin operations via Supabase
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr/';
+import { supabase } from '../config/supabase';
 
 export interface AdminQRCode {
-  qrcodeid: string;
-  content: string;
-  createdat: string;
-  expirytime: string | null;
-  userid: number;
-  styling: string | null;
+  id: string;
+  user_id: string;
   name: string;
+  content: Record<string, unknown>;
   type: string;
+  styling: Record<string, unknown> | null;
+  mode: string;
+  expirytime: string | null;
   scan_count: number;
-  user_email: string;
+  created_at: string;
+  user_email?: string;
+  // Backward compatibility aliases
+  qrcodeid?: string;
+  createdat?: string;
 }
 
 export interface AdminFetchCodesResponse {
@@ -36,35 +39,54 @@ export interface AdminDeleteResponse {
   error?: string;
 }
 
+async function isAdmin(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('admin')
+    .eq('id', user.id)
+    .single();
+
+  return profile?.admin === true;
+}
+
 /**
  * Fetches all QR codes from all users (admin only)
  */
 export async function fetchAllQRCodes(): Promise<AdminFetchCodesResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin_handler.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'list_all_qrcodes',
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: 'Unauthorized: Please log in' };
-      }
-      if (response.status === 403) {
-        return { success: false, error: 'Forbidden: Admin access required' };
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!await isAdmin()) {
+      return { success: false, error: 'Forbidden: Admin access required' };
     }
 
-    const result = await response.json();
-    return result;
+    const { data, error } = await supabase
+      .from('qrcodes')
+      .select('*, profiles(email)')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const codes: AdminQRCode[] = data?.map(row => ({
+      id: row.id,
+      user_id: row.user_id,
+      name: row.name,
+      content: row.content,
+      type: row.type,
+      styling: row.styling,
+      mode: row.mode,
+      expirytime: row.expirytime,
+      scan_count: row.scan_count,
+      created_at: row.created_at,
+      user_email: row.profiles?.email,
+      qrcodeid: row.id,
+      createdat: row.created_at,
+    })) || [];
+
+    return { success: true, codes };
   } catch (error) {
     return {
       success: false,
@@ -78,35 +100,23 @@ export async function fetchAllQRCodes(): Promise<AdminFetchCodesResponse> {
  */
 export async function updateQRCode(qrcodeid: string, content: string): Promise<AdminUpdateResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin_handler.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'update_qrcode',
-        qrcodeid,
-        content,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: 'Unauthorized: Please log in' };
-      }
-      if (response.status === 403) {
-        return { success: false, error: 'Forbidden: Admin access required' };
-      }
-      if (response.status === 404) {
-        return { success: false, error: 'QR code not found' };
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!await isAdmin()) {
+      return { success: false, error: 'Forbidden: Admin access required' };
     }
 
-    const result = await response.json();
-    return result;
+    const { error } = await supabase
+      .from('qrcodes')
+      .update({
+        content: typeof content === 'string' ? JSON.parse(content) : content,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', qrcodeid);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, message: 'QR code updated successfully' };
   } catch (error) {
     return {
       success: false,
@@ -120,34 +130,20 @@ export async function updateQRCode(qrcodeid: string, content: string): Promise<A
  */
 export async function deleteQRCode(qrcodeid: string): Promise<AdminDeleteResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin_handler.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'delete_qrcode',
-        qrcodeid,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: 'Unauthorized: Please log in' };
-      }
-      if (response.status === 403) {
-        return { success: false, error: 'Forbidden: Admin access required' };
-      }
-      if (response.status === 404) {
-        return { success: false, error: 'QR code not found' };
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!await isAdmin()) {
+      return { success: false, error: 'Forbidden: Admin access required' };
     }
 
-    const result = await response.json();
-    return result;
+    const { error } = await supabase
+      .from('qrcodes')
+      .delete()
+      .eq('id', qrcodeid);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, message: 'QR code deleted successfully' };
   } catch (error) {
     return {
       success: false,

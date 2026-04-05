@@ -18,49 +18,51 @@ export default function QRCodeViewModal({ qrCode, onClose }: QRCodeViewModalProp
 
     // Parse styling if available
     let styling = {};
-    try {
-      if (qrCode.styling) {
+    if (qrCode.styling && typeof qrCode.styling === 'string') {
+      try {
         styling = JSON.parse(qrCode.styling);
+      } catch (e) {
+        // Use default styling if parsing fails
       }
-    } catch (e) {
-      // Use default styling if parsing fails
+    } else if (qrCode.styling) {
+      styling = qrCode.styling;
     }
 
-    // Get QR code data from content
-    let qrData = qrCode.content;
+    // Get QR code data from content (already parsed as object in Supabase)
+    let qrData = '';
+    const content = qrCode.content as Record<string, unknown>;
+
     try {
-      const contentJson = JSON.parse(qrCode.content);
       // Generate appropriate data based on type
       switch (qrCode.type) {
         case 'url':
-          qrData = contentJson.url || qrCode.content;
+          qrData = (content.url as string) || '';
           break;
         case 'text':
-          qrData = contentJson.text || qrCode.content;
+          qrData = (content.text as string) || '';
           break;
         case 'email':
-          qrData = `mailto:${contentJson.email}${contentJson.subject ? `?subject=${encodeURIComponent(contentJson.subject)}` : ''}${contentJson.body ? `${contentJson.subject ? '&' : '?'}body=${encodeURIComponent(contentJson.body)}` : ''}`;
+          qrData = `mailto:${content.email}${content.subject ? `?subject=${encodeURIComponent(content.subject as string)}` : ''}${content.body ? `${content.subject ? '&' : '?'}body=${encodeURIComponent(content.body as string)}` : ''}`;
           break;
         case 'phone':
-          qrData = `tel:${contentJson.phone}`;
+          qrData = `tel:${content.phone}`;
           break;
         case 'sms':
-          qrData = `sms:${contentJson.number}${contentJson.message ? `?body=${encodeURIComponent(contentJson.message)}` : ''}`;
+          qrData = `sms:${content.number}${content.message ? `?body=${encodeURIComponent(content.message as string)}` : ''}`;
           break;
         case 'wifi':
-          qrData = `WIFI:T:${contentJson.encryption};S:${contentJson.ssid};P:${contentJson.password};H:${contentJson.hidden || false};;`;
+          qrData = `WIFI:T:${content.encryption};S:${content.ssid};P:${content.password};H:${content.hidden || false};;`;
           break;
         case 'vcard':
         case 'mecard':
-          // These should already be in the proper format
-          qrData = qrCode.content;
+          qrData = JSON.stringify(content);
           break;
         default:
-          qrData = qrCode.content;
+          qrData = JSON.stringify(content);
       }
     } catch (e) {
-      // Use raw content if parsing fails
-      qrData = qrCode.content;
+      // Use stringified content if conversion fails
+      qrData = JSON.stringify(content);
     }
 
     // Create QR code options
@@ -168,7 +170,7 @@ export default function QRCodeViewModal({ qrCode, onClose }: QRCodeViewModalProp
           <div className="text-sm text-gray-600">
             <p className="mb-1"><strong>Owner:</strong> {qrCode.user_email}</p>
             <p className="mb-1"><strong>Scans:</strong> {qrCode.scan_count}</p>
-            <p><strong>Created:</strong> {new Date(qrCode.createdat).toLocaleDateString()}</p>
+            <p><strong>Created:</strong> {qrCode.createdat ? new Date(qrCode.createdat).toLocaleDateString() : 'N/A'}</p>
           </div>
         </div>
 
