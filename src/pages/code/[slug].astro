@@ -1,0 +1,98 @@
+---
+import { supabase } from '../../lib/supabase';
+import MainLayout from '../../layouts/MainLayout.astro';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/');
+}
+
+// Fetch QR code data
+const { data: qrCode, error: fetchError } = await supabase
+  .from('qrcodes')
+  .select('type, content, expirytime')
+  .eq('id', slug)
+  .single();
+
+if (fetchError || !qrCode) {
+  return Astro.redirect('/?error=not_found');
+}
+
+// Check if expired
+if (qrCode.expirytime && new Date(qrCode.expirytime) < new Date()) {
+  return Astro.redirect('/?error=expired');
+}
+
+// Increment scan count (fire and forget)
+supabase.rpc('increment_scan_count', { qr_id: slug }).then(({ error: rpcError }) => {
+  if (rpcError) console.error('Failed to increment scan count:', rpcError);
+});
+
+// Build redirect URL based on type
+const content = qrCode.content as Record<string, unknown>;
+let redirectUrl: string | null = null;
+
+switch (qrCode.type) {
+  case 'url':
+    redirectUrl = content.url as string;
+    break;
+  case 'email':
+    redirectUrl = `mailto:${content.email as string}`;
+    break;
+  case 'phone':
+    redirectUrl = `tel:${content.phone as string}`;
+    break;
+  case 'sms':
+    redirectUrl = `sms:${content.number as string}`;
+    break;
+  case 'location':
+    redirectUrl = `https://www.google.com/maps?q=${content.latitude},${content.longitude}`;
+    break;
+  default:
+    redirectUrl = null;
+}
+
+if (!redirectUrl) {
+  return Astro.redirect('/?error=invalid_type');
+}
+
+// Record scan asynchronously (doesn't block redirect)
+const detectOS = (): string => {
+  const ua = Astro.request.headers.get('user-agent') || '';
+  const uaLower = ua.toLowerCase();
+  if (uaLower.includes('iphone') || uaLower.includes('ipad')) return 'iOS';
+  if (uaLower.includes('android')) return 'Android';
+  if (uaLower.includes('macintosh') || uaLower.includes('mac os')) return 'iOS';
+  if (uaLower.includes('win')) return 'Windows';
+  if (uaLower.includes('linux')) return 'Linux';
+  return 'Other';
+};
+
+const os = detectOS();
+
+supabase
+  .from('scans')
+  .insert({
+    qrcode_id: slug,
+    os,
+  })
+  .then(({ error: scanError }) => {
+    if (scanError) console.error('Failed to record scan:', scanError);
+  });
+
+// Redirect to destination
+return Astro.redirect(redirectUrl);
+---
+
+<MainLayout title="Redirecting...">
+  <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div class="text-center">
+      <div class="inline-block p-4 bg-white rounded-lg mb-4 border border-gray-200 shadow-sm">
+        <div class="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Redirecting...</h2>
+      <p class="text-gray-600">Processing QR code: {slug}</p>
+    </div>
+  </div>
+</MainLayout>
