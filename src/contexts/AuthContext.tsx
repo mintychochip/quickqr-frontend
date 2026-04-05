@@ -21,6 +21,10 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   sessionCheckCount: number;
   lastActivity: number;
+  loginPanelOpen: boolean;
+  loginPanelMode: 'signin' | 'signup';
+  openLoginPanel: (mode?: 'signin' | 'signup') => void;
+  closeLoginPanel: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +34,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [sessionCheckCount, setSessionCheckCount] = useState(0);
   const [lastActivity, setLastActivity] = useState(Date.now());
+  const [loginPanelOpen, setLoginPanelOpen] = useState(false);
+  const [loginPanelMode, setLoginPanelMode] = useState<'signin' | 'signup'>('signin');
+
+  const openLoginPanel = useCallback((mode: 'signin' | 'signup' = 'signin') => {
+    setLoginPanelMode(mode);
+    setLoginPanelOpen(true);
+  }, []);
+
+  const closeLoginPanel = useCallback(() => {
+    setLoginPanelOpen(false);
+  }, []);
 
   const fetchProfile = useCallback(async (authUser: User): Promise<UserProfile | null> => {
     const { data: profile } = await supabase
@@ -171,6 +186,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser,
     sessionCheckCount,
     lastActivity,
+    loginPanelOpen,
+    loginPanelMode,
+    openLoginPanel,
+    closeLoginPanel,
   };
 
   return (
