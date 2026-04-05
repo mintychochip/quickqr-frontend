@@ -299,11 +299,13 @@ function AppContent() {
         </Routes>
       </main>
       <Footer />
-      <LoginPanel
-        isOpen={loginPanelOpen}
-        onClose={closeLoginPanel}
-        initialMode={loginPanelMode}
-      />
+      {loginPanelOpen && (
+        <LoginPanel
+          isOpen={loginPanelOpen}
+          onClose={closeLoginPanel}
+          initialMode={loginPanelMode}
+        />
+      )}
     </div>
   );
 }
