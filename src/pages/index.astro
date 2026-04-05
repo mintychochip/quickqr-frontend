@@ -1,0 +1,192 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import '../styles/home.css';
+
+const companies = [
+  { name: 'Google', logo: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png' },
+  { name: 'Microsoft', logo: 'https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31' },
+  { name: 'Amazon', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' },
+  { name: 'Netflix', logo: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg' },
+  { name: 'Spotify', logo: 'https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png' },
+  { name: 'Airbnb', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg' },
+  { name: 'Uber', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png' },
+  { name: 'Tesla', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg' },
+];
+---
+
+<MainLayout title="QuickQR - Lightning-fast QR Codes">
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div style="text-align: center; margin-bottom: 4rem;">
+        <div class="hero-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Lightning-fast QR generation</span>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="hero-title-teal">Quick</span>-ly Create
+          <span class="block">
+            <span class="hero-title-teal">QR</span> Codes
+          </span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Generate QR codes in seconds. Fast and free.
+        </p>
+
+        <div class="hero-buttons">
+          <a href="/create" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Generate QR Code Now
+          </a>
+          <a href="/examples" class="btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            View Examples
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div style="max-width: 80rem; margin: 0 auto; padding: 0 1rem;">
+      <div style="text-align: center; margin-bottom: 4rem;">
+        <h2 class="features-title">
+          Stop Paying For Subscriptions
+          <span class="features-title-teal">You Don't Use</span>
+        </h2>
+        <p class="features-subtitle">
+          1,000 free scans monthly. No Contracts. No Commitments.
+        </p>
+      </div>
+
+      <div class="features-cta">
+        <div class="features-cta-box">
+          <h3>Try QuickQR for Free</h3>
+          <p>Start generating professional QR codes with pay-as-you-go pricing</p>
+          <a href="/signup" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Create Your First Code
+          </a>
+          <p class="features-cta-note">No credit card required - 1,000 free scans monthly</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Company Marquee -->
+  <section class="company-marquee">
+    <div class="company-marquee-header">
+      <p>Trusted by teams at</p>
+    </div>
+
+    <div class="marquee-container">
+      <div class="marquee-track">
+        {[...companies, ...companies].map((company, idx) => (
+          <div class="marquee-item">
+            <img src={company.logo} alt={company.name} />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Dynamic vs Static Comparison -->
+  <section class="comparison">
+    <div class="comparison-bg">
+      <div class="comparison-bg-blur-1"></div>
+      <div class="comparison-bg-blur-2"></div>
+    </div>
+
+    <div class="comparison-content">
+      <div class="comparison-header">
+        <h2 class="comparison-title">Choose Your QR Code Type</h2>
+        <p class="comparison-subtitle">Static for simplicity. Dynamic for flexibility.</p>
+      </div>
+
+      <div class="comparison-grid">
+        <!-- Static Card -->
+        <div class="comparison-card">
+          <div class="comparison-card-header">
+            <h3 class="comparison-card-title">Static</h3>
+            <p class="comparison-card-subtitle">Fixed & forever free</p>
+          </div>
+
+          <ul class="comparison-list">
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">100% free forever</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">Works offline</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">Perfect for print</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-x" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span class="comparison-list-item-text comparison-list-item-text-muted">Cannot edit after creation</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-x" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span class="comparison-list-item-text comparison-list-item-text-muted">No tracking or analytics</span>
+            </li>
+          </ul>
+
+          <div class="comparison-card-footer">
+            Best for: Business cards, posters, permanent links
+          </div>
+        </div>
+
+        <!-- Dynamic Card -->
+        <div class="comparison-card comparison-card-highlight">
+          <div class="comparison-card-header">
+            <h3 class="comparison-card-title">Dynamic</h3>
+            <p class="comparison-card-subtitle">Smart & trackable</p>
+          </div>
+
+          <ul class="comparison-list">
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">Edit destination anytime</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">Full analytics & tracking</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">Location & device data</span>
+            </li>
+            <li class="comparison-list-item">
+              <svg class="comparison-list-item-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="comparison-list-item-text">A/B testing ready</span>
+            </li>
+            <li class="comparison-list-item">
+              <div style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: var(--color-teal-500);"></div>
+              </div>
+              <span class="comparison-list-item-text">Paid feature</span>
+            </li>
+          </ul>
+
+          <div class="comparison-card-footer">
+            Best for: Campaigns, events, flexible marketing
+          </div>
+        </div>
+      </div>
+
+      <div class="comparison-cta">
+        <a href="/create" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Create Your QR Code
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</MainLayout>

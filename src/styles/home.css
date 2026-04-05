@@ -1,0 +1,446 @@
+/* Home Page Styles */
+
+/* Hero Section */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: var(--color-white, #ffffff);
+  padding-top: 5rem;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 5rem 1rem;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background-color: var(--color-teal-50, #f0fdfa);
+  border: 1px solid var(--color-teal-200, #99f6e4);
+  margin-bottom: 1.5rem;
+}
+
+.hero-badge svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-teal-600, #0d9488);
+}
+
+.hero-badge span {
+  font-size: 0.875rem;
+  color: var(--color-gray-700, #374151);
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-size: 3.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--color-gray-900, #111827);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 4.5rem;
+  }
+}
+
+.hero-title-teal {
+  color: var(--color-teal-600, #0d9488);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-gray-600, #4b5563);
+  margin-bottom: 2rem;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .hero-buttons {
+    flex-direction: row;
+  }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background-color: var(--color-teal-500, #14b8a6);
+  color: white;
+  border-radius: var(--border-radius, 0.375rem);
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-teal-600, #0d9488);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-primary svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background-color: white;
+  color: var(--color-gray-900, #111827);
+  border-radius: var(--border-radius, 0.375rem);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-gray-50, #f9fafb);
+}
+
+/* Features Section */
+.features {
+  padding: 6rem 0;
+  background-color: var(--color-gray-50, #f9fafb);
+  transform: translateZ(0);
+}
+
+.features-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .features-title {
+    font-size: 3rem;
+  }
+}
+
+.features-title-teal {
+  display: block;
+  color: var(--color-teal-600, #0d9488);
+}
+
+.features-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-gray-600, #4b5563);
+  max-width: 3xl;
+  margin: 0 auto 4rem;
+  text-align: center;
+}
+
+.features-cta {
+  text-align: center;
+}
+
+.features-cta-box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 3rem;
+  background-color: white;
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  box-shadow: var(--shadow-lg);
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.features-cta h3 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+}
+
+.features-cta p {
+  color: var(--color-gray-600, #4b5563);
+}
+
+.features-cta .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+
+.features-cta-note {
+  font-size: 0.875rem;
+  color: var(--color-gray-500, #6b7280);
+}
+
+/* Company Marquee */
+.company-marquee {
+  position: relative;
+  padding: 5rem 0;
+  background-color: white;
+  border-top: 1px solid var(--color-gray-200, #e5e7eb);
+  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  overflow: hidden;
+}
+
+.company-marquee-header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.company-marquee-header p {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gray-600, #4b5563);
+  font-weight: 600;
+}
+
+.marquee-container {
+  position: relative;
+  display: flex;
+  overflow-x: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-item {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2rem;
+}
+
+.marquee-item img {
+  height: 2.5rem;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.4;
+  filter: grayscale(100%);
+  transition: opacity 0.3s;
+  max-width: 150px;
+}
+
+.marquee-item img:hover {
+  opacity: 0.6;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Dynamic vs Static Comparison */
+.comparison {
+  position: relative;
+  padding: 5rem 0;
+  background-color: var(--color-gray-50, #f9fafb);
+  overflow: hidden;
+}
+
+.comparison-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.comparison-bg-blur-1 {
+  position: absolute;
+  top: 5rem;
+  left: 25%;
+  width: 24rem;
+  height: 24rem;
+  background: rgba(20, 184, 166, 0.1);
+  border-radius: 9999px;
+  filter: blur(64px);
+}
+
+.comparison-bg-blur-2 {
+  position: absolute;
+  bottom: 5rem;
+  right: 25%;
+  width: 24rem;
+  height: 24rem;
+  background: rgba(13, 148, 136, 0.1);
+  border-radius: 9999px;
+  filter: blur(64px);
+}
+
+.comparison-content {
+  position: relative;
+  z-index: 10;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.comparison-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.comparison-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .comparison-title {
+    font-size: 3rem;
+  }
+}
+
+.comparison-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-gray-600, #4b5563);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.comparison-grid {
+  display: grid;
+  gap: 2rem;
+  max-width: 64rem;
+  margin: 0 auto 4rem;
+}
+
+@media (min-width: 768px) {
+  .comparison-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.comparison-card {
+  position: relative;
+  background: white;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.comparison-card-highlight {
+  position: relative;
+}
+
+.comparison-card-highlight::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(to right, var(--color-teal-500, #14b8a6), var(--color-teal-600, #0d9488));
+  border-radius: 1rem;
+  opacity: 0.2;
+  z-index: -1;
+}
+
+.comparison-card-highlight:hover::before {
+  opacity: 0.3;
+}
+
+.comparison-card-header {
+  margin-bottom: 1.5rem;
+}
+
+.comparison-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+  margin-bottom: 0.5rem;
+}
+
+.comparison-card-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-gray-600, #4b5563);
+}
+
+.comparison-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.comparison-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.comparison-list-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.comparison-list-item-check {
+  color: #16a34a;
+}
+
+.comparison-list-item-x {
+  color: #dc2626;
+}
+
+.comparison-list-item-text {
+  font-size: 0.875rem;
+  color: var(--color-gray-700, #374151);
+}
+
+.comparison-list-item-text-muted {
+  color: var(--color-gray-600, #4b5563);
+}
+
+.comparison-card-footer {
+  font-size: 0.75rem;
+  color: var(--color-gray-500, #6b7280);
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-gray-200, #e5e7eb);
+}
+
+.comparison-cta {
+  text-align: center;
+}
+
+.comparison-cta .btn-primary {
+  font-size: 1.125rem;
+  padding: 1rem 2rem;
+}
+
+.comparison-cta .btn-primary svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
