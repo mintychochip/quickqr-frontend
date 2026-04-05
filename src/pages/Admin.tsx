@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Search, Trash2, Edit2, RefreshCw, X, Check, QrCode } from 'lucide-react';
-import { fetchAllQRCodes, updateQRCode, deleteQRCode, type AdminQRCode } from '../services/adminService';
+import { Shield, Search, Trash2, Edit2, RefreshCw, X, Check, QrCode, AlertTriangle } from 'lucide-react';
+import { fetchAllQRCodes, updateQRCode, deleteQRCode, fetchAbuseIncidents, resolveAbuseIncident, type AdminQRCode } from '../services/adminService';
 import { useAuth } from '../contexts/AuthContext';
 import QRCodeViewModal from '../components/QRCodeViewModal';
+import type { AbuseIncident } from '../types/abuse.types';
 
 // Helper function to parse and display QR code content
 function getDisplayContent(qr: AdminQRCode): string {
@@ -72,6 +73,11 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [viewingQRCode, setViewingQRCode] = useState<AdminQRCode | null>(null);
 
+  // Abuse incidents state
+  const [abuseIncidents, setAbuseIncidents] = useState<AbuseIncident[]>([]);
+  const [loadingAbuse, setLoadingAbuse] = useState(true);
+  const [abuseError, setAbuseError] = useState<string | null>(null);
+
   // Load all QR codes
   const loadQRCodes = async () => {
     try {
@@ -93,6 +99,29 @@ export default function Admin() {
 
   useEffect(() => {
     loadQRCodes();
+  }, []);
+
+  // Load abuse incidents
+  const loadAbuseIncidents = async () => {
+    try {
+      setLoadingAbuse(true);
+      setAbuseError(null);
+      const result = await fetchAbuseIncidents();
+
+      if (result.success && result.incidents) {
+        setAbuseIncidents(result.incidents);
+      } else {
+        setAbuseError(result.error || 'Failed to load abuse incidents');
+      }
+    } catch (err) {
+      setAbuseError('An error occurred while loading abuse incidents');
+    } finally {
+      setLoadingAbuse(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAbuseIncidents();
   }, []);
 
   // Filter QR codes based on search
@@ -165,6 +194,39 @@ export default function Admin() {
     } catch (error) {
       alert('Failed to delete QR code');
     }
+  };
+
+  // Handle resolve abuse incident
+  const handleResolve = async (id: string) => {
+    if (!confirm('Mark this incident as resolved?')) {
+      return;
+    }
+
+    try {
+      const result = await resolveAbuseIncident(id);
+      if (result.success) {
+        setAbuseIncidents(prev => prev.filter(incident => incident.id !== id));
+      } else {
+        alert('Failed to resolve incident');
+      }
+    } catch (error) {
+      alert('Failed to resolve incident');
+    }
+  };
+
+  // Get severity badge color
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Format abuse type for display
+  const formatAbuseType = (type: string) => {
+    return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
   // Format date
@@ -449,6 +511,114 @@ export default function Admin() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Abuse Incidents Section */}
+      <div className="mt-8 bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-6 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-6 h-6 text-red-500" />
+            <h2 className="text-2xl font-bold text-gray-900">Abuse Incidents</h2>
+            {abuseIncidents.length > 0 && (
+              <span className="px-2 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
+                {abuseIncidents.length}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={loadAbuseIncidents}
+            disabled={loadingAbuse}
+            className="flex items-center justify-center p-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            title="Refresh abuse incidents"
+          >
+            <RefreshCw className={`w-5 h-5 ${loadingAbuse ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+
+        {loadingAbuse ? (
+          <div className="text-center py-12 flex-1 flex items-center justify-center">
+            <div>
+              <div className="inline-block w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading abuse incidents...</p>
+            </div>
+          </div>
+        ) : abuseError ? (
+          <div className="text-center py-12 flex-1 flex items-center justify-center">
+            <div>
+              <p className="text-red-600 mb-4">{abuseError}</p>
+              <button
+                onClick={loadAbuseIncidents}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-900 transition-all shadow-sm"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : abuseIncidents.length === 0 ? (
+          <div className="text-center py-12 flex-1 flex items-center justify-center">
+            <p className="text-gray-600">No unresolved abuse incidents</p>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto max-h-96">
+            <table className="w-full">
+              <thead className="sticky top-0 bg-white z-10 shadow-sm">
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 text-gray-600 font-semibold text-xs uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-semibold text-xs uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-semibold text-xs uppercase tracking-wider">
+                    Severity
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-semibold text-xs uppercase tracking-wider">
+                    Evidence
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-semibold text-xs uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-semibold text-xs uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {abuseIncidents.map((incident) => (
+                  <tr key={incident.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-4 text-sm text-gray-900">
+                      {incident.user_id || 'Anonymous'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-600">
+                      {formatAbuseType(incident.type)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSeverityColor(incident.severity)}`}>
+                        {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-gray-500 max-w-xs truncate">
+                      {JSON.stringify(incident.evidence).substring(0, 60)}...
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-600">
+                      {formatDate(incident.created_at)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleResolve(incident.id)}
+                        className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        <Check className="w-4 h-4" />
+                        Resolve
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* QR Code View Modal */}

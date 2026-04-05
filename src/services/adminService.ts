@@ -3,6 +3,7 @@
  * Handles admin operations via Supabase
  */
 import { supabase } from '../config/supabase';
+import type { AbuseIncident } from '../types/abuse.types';
 
 export interface AdminQRCode {
   id: string;
@@ -150,4 +151,32 @@ export async function deleteQRCode(qrcodeid: string): Promise<AdminDeleteRespons
       error: error instanceof Error ? error.message : 'Failed to delete QR code',
     };
   }
+}
+
+export async function fetchAbuseIncidents(): Promise<{ success: boolean; incidents?: AbuseIncident[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('abuse_incidents')
+      .select('*')
+      .is('resolved_at', null)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, incidents: data || [] };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch' };
+  }
+}
+
+export async function resolveAbuseIncident(id: string): Promise<{ success: boolean }> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false };
+
+  await supabase
+    .from('abuse_incidents')
+    .update({ resolved_at: new Date().toISOString(), resolved_by: user.id })
+    .eq('id', id);
+
+  return { success: true };
 }
