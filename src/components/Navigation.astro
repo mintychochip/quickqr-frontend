@@ -64,8 +64,8 @@ const user: User | null = session?.user ? {
         </div>
       ) : (
         <div class="nav-right hidden md:flex">
-          <a href="/signin" class="nav-btn nav-btn-ghost">Sign In</a>
-          <a href="/signup" class="nav-btn nav-btn-primary">Get Started</a>
+          <a href="/auth/signin" class="nav-btn nav-btn-ghost">Sign In</a>
+          <a href="/auth/signup" class="nav-btn nav-btn-primary">Get Started</a>
         </div>
       )}
 
@@ -133,8 +133,8 @@ const user: User | null = session?.user ? {
             </>
           ) : (
             <>
-              <a href="/signin" class="nav-mobile-action-btn nav-mobile-action-btn-ghost">Sign In</a>
-              <a href="/signup" class="nav-mobile-action-btn nav-mobile-action-btn-primary">Get Started</a>
+              <a href="/auth/signin" class="nav-mobile-action-btn nav-mobile-action-btn-ghost">Sign In</a>
+              <a href="/auth/signup" class="nav-mobile-action-btn nav-mobile-action-btn-primary">Get Started</a>
             </>
           )}
         </div>
