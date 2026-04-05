@@ -20,10 +20,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes slide-in {
+@keyframes slide-in-mobile {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slide-in-desktop {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
+
 .animate-slide-in {
-  animation: slide-in 300ms ease-out;
+  animation: slide-in-mobile 300ms ease-out;
+}
+
+@media (min-width: 640px) {
+  .animate-slide-in {
+    animation-name: slide-in-desktop;
+  }
 }
