@@ -2,6 +2,8 @@
 
 @theme {
   --animate-marquee: marquee 40s linear infinite;
+  --animate-slide-in-mobile: slide-in-mobile 300ms ease-out forwards;
+  --animate-slide-in-desktop: slide-in-desktop 300ms ease-out forwards;
 
   @keyframes marquee {
     0% {
@@ -10,6 +12,16 @@
     100% {
       transform: translateX(-100%);
     }
+  }
+
+  @keyframes slide-in-mobile {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes slide-in-desktop {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
   }
 }
 
@@ -20,23 +32,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes slide-in-mobile {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes slide-in-desktop {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
 .animate-slide-in {
-  animation: slide-in-mobile 300ms ease-out forwards;
+  animation: var(--animate-slide-in-mobile);
 }
 
 @media (min-width: 640px) {
   .animate-slide-in {
-    animation-name: slide-in-desktop;
-    animation: slide-in-desktop 300ms ease-out forwards;
+    animation: var(--animate-slide-in-desktop);
   }
 }
