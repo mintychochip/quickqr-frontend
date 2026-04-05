@@ -1,0 +1,228 @@
+/* Create QR Code Page Styles */
+
+.create-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.create-header {
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-gray-600, #4b5563);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--color-gray-900, #111827);
+}
+
+.create-header h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+  margin: 0;
+}
+
+.error-message {
+  padding: 0.75rem 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--border-radius, 0.5rem);
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-section {
+  background: white;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.form-section h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-gray-900, #111827);
+  margin: 0 0 1rem 0;
+}
+
+.type-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.type-option {
+  cursor: pointer;
+}
+
+.type-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--color-gray-50, #f9fafb);
+  border: 2px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.75rem;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.type-card span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700, #374151);
+}
+
+.type-card svg {
+  color: var(--color-gray-500, #6b7280);
+}
+
+.type-option input:checked + .type-card {
+  border-color: var(--color-teal-500, #14b8a6);
+  background-color: var(--color-teal-50, #f0fdfa);
+}
+
+.type-option input:checked + .type-card span {
+  color: var(--color-teal-700, #0f766e);
+}
+
+.type-option input:checked + .type-card svg {
+  color: var(--color-teal-600, #0d9488);
+}
+
+.type-option:hover .type-card {
+  border-color: var(--color-gray-300, #d1d5db);
+}
+
+.type-option input:checked:hover + .type-card {
+  border-color: var(--color-teal-600, #0d9488);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700, #374151);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--border-radius, 0.5rem);
+  font-size: 1rem;
+  color: var(--color-gray-900, #111827);
+  background-color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-teal-500, #14b8a6);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--color-gray-400, #9ca3af);
+}
+
+.style-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.color-input {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.color-input input[type="color"] {
+  width: 48px;
+  height: 48px;
+  padding: 4px;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--border-radius, 0.5rem);
+  cursor: pointer;
+}
+
+.color-input input[type="text"] {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--border-radius, 0.5rem);
+  font-size: 0.875rem;
+  color: var(--color-gray-900, #111827);
+}
+
+.color-input input[type="text"]:focus {
+  outline: none;
+  border-color: var(--color-teal-500, #14b8a6);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background-color: var(--color-teal-500, #14b8a6);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius, 0.5rem);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+  background-color: var(--color-teal-600, #0d9488);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
