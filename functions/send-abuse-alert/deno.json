@@ -1,0 +1,7 @@
+{
+  "name": "send-abuse-alert",
+  "version": "1.0.0",
+  "imports": {
+    "jsr:@supabase/functions-js/edge-runtime.d.ts": "https://esm.sh/@supabase/functions-js@2.4.1/edge-runtime.d.ts"
+  }
+}
