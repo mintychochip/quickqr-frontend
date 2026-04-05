@@ -1,0 +1,127 @@
+/* Footer Styles */
+.footer {
+  background-color: rgb(255 255 255 / 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--color-gray-200);
+  padding: 3rem 0;
+}
+
+.footer-inner {
+  max-width: 1536px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .footer-inner {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .footer-inner {
+    padding: 0 3rem;
+  }
+}
+
+/* 3-column grid */
+.footer-grid {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Footer Brand */
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+
+.footer-logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background-color: var(--color-teal-500);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-md);
+}
+
+.footer-logo-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: white;
+}
+
+.footer-logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.footer-tagline {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+  max-width: 16rem;
+}
+
+/* Footer Links Section */
+.footer-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  margin-bottom: 0.75rem;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-link {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.footer-link:hover {
+  color: var(--color-gray-900);
+}
+
+/* Footer Bottom */
+.footer-bottom {
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-gray-200);
+  text-align: center;
+}
+
+.footer-copyright {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+}
+
+.footer-legal {
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  margin-top: 0.5rem;
+}
