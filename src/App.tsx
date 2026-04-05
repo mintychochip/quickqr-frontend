@@ -12,16 +12,16 @@ import QRCodeRedirect from './pages/QRCodeRedirect';
 import CreateQRCode from './pages/CreateQRCode';
 import Admin from './pages/Admin';
 import AuthCallback from './pages/AuthCallback';
+import LoginPanel from './components/LoginPanel';
 
 function Navigation() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, openLoginPanel } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
   const isRedirectPage = location.pathname.startsWith('/code/');
   const isCreatePage = location.pathname === '/create';
 
-  if (isAuthPage || isRedirectPage || isCreatePage) return null;
+  if (isRedirectPage || isCreatePage) return null;
 
   const handleLogout = async () => {
     await logout();
@@ -82,12 +82,18 @@ function Navigation() {
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-4 lg:gap-6">
-                <Link to="/signin" className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base">
+                <button
+                  onClick={() => openLoginPanel('signin')}
+                  className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm lg:text-base"
+                >
                   Sign In
-                </Link>
-                <Link to="/signup" className="px-5 py-2.5 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] text-sm lg:text-base">
+                </button>
+                <button
+                  onClick={() => openLoginPanel('signup')}
+                  className="px-5 py-2.5 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] text-sm lg:text-base"
+                >
                   Get Started
-                </Link>
+                </button>
               </div>
             )}
 
@@ -190,20 +196,18 @@ function Navigation() {
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/signin"
+                    <button
+                      onClick={() => { openLoginPanel('signin'); setIsMobileMenuOpen(false); }}
                       className="block w-full text-center text-gray-600 hover:text-gray-900 transition-colors px-4 py-3 font-medium"
-                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Sign In
-                    </Link>
-                    <Link
-                      to="/signup"
+                    </button>
+                    <button
+                      onClick={() => { openLoginPanel('signup'); setIsMobileMenuOpen(false); }}
                       className="block w-full px-4 py-3 bg-teal-500 hover:bg-teal-600 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all text-center"
-                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Get Started
-                    </Link>
+                    </button>
                   </>
                 )}
               </div>
@@ -217,11 +221,10 @@ function Navigation() {
 
 function Footer() {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
   const isRedirectPage = location.pathname.startsWith('/code/');
   const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/create';
 
-  if (isAuthPage || isRedirectPage || isDashboardPage) return null;
+  if (isRedirectPage || isDashboardPage) return null;
 
   return (
     <footer className="bg-white/95 backdrop-blur-sm border-t border-gray-200 py-12">
@@ -267,15 +270,14 @@ function Footer() {
 }
 
 function AppContent() {
+  const { loginPanelOpen, loginPanelMode, closeLoginPanel } = useAuth();
+
   return (
     <div className="min-h-screen bg-black">
       <Navigation />
-
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
@@ -296,8 +298,12 @@ function AppContent() {
           <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>
       </main>
-
       <Footer />
+      <LoginPanel
+        isOpen={loginPanelOpen}
+        onClose={closeLoginPanel}
+        initialMode={loginPanelMode}
+      />
     </div>
   );
 }
