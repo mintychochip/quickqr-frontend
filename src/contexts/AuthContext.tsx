@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { getCurrentUser, logout as logoutService, refreshSession } from '../services/authService';
+import { supabase } from '../config/supabase';
+import type { User } from '@supabase/supabase-js';
 
-interface User {
+interface UserProfile {
   userid?: string;
-  id?: number;
+  id?: string;
   email: string;
   phone?: string | null;
   admin?: boolean;
@@ -13,9 +14,9 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
   loading: boolean;
-  login: (user: User) => void;
+  login: (user: UserProfile) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   sessionCheckCount: number;
@@ -25,66 +26,78 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionCheckCount, setSessionCheckCount] = useState(0);
   const [lastActivity, setLastActivity] = useState(Date.now());
 
-  // Enhanced session checking with retry logic and graceful degradation
+  const fetchProfile = useCallback(async (authUser: User): Promise<UserProfile | null> => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+
+    if (profile) {
+      return {
+        id: profile.id,
+        email: profile.email || authUser.email || '',
+        phone: profile.phone,
+        admin: profile.admin,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+      };
+    }
+    return {
+      id: authUser.id,
+      email: authUser.email || '',
+    };
+  }, []);
+
   const checkSession = useCallback(async () => {
     try {
-      const result = await getCurrentUser();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
 
-      if (result.success && result.user) {
-        setUser(result.user);
+      if (authUser) {
+        const profile = await fetchProfile(authUser);
+        setUser(profile);
         setLastActivity(Date.now());
-        setSessionCheckCount(0); // Reset on success
+        setSessionCheckCount(0);
       } else {
-        // Clear user immediately on session failure - no retries for expired sessions
         setUser(null);
         setSessionCheckCount(0);
       }
     } catch (error) {
-      // Clear user immediately on session errors
       setUser(null);
       setSessionCheckCount(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchProfile]);
 
-  // Periodic session refresh to maintain activity
+  // Periodic session refresh
   useEffect(() => {
     if (!user) return;
 
     const interval = setInterval(async () => {
-      try {
-        const result = await refreshSession();
-        if (!result.success) {
-          await checkSession();
-        } else {
-          setLastActivity(Date.now());
-        }
-      } catch (error) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
         await checkSession();
+      } else {
+        setLastActivity(Date.now());
       }
-    }, 5 * 60 * 1000); // Every 5 minutes
+    }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, checkSession]);
 
-  // Activity tracking to prevent session timeouts
+  // Activity tracking
   useEffect(() => {
-    const handleActivity = () => {
-      setLastActivity(Date.now());
-    };
-
-    // Track various user activities
+    const handleActivity = () => setLastActivity(Date.now());
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
     events.forEach(event => {
       window.addEventListener(event, handleActivity, { passive: true });
     });
-
     return () => {
       events.forEach(event => {
         window.removeEventListener(event, handleActivity);
@@ -92,35 +105,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Initial session check on component mount
+  // Initial session check
   useEffect(() => {
     checkSession();
-  }, []); // Only run on mount
+  }, []);
 
   // Page visibility change handling
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && user) {
-        // Page became visible again, check session
         checkSession();
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user]);
+  }, [user, checkSession]);
 
-  const login = (userData: User) => {
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const profile = await fetchProfile(session.user);
+        setUser(profile);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
+
+  const login = (userData: UserProfile) => {
     setUser(userData);
     setLastActivity(Date.now());
-    setSessionCheckCount(0); // Reset failure count on successful login
+    setSessionCheckCount(0);
   };
 
   const logout = async () => {
     try {
-      await logoutService();
-    } catch (error) {
-      // Still clear local state even if server logout fails
+      await supabase.auth.signOut();
     } finally {
       setUser(null);
       setLastActivity(Date.now());
@@ -130,8 +153,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     setLoading(true);
-    await checkSession();
-    // checkSession already sets loading to false in its finally block
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const profile = await fetchProfile(authUser);
+      setUser(profile);
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
   };
 
   const value: AuthContextType = {
@@ -159,17 +188,11 @@ export function useAuth() {
   return context;
 }
 
-// Hook to check if user session is active and valid
 export function useSessionStatus() {
   const { user, loading, sessionCheckCount, lastActivity } = useAuth();
-  const [isSessionActive, setIsSessionActive] = useState(false);
-
-  useEffect(() => {
-    setIsSessionActive(!!user && !loading);
-  }, [user, loading]);
 
   return {
-    isSessionActive,
+    isSessionActive: !!user && !loading,
     sessionCheckCount,
     lastActivity,
     timeSinceLastActivity: Date.now() - lastActivity,

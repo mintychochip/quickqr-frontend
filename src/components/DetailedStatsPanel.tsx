@@ -147,7 +147,8 @@ export default function DetailedStatsPanel() {
           return stat.type;
       }
     } catch (e) {
-      return stat.content?.substring(0, 50) || 'N/A';
+      const contentStr = stat.content ? JSON.stringify(stat.content).substring(0, 50) : 'N/A';
+      return contentStr || 'N/A';
     }
   };
 

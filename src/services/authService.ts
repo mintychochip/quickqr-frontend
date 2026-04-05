@@ -1,15 +1,9 @@
 /**
  * Authentication Service
- * Handles all auth-related API calls to the PHP backend
- * Enhanced with retry logic and better error handling for session persistence
+ * Handles auth using Supabase
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr';
-
-// Retry configuration
-const MAX_RETRIES = 3;
-const RETRY_DELAY_BASE = 1000; // 1 second base delay
-const REQUEST_TIMEOUT = 10000; // 10 second timeout
+import { supabase } from '../config/supabase';
+import type { User } from '@supabase/supabase-js';
 
 export interface RegisterData {
   email: string;
@@ -27,153 +21,82 @@ export interface AuthResponse {
   success: boolean;
   message?: string;
   error?: string;
-  user?: {
-    userid?: string;
-    id?: number;
-    email: string;
-    phone?: string | null;
-    admin?: boolean;
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-  };
+  user?: User;
 }
 
 /**
- * Delay function for retry logic
- */
-async function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Retry with exponential backoff
- */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  retries: number = MAX_RETRIES
-): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    if (retries <= 0) throw error;
-
-    // Don't retry on authentication errors (401)
-    if (error instanceof Error &&
-        (error.message.includes('401') || error.message.includes('Session expired'))) {
-      throw error;
-    }
-
-    // Don't retry on client errors (4xx)
-    if (error instanceof Error && error.message.match(/HTTP error! status: 4\d\d/)) {
-      throw error;
-    }
-
-    const delayMs = RETRY_DELAY_BASE * Math.pow(2, MAX_RETRIES - retries);
-
-    await delay(delayMs);
-    return retryWithBackoff(fn, retries - 1);
-  }
-}
-
-/**
- * Enhanced fetch with timeout and better error handling
- */
-async function enhancedFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        ...options.headers,
-      },
-    });
-
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
-      }
-      if (error.message.includes('Failed to fetch')) {
-        throw new Error('Network error - please check your connection');
-      }
-    }
-
-    throw error;
-  }
-}
-
-/**
- * Register a new user with JSON format
+ * Register a new user
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
   try {
-    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          first_name: data.firstName || '',
+          last_name: data.lastName || '',
+        },
       },
-      body: JSON.stringify({
-        action: 'register',
-        email: data.email,
-        password: data.password,
-      }),
-      credentials: 'include', // Include cookies for session
-      mode: 'cors',
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const result = await response.json();
-    return result;
+    return { success: true, user: authData.user ?? undefined };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Registration failed. Please check your connection.',
+      error: error instanceof Error ? error.message : 'Registration failed',
     };
   }
 }
 
 /**
- * Login a user with JSON format
+ * Login a user
  */
 export async function login(data: LoginData): Promise<AuthResponse> {
   try {
-    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'login',
-        email: data.email,
-        password: data.password,
-      }),
-      credentials: 'include', // Include cookies for session
-      mode: 'cors',
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const result = await response.json();
-    return result;
+    return { success: true, user: authData.user ?? undefined };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Login failed. Please check your connection.',
+      error: error instanceof Error ? error.message : 'Login failed',
+    };
+  }
+}
+
+/**
+ * Login with Google OAuth
+ */
+export async function loginWithGoogle(): Promise<AuthResponse> {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Google login failed',
     };
   }
 }
@@ -183,23 +106,13 @@ export async function login(data: LoginData): Promise<AuthResponse> {
  */
 export async function logout(): Promise<AuthResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/auth.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'logout',
-      }),
-      credentials: 'include',
-    });
+    const { error } = await supabase.auth.signOut();
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const result = await response.json();
-    return result;
+    return { success: true };
   } catch (error) {
     return {
       success: false,
@@ -209,91 +122,34 @@ export async function logout(): Promise<AuthResponse> {
 }
 
 /**
- * Get current user info with enhanced retry logic
+ * Get current user
  */
 export async function getCurrentUser(): Promise<AuthResponse> {
-  const fetchWithRetry = async (): Promise<AuthResponse> => {
-    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'me',
-      }),
-      credentials: 'include',
-      mode: 'cors',
-    });
-
-    // Handle different response statuses appropriately
-    if (response.status === 401) {
-      return { success: false, error: 'Session expired' };
-    }
-
-    if (response.status === 403) {
-      return { success: false, error: 'Access forbidden' };
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    try {
-      const result = await response.json();
-      return result;
-    } catch (jsonError) {
-      throw new Error('Invalid response format from server');
-    }
-  };
-
   try {
-    return await retryWithBackoff(fetchWithRetry);
-  } catch (error) {
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (error instanceof Error) {
-      if (error.message.includes('Session expired')) {
-        return { success: false, error: 'Session expired' };
-      }
-      if (error.message.includes('Request timeout')) {
-        return { success: false, error: 'Session check timeout - please try again' };
-      }
-      if (error.message.includes('Network error')) {
-        return { success: false, error: 'Network error - please check your connection' };
-      }
+    if (error) {
       return { success: false, error: error.message };
     }
 
-    return { success: false, error: 'Failed to get user info' };
+    if (!user) {
+      return { success: false, error: 'No user found' };
+    }
+
+    return { success: true, user };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get user',
+    };
   }
 }
 
 /**
- * Refresh user session
+ * Get current session
  */
-export async function refreshSession(): Promise<AuthResponse> {
-  try {
-    const response = await enhancedFetch(`${API_BASE_URL}/auth.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'refresh',
-      }),
-      credentials: 'include',
-      mode: 'cors',
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to refresh session',
-    };
-  }
+export async function getSession() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) return { session: null, error: error.message };
+  return { session };
 }

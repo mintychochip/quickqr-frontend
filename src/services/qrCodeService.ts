@@ -1,21 +1,25 @@
 /**
  * QR Code Service
- * Handles fetching and managing QR codes for authenticated users
+ * Handles fetching and managing QR codes via Supabase
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artemis.cs.csub.edu/~quickqr';
+import { supabase } from '../config/supabase';
 
 export interface QRCode {
-  qrcodeid: string;
-  content: string;
-  createdat: string;
-  expirytime: string | null;
-  userid: number;
-  styling: string | null;
+  id: string;
+  user_id: string;
   name: string;
+  content: Record<string, unknown>;
   type: string;
+  styling: Record<string, unknown> | null;
+  mode: string;
+  expirytime: string | null;
   scan_count: number;
+  created_at: string;
+  updated_at: string;
   expired?: number;
+  // Backward compatibility aliases for PHP backend field names
+  qrcodeid?: string;
+  createdat?: string;
 }
 
 export interface FetchCodesResponse {
@@ -29,42 +33,30 @@ export interface FetchCodesResponse {
  */
 export async function fetchUserQRCodes(): Promise<FetchCodesResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/qrcode.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'list',
-        limit: 100,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
     }
 
-    const result = await response.json();
+    const { data, error } = await supabase
+      .from('qrcodes')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
 
-    // Handle different response formats
-    let codes: QRCode[] = [];
-
-    if (Array.isArray(result)) {
-      codes = result;
-    } else if (result.data && result.data.qrcodes && Array.isArray(result.data.qrcodes)) {
-      codes = result.data.qrcodes;
-    } else if (result.codes && Array.isArray(result.codes)) {
-      codes = result.codes;
-    } else if (result.success && result.codes) {
-      codes = result.codes;
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    return {
-      success: true,
-      codes: codes,
-    };
+    // Map to include backward compatibility aliases
+    const codesWithAliases = (data || []).map(qr => ({
+      ...qr,
+      qrcodeid: qr.id,
+      createdat: qr.created_at,
+    }));
+
+    return { success: true, codes: codesWithAliases };
   } catch (error) {
     return {
       success: false,
@@ -74,85 +66,20 @@ export async function fetchUserQRCodes(): Promise<FetchCodesResponse> {
 }
 
 /**
- * Gets a display URL for a QR code (for the "URL" column in dashboard)
- * @param qrCode - The QR code object
- */
-export function getQRCodeDisplayUrl(qrCode: QRCode): string {
-  try {
-    // Check if content exists
-    if (!qrCode.content) {
-      return 'No content';
-    }
-
-    // Parse the content field as JSON
-    const contentDecoded = typeof qrCode.content === 'string'
-      ? JSON.parse(qrCode.content)
-      : qrCode.content;
-
-    // Return appropriate display based on type
-    switch (qrCode.type) {
-      case 'url':
-        return contentDecoded.url || 'N/A';
-      case 'text':
-        return (contentDecoded.text?.substring(0, 50) || 'Text content') + (contentDecoded.text?.length > 50 ? '...' : '');
-      case 'email':
-        return contentDecoded.email || 'Email';
-      case 'phone':
-        return contentDecoded.phone || 'Phone';
-      case 'sms':
-        return contentDecoded.number || 'SMS';
-      case 'location':
-        return `${contentDecoded.latitude},${contentDecoded.longitude}` || 'Location';
-      case 'vcard':
-      case 'mecard':
-        return contentDecoded.name || 'Contact Card';
-      case 'wifi':
-        return contentDecoded.ssid || 'WiFi';
-      case 'event':
-        return contentDecoded.title || 'Event';
-      default:
-        return qrCode.type;
-    }
-  } catch (e) {
-    return qrCode.content?.substring(0, 50) || 'N/A';
-  }
-}
-
-/**
  * Deletes a QR code
- * @param qrcodeId - The ID of the QR code to delete
  */
 export async function deleteQRCode(qrcodeId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/qrcode.php`, {
-      method: 'POST',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'delete',
-        qrcodeid: qrcodeId,
-      }),
-    });
+    const { error } = await supabase
+      .from('qrcodes')
+      .delete()
+      .eq('id', qrcodeId);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const result = await response.json();
-
-    if (result.success) {
-      return {
-        success: true,
-      };
-    } else {
-      return {
-        success: false,
-        error: result.error || 'Failed to delete QR code',
-      };
-    }
+    return { success: true };
   } catch (error) {
     return {
       success: false,
@@ -162,22 +89,50 @@ export async function deleteQRCode(qrcodeId: string): Promise<{ success: boolean
 }
 
 /**
- * Gets the QR code name/title for display
- * For now, we'll use the type or generate one from the qrcodeid
- * @param qrCode - The QR code object
+ * Gets a display URL for a QR code
+ */
+export function getQRCodeDisplayUrl(qrCode: QRCode): string {
+  try {
+    if (!qrCode.content) return 'No content';
+
+    const content = qrCode.content as Record<string, unknown>;
+
+    switch (qrCode.type) {
+      case 'url':
+        return (content.url as string) || 'N/A';
+      case 'text':
+        return ((content.text as string)?.substring(0, 50) || 'Text content') + '...';
+      case 'email':
+        return (content.email as string) || 'Email';
+      case 'phone':
+        return (content.phone as string) || 'Phone';
+      case 'sms':
+        return (content.number as string) || 'SMS';
+      case 'location':
+        return `${content.latitude},${content.longitude}` || 'Location';
+      case 'vcard':
+      case 'mecard':
+        return (content.name as string) || 'Contact Card';
+      case 'wifi':
+        return (content.ssid as string) || 'WiFi';
+      case 'event':
+        return (content.title as string) || 'Event';
+      default:
+        return qrCode.type;
+    }
+  } catch {
+    return 'N/A';
+  }
+}
+
+/**
+ * Gets the QR code name for display
  */
 export function getQRCodeName(qrCode: QRCode): string {
-  // Use the name field from database if available
-  if (qrCode.name) {
-    return qrCode.name;
-  }
-
-  // Fallback: Generate name from type
+  if (qrCode.name) return qrCode.name;
   if (qrCode.type) {
     const typeFormatted = qrCode.type === 'url' ? 'URL' : qrCode.type === 'sms' ? 'SMS' : qrCode.type.charAt(0).toUpperCase() + qrCode.type.slice(1);
     return typeFormatted + ' QR Code';
   }
-
-  // Last fallback: use first 8 chars of qrcodeid
-  return `QR ${qrCode.qrcodeid?.substring(0, 8) || 'Unknown'}`;
+  return `QR ${qrCode.id?.substring(0, 8) || 'Unknown'}`;
 }

@@ -11,6 +11,7 @@ import Pricing from './pages/Pricing';
 import QRCodeRedirect from './pages/QRCodeRedirect';
 import CreateQRCode from './pages/CreateQRCode';
 import Admin from './pages/Admin';
+import AuthCallback from './pages/AuthCallback';
 
 function Navigation() {
   const location = useLocation();
@@ -292,6 +293,7 @@ function AppContent() {
           } />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/code/:slug" element={<QRCodeRedirect />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>
       </main>
 
