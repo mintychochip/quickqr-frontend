@@ -291,6 +291,7 @@ const DashboardQRList = () => {
                   bgColor={qr.styling?.bgColor || '#ffffff'}
                   fgColor={qr.styling?.dotsColor || '#000000'}
                 />
+                <div style={{fontSize: '10px', color: '#999', textAlign: 'center', marginTop: '2px'}}>{qr.id.slice(0,8)}</div>
               </div>
               
               <div className="qr-info-enhanced">
