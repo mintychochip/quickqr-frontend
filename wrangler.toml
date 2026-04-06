@@ -8,8 +8,8 @@ directory = "dist"
 
 # Environment variables (these will be set in Cloudflare dashboard)
 [vars]
-PUBLIC_SUPABASE_URL = ""
-PUBLIC_SUPABASE_PUBLISHABLE_KEY = ""
+PUBLIC_SUPABASE_URL = "https://ghusxqefferhjeaqebbk.supabase.co"
+PUBLIC_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodXN4cWVmZmVyaGplYXFlYmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMzMDgxMjQsImV4cCI6MjA1ODg4NDEyNH0.17XVIT8J8gzcf29g_5ytK5zuJ0Xdz9kaejUB7DD2i2Y"
 
 # Route configuration - handle all routes
 [[routes]]
