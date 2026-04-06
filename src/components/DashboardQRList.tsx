@@ -1,6 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../config/supabase';
 import Chart from 'chart.js/auto';
 
 interface QRCode {
@@ -19,28 +19,12 @@ interface ScanData {
   os: string;
 }
 
-declare global {
-  interface Window {
-    __DASHBOARD_DATA__?: {
-      qrCodes: QRCode[];
-      baseUrl: string;
-      userId: string;
-    };
-  }
-}
-
 const DashboardQRList = () => {
-  // Get data from window
-  const [data] = useState(() => window.__DASHBOARD_DATA__ || { qrCodes: [], baseUrl: '', userId: '' });
-  const [qrCodes, setQrCodes] = useState<QRCode[]>(data.qrCodes);
-  const [baseUrl] = useState(data.baseUrl);
+  const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [baseUrl] = useState(() => typeof window !== 'undefined' ? window.location.origin : '');
   
-  // Initialize Supabase client
-  const [supabase] = useState(() => {
-    const supabaseUrl = (import.meta as any).env?.PUBLIC_SUPABASE_URL || '';
-    const supabaseKey = (import.meta as any).env?.PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-    return createClient(supabaseUrl, supabaseKey);
-  });
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -50,12 +34,59 @@ const DashboardQRList = () => {
   const chartRefs = useRef<Record<string, Chart | null>>({});
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
+  // Fetch QR codes on mount
+  useEffect(() => {
+    async function loadQRCodes() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        
+        if (authError || !session?.user) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+
+        const user = session.user;
+
+        const { data: codes, error: qrError } = await supabase
+          .from('qrcodes')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (qrError) {
+          setError(qrError.message);
+        } else {
+          setQrCodes(codes || []);
+          
+          // Update stats in parent
+          const totalEl = document.getElementById('stat-total');
+          const scansEl = document.getElementById('stat-scans');
+          const dynamicEl = document.getElementById('stat-dynamic');
+          
+          if (totalEl) totalEl.textContent = String(codes?.length || 0);
+          if (scansEl) scansEl.textContent = String(codes?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0);
+          if (dynamicEl) dynamicEl.textContent = String(codes?.filter(qr => qr.mode === 'dynamic').length || 0);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadQRCodes();
+  }, []);
+
   const getQRUrl = (qr: QRCode) => {
     return `${baseUrl}/r/${qr.id}`;
   };
 
   const getQRValue = (qr: QRCode) => {
-    // Generate the actual content that the QR code encodes
     switch (qr.type) {
       case 'url':
         return qr.content?.url || getQRUrl(qr);
@@ -73,7 +104,7 @@ const DashboardQRList = () => {
   };
 
   const loadAnalytics = async (qrId: string) => {
-    if (scanData[qrId]) return; // Already loaded
+    if (scanData[qrId]) return;
     
     setLoadingAnalytics(prev => ({ ...prev, [qrId]: true }));
     
@@ -125,7 +156,6 @@ const DashboardQRList = () => {
       .eq('id', qr.id);
 
     if (!error) {
-      // Update local state
       setQrCodes(prev => prev.map(q => 
         q.id === qr.id 
           ? { ...q, name: editName, ...(updates.content && { content: editContent }) }
@@ -159,20 +189,15 @@ const DashboardQRList = () => {
     const scans = scanData[expandedId];
     if (scans.length === 0) return;
 
-    // Destroy existing chart
     if (chartRefs.current[expandedId]) {
       chartRefs.current[expandedId]?.destroy();
     }
 
-    // Prepare data for charts
     const osCounts: Record<string, number> = {};
     const dailyCounts: Record<string, number> = {};
     
     scans.forEach(scan => {
-      // OS breakdown
       osCounts[scan.os] = (osCounts[scan.os] || 0) + 1;
-      
-      // Daily timeline
       const date = new Date(scan.scanned_at).toLocaleDateString();
       dailyCounts[date] = (dailyCounts[date] || 0) + 1;
     });
@@ -186,7 +211,7 @@ const DashboardQRList = () => {
     chartRefs.current[expandedId] = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: Object.keys(dailyCounts).slice(-14), // Last 14 days
+        labels: Object.keys(dailyCounts).slice(-14),
         datasets: [{
           label: 'Scans',
           data: Object.values(dailyCounts).slice(-14),
@@ -199,15 +224,8 @@ const DashboardQRList = () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1 }
-          }
-        }
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
       }
     });
 
@@ -215,6 +233,23 @@ const DashboardQRList = () => {
       chartRefs.current[expandedId]?.destroy();
     };
   }, [expandedId, scanData]);
+
+  if (loading) {
+    return (
+      <div className="qr-grid-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading QR codes...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="qr-grid-error">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
 
   if (!qrCodes || qrCodes.length === 0) {
     return (
@@ -316,7 +351,7 @@ const DashboardQRList = () => {
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="12" y1="20" x2="12" y4="4"></line>
                     <line x1="6" y1="20" x2="6" y2="14"></line>
                   </svg>
                 </button>
