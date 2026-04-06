@@ -1,30 +1,70 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import '../../styles/auth.css';
-import { createServerClient } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+const supabasePublishableKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+
+// Debug logging
+console.log('Callback env vars present:', { 
+  hasUrl: !!supabaseUrl, 
+  hasKey: !!supabasePublishableKey,
+  url: supabaseUrl?.slice(0, 20) + '...'
+});
 
 // Exchange code for session
 const url = Astro.request.url;
 const code = new URL(url).searchParams.get('code');
 const accessToken = new URL(url).searchParams.get('access_token');
 const refreshToken = new URL(url).searchParams.get('refresh_token');
+const errorParam = new URL(url).searchParams.get('error');
+const errorDescription = new URL(url).searchParams.get('error_description');
 
-let authError = null;
+console.log('Callback params:', { code: !!code, accessToken: !!accessToken, error: errorParam });
 
-if (code) {
+let authError = errorParam ? `${errorParam}: ${errorDescription}` : null;
+
+if (code && supabaseUrl && supabasePublishableKey) {
   // PKCE flow - exchange code for session
-  const supabase = createServerClient(Astro.cookies);
+  const supabase = createClient(supabaseUrl, supabasePublishableKey);
+  
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+  console.log('Exchange result:', { success: !!data?.session, error: error?.message });
   
   if (error) {
     authError = error.message;
   } else if (data.session) {
+    // Extract session tokens
+    const { access_token, refresh_token } = data.session;
+    
+    // Set auth cookies for SSR
+    Astro.cookies.set('sb-access-token', access_token, {
+      path: '/',
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+    
+    Astro.cookies.set('sb-refresh-token', refresh_token, {
+      path: '/',
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+    
+    console.log('Cookies set, redirecting to dashboard');
+    
     // Successfully authenticated, redirect to dashboard
     return Astro.redirect('/dashboard');
   }
-} else if (accessToken) {
+} else if (accessToken && supabaseUrl && supabasePublishableKey) {
   // Implicit flow - set session from tokens
-  const supabase = createServerClient(Astro.cookies);
+  const supabase = createClient(supabaseUrl, supabasePublishableKey);
+  
   const { data, error } = await supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken || '',
@@ -33,9 +73,30 @@ if (code) {
   if (error) {
     authError = error.message;
   } else if (data.session) {
+    // Set auth cookies for SSR
+    Astro.cookies.set('sb-access-token', data.session.access_token, {
+      path: '/',
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    
+    Astro.cookies.set('sb-refresh-token', data.session.refresh_token, {
+      path: '/',
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    
     // Successfully authenticated, redirect to dashboard
     return Astro.redirect('/dashboard');
   }
+} else if (!code && !accessToken && !errorParam) {
+  // No code and no error - just redirect to home
+  console.log('No auth params, redirecting to home');
+  return Astro.redirect('/');
 }
 ---
 
@@ -46,7 +107,7 @@ if (code) {
         <div class="auth-header">
           <h1>Sign In Error</h1>
           <p style="color: #ef4444;">{authError}</p>
-          <a href="/auth/signin" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Try again</a>
+          <a href="/" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Try again</a>
         </div>
       ) : (
         <div class="auth-loading">
