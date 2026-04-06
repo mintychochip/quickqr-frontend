@@ -131,12 +131,13 @@ const isHiddenRoute = currentPath.startsWith('/code/') || currentPath === '/crea
     if (user) {
       // User is logged in - show dashboard link and logout
       const userName = user.email?.split('@')[0] || 'User';
+      const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
       
       if (navAuthSection) {
         navAuthSection.innerHTML = `
           <a href="/dashboard" class="nav-link">Dashboard</a>
           <div class="nav-user-badge">
-            <div class="nav-user-dot"></div>
+            ${avatarUrl ? `<img src="${avatarUrl}" alt="${userName}" class="nav-user-avatar" />` : '<div class="nav-user-dot"></div>'}
             <span class="nav-user-name">${userName}</span>
           </div>
           <button id="logout-btn" class="nav-btn nav-btn-secondary nav-btn-logout">
@@ -160,7 +161,7 @@ const isHiddenRoute = currentPath.startsWith('/code/') || currentPath === '/crea
         mobileAuthSection.innerHTML = `
           <div class="nav-mobile-user">
             <div class="nav-mobile-user-info">
-              <div class="nav-mobile-user-dot"></div>
+              ${avatarUrl ? `<img src="${avatarUrl}" alt="${userName}" class="nav-mobile-user-avatar" />` : '<div class="nav-mobile-user-dot"></div>'}
               <div>
                 <div class="nav-mobile-user-name">${userName}</div>
                 <div class="nav-mobile-user-email">${user.email}</div>

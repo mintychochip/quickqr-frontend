@@ -141,6 +141,75 @@ import '../styles/create.css';
                     <span>Text</span>
                   </span>
                 </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="social" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    </svg>
+                    <span>Social</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="youtube" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                      <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                    </svg>
+                    <span>YouTube</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="spotify" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M8 12c2.5-1 5.5-1 8 0"></path>
+                      <path d="M8 15c3-1.5 5-1.5 8 0"></path>
+                      <path d="M8 9c3-1.5 5-1.5 8 0"></path>
+                    </svg>
+                    <span>Spotify</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="app" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                      <line x1="12" y1="8" x2="12" y2="8"></line>
+                      <line x1="12" y1="16" x2="12" y2="16"></line>
+                      <line x1="8" y1="12" x2="8" y2="12"></line>
+                      <line x1="16" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    <span>App</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="zoom" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M15 10l4.5-4.5a2.12 2.12 0 0 0 0-3h0a2.12 2.12 0 0 0-3 0L12 7"></path>
+                      <path d="M15 14l4.5 4.5a2.12 2.12 0 0 1 0 3h0a2.12 2.12 0 0 1-3 0L12 17"></path>
+                      <path d="M9 10L4.5 5.5a2.12 2.12 0 0 1 0-3h0a2.12 2.12 0 0 1 3 0L12 7"></path>
+                      <path d="M9 14l-4.5 4.5a2.12 2.12 0 0 0 0 3h0a2.12 2.12 0 0 0 3 0L12 17"></path>
+                    </svg>
+                    <span>Zoom</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="pdf" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <path d="M9 13h6"></path>
+                      <path d="M9 17h6"></path>
+                      <path d="M9 9h1"></path>
+                    </svg>
+                    <span>PDF</span>
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -317,6 +386,96 @@ import '../styles/create.css';
                 <div class="form-group">
                   <label for="textcontent">Text Content</label>
                   <textarea id="textcontent" name="textcontent" rows="4" placeholder="Enter any text..."></textarea>
+                </div>
+              </div>
+
+              <!-- Social Fields -->
+              <div id="social-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="socialPlatform">Platform</label>
+                  <select id="socialPlatform" name="socialPlatform">
+                    <option value="instagram">Instagram</option>
+                    <option value="twitter">Twitter/X</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="snapchat">Snapchat</option>
+                    <option value="threads">Threads</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="socialUrl">Profile URL</label>
+                  <input type="url" id="socialUrl" name="socialUrl" placeholder="https://instagram.com/username" />
+                </div>
+              </div>
+
+              <!-- YouTube Fields -->
+              <div id="youtube-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="youtubeUrl">YouTube URL</label>
+                  <input type="url" id="youtubeUrl" name="youtubeUrl" placeholder="https://youtube.com/watch?v=..." />
+                </div>
+              </div>
+
+              <!-- Spotify Fields -->
+              <div id="spotify-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="spotifyType">Type</label>
+                  <select id="spotifyType" name="spotifyType">
+                    <option value="track">Song/Track</option>
+                    <option value="album">Album</option>
+                    <option value="playlist">Playlist</option>
+                    <option value="artist">Artist</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="spotifyUrl">Spotify URL</label>
+                  <input type="url" id="spotifyUrl" name="spotifyUrl" placeholder="https://open.spotify.com/track/..." />
+                </div>
+              </div>
+
+              <!-- App Store Fields -->
+              <div id="app-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="appName">App Name</label>
+                  <input type="text" id="appName" name="appName" placeholder="My App" />
+                </div>
+                <div class="form-group">
+                  <label for="appStoreUrl">App Store URL (iOS)</label>
+                  <input type="url" id="appStoreUrl" name="appStoreUrl" placeholder="https://apps.apple.com/..." />
+                </div>
+                <div class="form-group">
+                  <label for="playStoreUrl">Play Store URL (Android)</label>
+                  <input type="url" id="playStoreUrl" name="playStoreUrl" placeholder="https://play.google.com/store/apps/..." />
+                </div>
+              </div>
+
+              <!-- Zoom Fields -->
+              <div id="zoom-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="zoomUrl">Zoom Meeting URL</label>
+                  <input type="url" id="zoomUrl" name="zoomUrl" placeholder="https://zoom.us/j/..." />
+                </div>
+                <div class="form-group">
+                  <label for="zoomMeetingId">Meeting ID (optional)</label>
+                  <input type="text" id="zoomMeetingId" name="zoomMeetingId" placeholder="123 456 7890" />
+                </div>
+                <div class="form-group">
+                  <label for="zoomPasscode">Passcode (optional)</label>
+                  <input type="text" id="zoomPasscode" name="zoomPasscode" placeholder="xxxxxx" />
+                </div>
+              </div>
+
+              <!-- PDF Fields -->
+              <div id="pdf-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="pdfUrl">PDF URL</label>
+                  <input type="url" id="pdfUrl" name="pdfUrl" placeholder="https://example.com/document.pdf" />
+                </div>
+                <div class="form-group">
+                  <label for="pdfTitle">Title (optional)</label>
+                  <input type="text" id="pdfTitle" name="pdfTitle" placeholder="Document Title" />
                 </div>
               </div>
             </div>
@@ -734,6 +893,53 @@ import '../styles/create.css';
         const text = document.getElementById('textcontent')?.value?.trim();
         return text ? { text } : null;
       
+      case 'social':
+        const socialUrl = document.getElementById('socialUrl')?.value?.trim();
+        if (!socialUrl) return null;
+        return {
+          platform: document.getElementById('socialPlatform')?.value || 'other',
+          url: socialUrl
+        };
+      
+      case 'youtube':
+        const youtubeUrl = document.getElementById('youtubeUrl')?.value?.trim();
+        return youtubeUrl ? { url: youtubeUrl } : null;
+      
+      case 'spotify':
+        const spotifyUrl = document.getElementById('spotifyUrl')?.value?.trim();
+        if (!spotifyUrl) return null;
+        return {
+          type: document.getElementById('spotifyType')?.value || 'track',
+          url: spotifyUrl
+        };
+      
+      case 'app':
+        const appStoreUrl = document.getElementById('appStoreUrl')?.value?.trim();
+        const playStoreUrl = document.getElementById('playStoreUrl')?.value?.trim();
+        if (!appStoreUrl && !playStoreUrl) return null;
+        return {
+          name: document.getElementById('appName')?.value || 'My App',
+          appStoreUrl,
+          playStoreUrl
+        };
+      
+      case 'zoom':
+        const zoomUrl = document.getElementById('zoomUrl')?.value?.trim();
+        if (!zoomUrl) return null;
+        return {
+          url: zoomUrl,
+          meetingId: document.getElementById('zoomMeetingId')?.value || '',
+          passcode: document.getElementById('zoomPasscode')?.value || ''
+        };
+      
+      case 'pdf':
+        const pdfUrl = document.getElementById('pdfUrl')?.value?.trim();
+        if (!pdfUrl) return null;
+        return {
+          url: pdfUrl,
+          title: document.getElementById('pdfTitle')?.value || 'Document'
+        };
+      
       default:
         return null;
     }
@@ -806,6 +1012,25 @@ import '../styles/create.css';
       
       case 'text':
         return content.text;
+      
+      case 'social':
+        return content.url;
+      
+      case 'youtube':
+        return content.url;
+      
+      case 'spotify':
+        return content.url;
+      
+      case 'app':
+        // For apps, use a simple landing page URL or the first available store URL
+        return content.appStoreUrl || content.playStoreUrl;
+      
+      case 'zoom':
+        return content.url;
+      
+      case 'pdf':
+        return content.url;
       
       default:
         return null;
