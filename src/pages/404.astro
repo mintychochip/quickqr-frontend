@@ -97,25 +97,11 @@ import MainLayout from '../layouts/MainLayout.astro';
       else if (ua.includes('win')) os = 'Windows';
       else if (ua.includes('linux')) os = 'Linux';
 
-      supabase.from('scans').insert({ qrcode_id: slug, os }).then(({ error }) => {
-        if (error) console.error('Failed to record scan:', error);
-      });
-
-      const { data: current } = await supabase
-        .from('qrcodes')
-        .select('scan_count')
-        .eq('id', slug)
-        .single();
-      
-      if (current) {
-        supabase
-          .from('qrcodes')
-          .update({ scan_count: (current.scan_count || 0) + 1 })
-          .eq('id', slug)
-          .then(({ error }) => {
-            if (error) console.error('Failed to increment scan count:', error);
-          });
-      }
+      // Record scan and increment count using RPC
+      await Promise.all([
+        supabase.from('scans').insert({ qrcode_id: slug, os }),
+        supabase.rpc('increment_scan_count', { qr_id: slug })
+      ]);
     }
 
     // Build redirect URL
