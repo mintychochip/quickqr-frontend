@@ -64,8 +64,8 @@ const user: User | null = session?.user ? {
         </div>
       ) : (
         <div class="nav-right hidden md:flex">
-          <a href="/auth/signin" class="nav-btn nav-btn-ghost">Sign In</a>
-          <a href="/auth/signup" class="nav-btn nav-btn-primary">Get Started</a>
+          <button id="open-auth-sidebar-btn" class="nav-btn nav-btn-ghost">Sign In</button>
+          <button id="open-auth-sidebar-btn-start" class="nav-btn nav-btn-primary">Get Started</button>
         </div>
       )}
 
@@ -180,6 +180,9 @@ const user: User | null = session?.user ? {
 
   mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
   mobileBackdrop?.addEventListener('click', closeMobileMenu);
+
+  document.getElementById('open-auth-sidebar-btn')?.addEventListener('click', () => (window as any).openAuthSidebar?.());
+  document.getElementById('open-auth-sidebar-btn-start')?.addEventListener('click', () => (window as any).openAuthSidebar?.());
 
   async function handleLogout() {
     await supabase.auth.signOut();

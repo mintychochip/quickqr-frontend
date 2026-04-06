@@ -1,6 +1,7 @@
 ---
 import Navigation from '../components/Navigation.astro';
 import Footer from '../components/Footer.astro';
+import AuthSidebar from '../components/AuthSidebar.astro';
 import '../styles/global.css';
 import '../styles/navigation.css';
 import '../styles/footer.css';
@@ -31,5 +32,6 @@ const { title, description = 'Lightning-fast QR code generation for everyone.' }
       <slot />
     </main>
     <Footer />
+    <AuthSidebar />
   </body>
 </html>

@@ -1,0 +1,28 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import '../../styles/auth.css';
+
+// Exchange code for session
+const url = Astro.request.url;
+const code = new URL(url).searchParams.get('code');
+
+if (code) {
+  const { supabase } = await import('../../lib/supabase');
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (!error) {
+    return Astro.redirect('/dashboard');
+  }
+}
+---
+
+<MainLayout title="Signing In - QuickQR">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-loading">
+        <div class="spinner"></div>
+        <p>Signing you in...</p>
+      </div>
+    </div>
+  </div>
+</MainLayout>
