@@ -2,12 +2,22 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 
+interface QRStyling {
+  dotsColor?: string;
+  bgColor?: string;
+  fgColor?: string;
+  dotsType?: string;
+  cornerSquareColor?: string;
+  cornerDotColor?: string;
+}
+
 interface QRCode {
   id: string;
   name: string;
   type: string;
   mode: string;
   content: any;
+  styling?: QRStyling;
   scan_count: number;
   created_at: string;
   expirytime?: string;
@@ -17,6 +27,15 @@ interface ScanData {
   scanned_at: string;
   os: string;
 }
+
+const defaultStyling: QRStyling = {
+  dotsColor: '#000000',
+  bgColor: '#ffffff',
+  fgColor: '#000000',
+  dotsType: 'square',
+  cornerSquareColor: '#000000',
+  cornerDotColor: '#000000',
+};
 
 const DashboardQRList = () => {
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
@@ -28,6 +47,8 @@ const DashboardQRList = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editContent, setEditContent] = useState<any>(null);
+  const [editStyling, setEditStyling] = useState<QRStyling>(defaultStyling);
+  const [editMode, setEditMode] = useState<'content' | 'style'>('content');
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [loadingAnalytics, setLoadingAnalytics] = useState<Record<string, boolean>>({});
   
@@ -105,6 +126,10 @@ const DashboardQRList = () => {
     }
   };
 
+  const getQRStyling = (qr: QRCode): QRStyling => {
+    return { ...defaultStyling, ...qr.styling };
+  };
+
   const loadAnalytics = async (qrId: string) => {
     if (scanData[qrId]) return;
     
@@ -133,16 +158,20 @@ const DashboardQRList = () => {
     }
   };
 
-  const startEdit = (qr: QRCode) => {
+  const startEdit = (qr: QRCode, mode: 'content' | 'style' = 'content') => {
     setEditingId(qr.id);
+    setEditMode(mode);
     setEditName(qr.name || '');
     setEditContent(qr.content ? JSON.parse(JSON.stringify(qr.content)) : {});
+    setEditStyling(getQRStyling(qr));
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName('');
     setEditContent(null);
+    setEditStyling(defaultStyling);
+    setEditMode('content');
   };
 
   const saveEdit = async (qr: QRCode) => {
@@ -150,6 +179,10 @@ const DashboardQRList = () => {
     
     if (editContent && JSON.stringify(editContent) !== JSON.stringify(qr.content)) {
       updates.content = editContent;
+    }
+
+    if (editStyling && JSON.stringify(editStyling) !== JSON.stringify(qr.styling || defaultStyling)) {
+      updates.styling = editStyling;
     }
 
     const { error } = await supabase
@@ -160,7 +193,7 @@ const DashboardQRList = () => {
     if (!error) {
       setQrCodes(prev => prev.map(q => 
         q.id === qr.id 
-          ? { ...q, name: editName, ...(updates.content && { content: editContent }) }
+          ? { ...q, name: editName, ...(updates.content && { content: editContent }), ...(updates.styling && { styling: editStyling }) }
           : q
       ));
       setEditingId(null);
@@ -197,6 +230,111 @@ const DashboardQRList = () => {
       alert('Failed to delete: ' + error.message);
       setDeleting(false);
     }
+  };
+
+  const renderEditForm = (qr: QRCode) => {
+    const styling = getQRStyling(qr);
+
+    return (
+      <div className="qr-edit-form">
+        <input
+          type="text"
+          value={editName}
+          onChange={(e) => setEditName(e.target.value)}
+          placeholder="QR Code Name"
+          className="edit-input"
+        />
+        
+        {/* Edit Mode Tabs */}
+        <div className="edit-tabs">
+          <button 
+            className={`edit-tab ${editMode === 'content' ? 'active' : ''}`}
+            onClick={() => setEditMode('content')}
+          >
+            Content
+          </button>
+          <button 
+            className={`edit-tab ${editMode === 'style' ? 'active' : ''}`}
+            onClick={() => setEditMode('style')}
+          >
+            Style
+          </button>
+        </div>
+
+        {editMode === 'content' ? (
+          <>
+            {qr.type === 'url' && (
+              <input
+                type="url"
+                value={editContent?.url || ''}
+                onChange={(e) => setEditContent({ ...editContent, url: e.target.value })}
+                placeholder="URL"
+                className="edit-input"
+              />
+            )}
+            {qr.type === 'email' && (
+              <input
+                type="email"
+                value={editContent?.email || ''}
+                onChange={(e) => setEditContent({ ...editContent, email: e.target.value })}
+                placeholder="Email"
+                className="edit-input"
+              />
+            )}
+            {qr.type === 'phone' && (
+              <input
+                type="tel"
+                value={editContent?.phone || ''}
+                onChange={(e) => setEditContent({ ...editContent, phone: e.target.value })}
+                placeholder="Phone"
+                className="edit-input"
+              />
+            )}
+          </>
+        ) : (
+          <div className="style-editor">
+            <div className="style-row">
+              <div className="style-field">
+                <label>Dots Color</label>
+                <div className="color-picker">
+                  <input
+                    type="color"
+                    value={editStyling.dotsColor || '#000000'}
+                    onChange={(e) => setEditStyling({ ...editStyling, dotsColor: e.target.value })}
+                  />
+                  <span>{editStyling.dotsColor}</span>
+                </div>
+              </div>
+              <div className="style-field">
+                <label>Background</label>
+                <div className="color-picker">
+                  <input
+                    type="color"
+                    value={editStyling.bgColor || '#ffffff'}
+                    onChange={(e) => setEditStyling({ ...editStyling, bgColor: e.target.value })}
+                  />
+                  <span>{editStyling.bgColor}</span>
+                </div>
+              </div>
+            </div>
+            <div className="style-preview">
+              <QRCodeSVG
+                value={getQRValue({ ...qr, styling: editStyling })}
+                size={80}
+                level="M"
+                bgColor={editStyling.bgColor || '#ffffff'}
+                fgColor={editStyling.dotsColor || '#000000'}
+              />
+            </div>
+          </div>
+        )}
+        
+        <div className="edit-actions">
+          <button onClick={() => saveEdit(qr)} className="edit-btn save">Save</button>
+          <button onClick={cancelEdit} className="edit-btn cancel">Cancel</button>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -242,62 +380,24 @@ const DashboardQRList = () => {
         const scans = scanData[qr.id] || [];
         const osCounts: Record<string, number> = {};
         scans.forEach(s => { osCounts[s.os] = (osCounts[s.os] || 0) + 1; });
+        const styling = getQRStyling(qr);
 
         return (
           <div key={qr.id} className={`qr-card-enhanced ${isExpanded ? 'expanded' : ''}`}>
             <div className="qr-card-main">
-              <div className="qr-preview-enhanced">
+              <div className="qr-preview-enhanced" style={{ backgroundColor: styling.bgColor }}>
                 <QRCodeSVG
                   value={getQRValue(qr)}
                   size={80}
                   level="M"
-                  bgColor="#ffffff"
-                  fgColor="#000000"
+                  bgColor={styling.bgColor || '#ffffff'}
+                  fgColor={styling.dotsColor || '#000000'}
                 />
               </div>
               
               <div className="qr-info-enhanced">
                 {isEditing ? (
-                  <div className="qr-edit-form">
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="QR Code Name"
-                      className="edit-input"
-                    />
-                    {qr.type === 'url' && (
-                      <input
-                        type="url"
-                        value={editContent?.url || ''}
-                        onChange={(e) => setEditContent({ ...editContent, url: e.target.value })}
-                        placeholder="URL"
-                        className="edit-input"
-                      />
-                    )}
-                    {qr.type === 'email' && (
-                      <input
-                        type="email"
-                        value={editContent?.email || ''}
-                        onChange={(e) => setEditContent({ ...editContent, email: e.target.value })}
-                        placeholder="Email"
-                        className="edit-input"
-                      />
-                    )}
-                    {qr.type === 'phone' && (
-                      <input
-                        type="tel"
-                        value={editContent?.phone || ''}
-                        onChange={(e) => setEditContent({ ...editContent, phone: e.target.value })}
-                        placeholder="Phone"
-                        className="edit-input"
-                      />
-                    )}
-                    <div className="edit-actions">
-                      <button onClick={() => saveEdit(qr)} className="edit-btn save">Save</button>
-                      <button onClick={cancelEdit} className="edit-btn cancel">Cancel</button>
-                    </div>
-                  </div>
+                  renderEditForm(qr)
                 ) : (
                   <>
                     <h3 className="qr-name">{qr.name || 'Unnamed QR'}</h3>
@@ -327,13 +427,23 @@ const DashboardQRList = () => {
                   </button>
                 )}
                 <button 
-                  onClick={() => startEdit(qr)} 
+                  onClick={() => startEdit(qr, 'content')} 
                   className="action-btn edit"
-                  title="Edit"
+                  title="Edit Content"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => startEdit(qr, 'style')} 
+                  className="action-btn style"
+                  title="Edit Style"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="3"></circle>
                   </svg>
                 </button>
                 <a 

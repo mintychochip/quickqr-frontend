@@ -714,6 +714,100 @@
   color: #dc2626;
 }
 
+/* Edit Tabs */
+.edit-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.edit-tab {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  background: white;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-gray-600, #4b5563);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-tab:hover {
+  border-color: var(--color-teal-500, #14b8a6);
+  color: var(--color-teal-600, #0d9488);
+}
+
+.edit-tab.active {
+  background-color: var(--color-teal-50, #f0fdfa);
+  border-color: var(--color-teal-500, #14b8a6);
+  color: var(--color-teal-700, #0f766e);
+}
+
+/* Style Editor */
+.style-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.style-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.style-field label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-gray-500, #6b7280);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-picker input[type="color"] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.color-picker span {
+  font-size: 0.75rem;
+  color: var(--color-gray-600, #4b5563);
+  font-family: monospace;
+}
+
+.style-preview {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
+  background: var(--color-gray-100, #f3f4f6);
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Style action button */
+.qr-actions-enhanced .action-btn.style {
+  background-color: var(--color-gray-50, #f9fafb);
+  color: var(--color-gray-600, #4b5563);
+}
+
+.qr-actions-enhanced .action-btn.style:hover {
+  background-color: var(--color-purple-100, #f3e8ff);
+  color: var(--color-purple-700, #7c3aed);
+}
+
 /* Delete Modal */
 .modal-overlay {
   position: fixed;
