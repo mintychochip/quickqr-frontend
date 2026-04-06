@@ -1,0 +1,157 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Privacy Policy - QuickQR">
+  <div class="legal-container">
+    <div class="legal-content">
+      <h1>Privacy Policy</h1>
+      <p class="last-updated">Last updated: April 6, 2026</p>
+
+      <section>
+        <h2>What We Collect</h2>
+        <p>We only collect what's necessary to run QuickQR:</p>
+        <ul>
+          <li><strong>Account info:</strong> Email address (for login) and any profile details you choose to add</li>
+          <li><strong>QR codes:</strong> The content you create (URLs, contact info, etc.) and their styling preferences</li>
+          <li><strong>Analytics:</strong> For dynamic QR codes only - we log scan counts, device type (iOS/Android/etc.), and rough location (country/city level)</li>
+          <li><strong>Payment info:</strong> Handled by Stripe - we never see your full card details</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What We Don't Do</h2>
+        <ul>
+          <li>We don't sell your data to anyone</li>
+          <li>We don't track you across the web</li>
+          <li>We don't use cookies for advertising</li>
+          <li>We don't store passwords in plain text (bcrypt hashed)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>How We Use Your Data</h2>
+        <ul>
+          <li>To display your QR codes and their analytics</li>
+          <li>To send you important account notifications</li>
+          <li>To prevent abuse and spam (we check for malicious URLs)</li>
+          <li>To improve the service (aggregated usage stats, not individual tracking)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Data Storage</h2>
+        <p>Everything lives on Supabase infrastructure (US-based). We keep your QR codes until you delete them or close your account. Backups are retained for 30 days then purged.</p>
+      </section>
+
+      <section>
+        <h2>Your Rights</h2>
+        <p>You can:</p>
+        <ul>
+          <li>Export your QR codes anytime</li>
+          <li>Delete individual QR codes or your entire account</li>
+          <li>Request a copy of your data</li>
+          <li>Update your email or profile info</li>
+        </ul>
+        <p>Email <a href="mailto:support@quickqr.app">support@quickqr.app</a> for data requests.</p>
+      </section>
+
+      <section>
+        <h2>Static vs Dynamic QR Codes</h2>
+        <p><strong>Static QR codes:</strong> We generate the image and that's it. No tracking, no storage of scan data.</p>
+        <p><strong>Dynamic QR codes:</strong> We host a redirect and log basic analytics (device type, location, timestamp) so you can see how they're performing.</p>
+      </section>
+
+      <section>
+        <h2>Security</h2>
+        <p>We use industry standard practices: HTTPS everywhere, hashed passwords, row-level security on the database, and regular dependency updates. That said, no system is perfect - don't use QuickQR for nuclear launch codes.</p>
+      </section>
+
+      <section>
+        <h2>Changes</h2>
+        <p>If we materially change this policy, we'll email you and post a notice. Continued use after changes means you're cool with it.</p>
+      </section>
+
+      <section>
+        <h2>Contact</h2>
+        <p>Questions? <a href="mailto:support@quickqr.app">support@quickqr.app</a></p>
+      </section>
+    </div>
+  </div>
+</MainLayout>
+
+<style>
+  .legal-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .legal-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-gray-900, #111827);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .last-updated {
+    font-size: 0.875rem;
+    color: var(--color-gray-500, #6b7280);
+    margin-bottom: 2rem;
+  }
+
+  .legal-content section {
+    margin-bottom: 2rem;
+  }
+
+  .legal-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-gray-900, #111827);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  }
+
+  .legal-content p {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--color-gray-600, #4b5563);
+    margin: 0 0 1rem 0;
+  }
+
+  .legal-content ul {
+    margin: 0 0 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .legal-content li {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--color-gray-600, #4b5563);
+    margin-bottom: 0.5rem;
+  }
+
+  .legal-content a {
+    color: var(--color-teal-600, #0d9488);
+    text-decoration: none;
+  }
+
+  .legal-content a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .legal-container {
+      padding: 2rem 1rem;
+    }
+
+    .legal-content h1 {
+      font-size: 1.5rem;
+    }
+
+    .legal-content h2 {
+      font-size: 1.125rem;
+    }
+  }
+</style>

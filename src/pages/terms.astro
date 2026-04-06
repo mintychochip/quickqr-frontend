@@ -1,0 +1,201 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Terms of Service - QuickQR">
+  <div class="legal-container">
+    <div class="legal-content">
+      <h1>Terms of Service</h1>
+      <p class="last-updated">Last updated: April 6, 2026</p>
+
+      <section>
+        <h2>The Basics</h2>
+        <p>QuickQR lets you create QR codes. Free tier gets you static QR codes. Paid tier adds dynamic QR codes with analytics. Don't use it for evil.</p>
+      </section>
+
+      <section>
+        <h2>Your Account</h2>
+        <ul>
+          <li>You need an account to save QR codes</li>
+          <li>Keep your login info secure</li>
+          <li>You're responsible for what you create</li>
+          <li>One person per account (don't share logins)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What You Can't Do</h2>
+        <p>Don't use QuickQR to create QR codes that:</p>
+        <ul>
+          <li>Link to malware, phishing, or scam sites</li>
+          <li>Distribute illegal content</li>
+          <li>Harass, threaten, or dox people</li>
+          <li>Impersonate brands/services to trick users</li>
+          <li>Generate massive amounts of QR codes to abuse our system</li>
+        </ul>
+        <p>We scan URLs and will ban accounts that violate this. No warnings for obvious malicious stuff.</p>
+      </section>
+
+      <section>
+        <h2>Content You Create</h2>
+        <p>You own your QR codes. We just host them. By using QuickQR, you give us permission to:</p>
+        <ul>
+          <li>Store and display your QR codes</li>
+          <li>Generate the QR code images</li>
+          <li>Host redirects for dynamic QR codes</li>
+        </ul>
+        <p>If you delete a QR code, it's gone from our servers (except backups which purge after 30 days).</p>
+      </section>
+
+      <section>
+        <h2>Paid Plans</h2>
+        <ul>
+          <li>Prices are in USD</li>
+          <li>Billed monthly or annually (your choice)</li>
+          <li>Cancellation stops renewal - you keep access until the period ends</li>
+          <li>No refunds for partial months</li>
+          <li>We may change prices with 30 days notice</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Service Availability</h2>
+        <p>We aim for 99% uptime but stuff happens. We don't guarantee:</p>
+        <ul>
+          <li>Zero downtime</li>
+          <li>That your QR codes will work forever (though we'll try)</li>
+          <li>Unlimited storage on free accounts</li>
+        </ul>
+        <p>Dynamic QR codes need our servers to redirect. If we're down, they don't work. Static QR codes work forever since they're just images.</p>
+      </section>
+
+      <section>
+        <h2>Limits</h2>
+        <p>Free accounts:</p>
+        <ul>
+          <li>Up to 50 static QR codes</li>
+          <li>No dynamic QR codes</li>
+          <li>No analytics</li>
+        </ul>
+        <p>Paid accounts:</p>
+        <ul>
+          <li>Unlimited QR codes (within reason - don't abuse it)</li>
+          <li>Dynamic QR codes with full analytics</li>
+          <li>CSV exports</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Termination</h2>
+        <p>You can close your account anytime. We'll delete your QR codes (except backups which purge after 30 days).</p>
+        <p>We can terminate accounts that:</p>
+        <ul>
+          <li>Violate these terms (especially the malicious content rules)</li>
+          <li>Abuse the service (flooding, automation, etc.)</li>
+          <li>Don't pay for 30 days after a failed charge</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Warranty Disclaimer</h2>
+        <p>QuickQR is provided "as is" without warranties. We try our best but can't guarantee everything works perfectly all the time. We're not liable for:</p>
+        <ul>
+          <li>Lost business because your QR code was down</li>
+          <li>Someone scanning a malicious QR code you created</li>
+          <li>Data loss (export your important stuff)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Changes to These Terms</h2>
+        <p>We'll email you about major changes. Continued use means you accept the new terms.</p>
+      </section>
+
+      <section>
+        <h2>Governing Law</h2>
+        <p>These terms are governed by California law. Any disputes go to courts in San Francisco.</p>
+      </section>
+
+      <section>
+        <h2>Contact</h2>
+        <p>Questions? <a href="mailto:support@quickqr.app">support@quickqr.app</a></p>
+      </section>
+    </div>
+  </div>
+</MainLayout>
+
+<style>
+  .legal-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .legal-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-gray-900, #111827);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .last-updated {
+    font-size: 0.875rem;
+    color: var(--color-gray-500, #6b7280);
+    margin-bottom: 2rem;
+  }
+
+  .legal-content section {
+    margin-bottom: 2rem;
+  }
+
+  .legal-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-gray-900, #111827);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  }
+
+  .legal-content p {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--color-gray-600, #4b5563);
+    margin: 0 0 1rem 0;
+  }
+
+  .legal-content ul {
+    margin: 0 0 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .legal-content li {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--color-gray-600, #4b5563);
+    margin-bottom: 0.5rem;
+  }
+
+  .legal-content a {
+    color: var(--color-teal-600, #0d9488);
+    text-decoration: none;
+  }
+
+  .legal-content a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .legal-container {
+      padding: 2rem 1rem;
+    }
+
+    .legal-content h1 {
+      font-size: 1.5rem;
+    }
+
+    .legal-content h2 {
+      font-size: 1.125rem;
+    }
+  }
+</style>
