@@ -37,6 +37,26 @@ const DashboardQRList = () => {
 
   useEffect(() => {
     loadQRCodes();
+    
+    // Subscribe to realtime updates for scan counts
+    const subscription = supabase
+      .channel('qr-scans')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'qrcodes' },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as QRCode;
+            setAllQrCodes(prev => prev.map(qr => 
+              qr.id === updated.id ? { ...qr, scan_count: updated.scan_count } : qr
+            ));
+          }
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function loadQRCodes() {
