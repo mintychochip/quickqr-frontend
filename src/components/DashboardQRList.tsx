@@ -346,7 +346,7 @@ const DashboardQRList = () => {
             <h3 style={{ marginBottom: '1rem' }}>{previewQr.name}</h3>
             <div style={{ marginBottom: '1.5rem' }}>
               <QRCodeSVG
-                value={previewQr.type === 'url' ? previewQr.content?.url : `${baseUrl}/r/${previewQr.id}`}
+                value={`${baseUrl}/r/${previewQr.id}`}
                 size={300}
                 bgColor={previewQr.styling?.bgColor || '#ffffff'}
                 fgColor={previewQr.styling?.dotsColor || '#000000'}
