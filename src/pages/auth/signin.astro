@@ -1,26 +1,6 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import '../../styles/auth.css';
-
-let errorMessage = '';
-
-if (Astro.request.method === 'POST') {
-  const formData = await Astro.request.formData();
-  const email = formData.get('email')?.toString() || '';
-  const password = formData.get('password')?.toString() || '';
-
-  const { supabase } = await import('../../lib/supabase');
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    errorMessage = error.message;
-  } else if (data.session) {
-    return Astro.redirect('/dashboard');
-  }
-}
 ---
 
 <MainLayout title="Sign In - QuickQR">
@@ -31,9 +11,9 @@ if (Astro.request.method === 'POST') {
         <p>Sign in to your QuickQR account</p>
       </div>
 
-      {errorMessage && <div class="auth-error">{errorMessage}</div>}
+      <div id="error-message" class="auth-error" style="display: none;"></div>
 
-      <form class="auth-form" method="POST">
+      <form class="auth-form" id="signin-form">
         <div class="form-group">
           <label for="email">Email</label>
           <input
@@ -56,7 +36,7 @@ if (Astro.request.method === 'POST') {
           />
         </div>
 
-        <button type="submit" class="auth-submit">Sign In</button>
+        <button type="submit" class="auth-submit" id="submit-btn">Sign In</button>
       </form>
 
       <div class="auth-footer">
@@ -65,3 +45,37 @@ if (Astro.request.method === 'POST') {
     </div>
   </div>
 </MainLayout>
+
+<script>
+  import { supabase } from '../../config/supabase';
+
+  const form = document.getElementById('signin-form');
+  const errorDiv = document.getElementById('error-message');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const email = formData.get('email')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Signing in...';
+    errorDiv.style.display = 'none';
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      errorDiv.textContent = error.message;
+      errorDiv.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign In';
+    } else if (data.session) {
+      window.location.href = '/dashboard';
+    }
+  });
+</script>

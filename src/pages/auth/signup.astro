@@ -1,26 +1,6 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import '../../styles/auth.css';
-
-let errorMessage = '';
-
-if (Astro.request.method === 'POST') {
-  const formData = await Astro.request.formData();
-  const email = formData.get('email')?.toString() || '';
-  const password = formData.get('password')?.toString() || '';
-
-  const { supabase } = await import('../../lib/supabase');
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-
-  if (error) {
-    errorMessage = error.message;
-  } else if (data.session) {
-    return Astro.redirect('/dashboard');
-  }
-}
 ---
 
 <MainLayout title="Sign Up - QuickQR">
@@ -31,9 +11,9 @@ if (Astro.request.method === 'POST') {
         <p>Start generating QR codes today</p>
       </div>
 
-      {errorMessage && <div class="auth-error">{errorMessage}</div>}
+      <div id="error-message" class="auth-error" style="display: none;"></div>
 
-      <form class="auth-form" method="POST">
+      <form class="auth-form" id="signup-form">
         <div class="form-group">
           <label for="email">Email</label>
           <input
@@ -57,7 +37,7 @@ if (Astro.request.method === 'POST') {
           />
         </div>
 
-        <button type="submit" class="auth-submit">Create Account</button>
+        <button type="submit" class="auth-submit" id="submit-btn">Create Account</button>
       </form>
 
       <div class="auth-footer">
@@ -66,3 +46,44 @@ if (Astro.request.method === 'POST') {
     </div>
   </div>
 </MainLayout>
+
+<script>
+  import { supabase } from '../../config/supabase';
+
+  const form = document.getElementById('signup-form');
+  const errorDiv = document.getElementById('error-message');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const email = formData.get('email')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+    errorDiv.style.display = 'none';
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      errorDiv.textContent = error.message;
+      errorDiv.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    } else if (data.session) {
+      window.location.href = '/dashboard';
+    } else {
+      // Email confirmation required
+      errorDiv.textContent = 'Check your email to confirm your account';
+      errorDiv.style.display = 'block';
+      errorDiv.style.color = '#14b8a6';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    }
+  });
+</script>
