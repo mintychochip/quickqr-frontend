@@ -1,13 +1,6 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import '../styles/home.css';
-import { getSession } from '../lib/supabase';
-
-// Check if user is already logged in via cookies
-const session = await getSession(Astro.cookies);
-if (session) {
-  return Astro.redirect('/dashboard');
-}
 
 const companies = [
   { name: 'Google', logo: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png' },
