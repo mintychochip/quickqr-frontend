@@ -4,12 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import 'clsx';
 /* empty css                         */
 
-const supabaseUrl = undefined                                   ;
-const supabasePublishableKey = undefined                                               ;
-{
-  throw new Error("Missing Supabase environment variables");
-}
-const supabase = createClient(supabaseUrl, supabasePublishableKey);
+const supabase = createClient("", "");
 
 const supabase$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
