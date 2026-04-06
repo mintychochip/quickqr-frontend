@@ -1,5 +1,11 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
+
+// For static builds with dynamic routes, we need to export getStaticPaths
+// This route handles QR code redirects client-side, so we return empty paths
+export function getStaticPaths() {
+  return [];
+}
 ---
 
 <MainLayout title="Redirecting...">
