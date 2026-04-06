@@ -1,0 +1,109 @@
+# QuickQR — Full Documentation
+
+## Product Description
+QuickQR is a browser-based QR code generator that creates scannable QR codes in real-time. Users type content (URL, text, email, or phone number) and the QR code generates instantly with live preview.
+
+**Live site**: https://www.quickqr.app
+
+## Core Functionality
+
+### Static QR Generator (Free, No Account Required)
+- Type any URL, text, email address, or phone number
+- QR code generates live as user types
+- Customize dots color and background color via color pickers
+- Download QR code as PNG at full resolution
+- Works completely offline after page load
+
+### Dynamic QR Codes (Pro Feature, Requires Account)
+- Create an account to save QR codes
+- Edit destination URL after creation
+- View scan analytics: total scans, location data, device breakdown
+- A/B testing support with multiple variants
+- Pay-as-you-go pricing
+
+## Technical Stack
+- **Framework**: Astro 5.x with App Router
+- **Adapter**: @astrojs/vercel (Vercel serverless)
+- **Styling**: Plain CSS (custom properties), no Tailwind
+- **QR Library**: qr-code-styling (client-side only, dynamically imported)
+- **Auth**: Supabase (Google OAuth, GitHub OAuth, email/password)
+- **Icons**: Inline SVG
+
+## File Structure
+```
+src/
+  pages/
+    index.astro       — Main landing page with QR generator
+    auth/
+      signin.astro    — Email/password sign in
+      signup.astro    — Email/password sign up
+      callback.astro  — OAuth callback handler
+  components/
+    Navigation.astro  — Top navigation bar
+    AuthSidebar.astro — Slide-in auth panel
+    Footer.astro      — Site footer
+  layouts/
+    MainLayout.astro  — Base layout (imports Navigation, Footer, AuthSidebar)
+  lib/
+    supabase.ts       — Supabase client (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY)
+  config/
+    supabase.ts       — Supabase config wrapper
+  styles/
+    global.css        — CSS custom properties and resets
+    home.css          — Homepage, hero, QR section, features, comparison, marquee
+    navigation.css    — Nav styles
+    auth.css          — Auth page styles
+    comparison.css    — Comparison section
+    footer.css        — Footer styles
+    pricing.css       — Pricing section
+    admin.css         — Admin dashboard
+    qr-results.css    — QR results page
+```
+
+## Authentication
+- Supabase auth integration via @supabase/supabase-js
+- Providers: Google OAuth, GitHub OAuth, email/password
+- Auth sidebar slides in from right side of screen (not separate page flow for OAuth)
+- OAuth redirectTo: window.location.origin
+- Auth callback at /auth/callback.astro
+
+## QR Code Behavior
+- Library: qr-code-styling v1.9.2
+- Client-side only — must be dynamically imported (never at module level in SSR context)
+- Supported types: URL, Text, Email (mailto: prefix), Phone (tel: prefix)
+- Color customization: dotsColor (#000000 default), background (#ffffff default)
+- PNG download via qr.download({ name: 'quickqr', extension: 'png' })
+- QR updates on every keystroke (input event)
+
+## CSS Design System
+```
+--color-teal-50: #f0fdfa
+--color-teal-100: #ccfbf1
+--color-teal-200: #99f6e4
+--color-teal-400: #2dd4bf
+--color-teal-500: #14b8a6
+--color-teal-600: #0d9488
+--color-teal-700: #0f766e
+--color-gray-50: #f9fafb
+--color-gray-100: #f3f4f6
+--color-gray-200: #e5e7eb
+--color-gray-300: #d1d5db
+--color-gray-400: #9ca3af
+--color-gray-500: #6b7280
+--color-gray-600: #4b5563
+--color-gray-700: #374151
+--color-gray-800: #1f2937
+--color-gray-900: #111827
+--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05)
+--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)
+--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)
+--radius: 0.75rem
+--radius-lg: 1rem
+```
+
+## Supabase Schema Notes
+- Auth: uses Supabase Auth (no custom schema)
+- Database: configured but schema details depend on project setup
+- Environment variables needed:
+  - PUBLIC_SUPABASE_URL
+  - PUBLIC_SUPABASE_PUBLISHABLE_KEY

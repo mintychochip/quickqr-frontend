@@ -1,0 +1,26 @@
+# QuickQR — Lightning-Fast QR Codes
+
+https://www.quickqr.app
+
+## Overview
+QuickQR generates scannable QR codes instantly in the browser. No signup required for static QR codes. Upgrade to Pro for dynamic QR codes with analytics.
+
+## Features
+- **Static QR Codes** (Free) — Generate QR codes without an account. Works offline. Perfect for print materials, packaging, and permanent links.
+- **Dynamic QR Codes** (Pro) — Edit destination URLs anytime, full scan analytics, A/B testing ready, location & device data.
+
+## How It Works
+1. Go to https://www.quickqr.app
+2. Choose a type: URL, Text, Email, or Phone
+3. Enter your content — QR code generates live
+4. Customize dot color and background color
+5. Download as PNG
+
+## Pricing
+- **Free tier**: Unlimited static QR codes, no account needed
+- **Pro**: Pay-as-you-go — edit URLs after creation, full analytics
+
+## Pages
+- https://www.quickqr.app — Main QR generator
+- https://www.quickqr.app/auth/signin — Sign in
+- https://www.quickqr.app/auth/signup — Create account
