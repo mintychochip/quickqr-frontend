@@ -1,88 +1,5 @@
 ---
-import { supabase } from '../../lib/supabase';
 import MainLayout from '../../layouts/MainLayout.astro';
-
-const { slug } = Astro.params;
-
-if (!slug) {
-  return Astro.redirect('/');
-}
-
-// Fetch QR code data
-const { data: qrCode, error: fetchError } = await supabase
-  .from('qrcodes')
-  .select('type, content, expirytime')
-  .eq('id', slug)
-  .single();
-
-if (fetchError || !qrCode) {
-  return Astro.redirect('/?error=not_found');
-}
-
-// Check if expired
-if (qrCode.expirytime && new Date(qrCode.expirytime) < new Date()) {
-  return Astro.redirect('/?error=expired');
-}
-
-// Increment scan count (fire and forget)
-supabase.rpc('increment_scan_count', { qr_id: slug }).then(({ error: rpcError }) => {
-  if (rpcError) console.error('Failed to increment scan count:', rpcError);
-});
-
-// Build redirect URL based on type
-const content = qrCode.content as Record<string, unknown>;
-let redirectUrl: string | null = null;
-
-switch (qrCode.type) {
-  case 'url':
-    redirectUrl = content.url as string;
-    break;
-  case 'email':
-    redirectUrl = `mailto:${content.email as string}`;
-    break;
-  case 'phone':
-    redirectUrl = `tel:${content.phone as string}`;
-    break;
-  case 'sms':
-    redirectUrl = `sms:${content.number as string}`;
-    break;
-  case 'location':
-    redirectUrl = `https://www.google.com/maps?q=${content.latitude},${content.longitude}`;
-    break;
-  default:
-    redirectUrl = null;
-}
-
-if (!redirectUrl) {
-  return Astro.redirect('/?error=invalid_type');
-}
-
-// Record scan asynchronously (doesn't block redirect)
-const detectOS = (): string => {
-  const ua = Astro.request.headers.get('user-agent') || '';
-  const uaLower = ua.toLowerCase();
-  if (uaLower.includes('iphone') || uaLower.includes('ipad')) return 'iOS';
-  if (uaLower.includes('android')) return 'Android';
-  if (uaLower.includes('macintosh') || uaLower.includes('mac os')) return 'iOS';
-  if (uaLower.includes('win')) return 'Windows';
-  if (uaLower.includes('linux')) return 'Linux';
-  return 'Other';
-};
-
-const os = detectOS();
-
-supabase
-  .from('scans')
-  .insert({
-    qrcode_id: slug,
-    os,
-  })
-  .then(({ error: scanError }) => {
-    if (scanError) console.error('Failed to record scan:', scanError);
-  });
-
-// Redirect to destination
-return Astro.redirect(redirectUrl);
 ---
 
 <MainLayout title="Redirecting...">
@@ -92,7 +9,111 @@ return Astro.redirect(redirectUrl);
         <div class="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
       <h2 class="text-2xl font-bold text-gray-900 mb-2">Redirecting...</h2>
-      <p class="text-gray-600">Processing QR code: {slug}</p>
+      <p class="text-gray-600" id="status-text">Loading QR code...</p>
+      <p class="text-red-500 mt-4" id="error-text" style="display: none;"></p>
+      <a href="/" id="home-link" style="display: none;" class="mt-4 inline-block px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600">
+        Go Home
+      </a>
     </div>
   </div>
 </MainLayout>
+
+<script>
+  import { supabase } from '../../config/supabase';
+
+  async function handleRedirect() {
+    const path = window.location.pathname;
+    const slug = path.split('/').pop();
+    const statusText = document.getElementById('status-text');
+    const errorText = document.getElementById('error-text');
+    const homeLink = document.getElementById('home-link');
+
+    if (!slug) {
+      statusText.textContent = 'Invalid QR code';
+      errorText.textContent = 'No QR code ID found';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    statusText.textContent = `Loading QR code: ${slug}`;
+
+    // Fetch QR code data
+    const { data: qrCode, error: fetchError } = await supabase
+      .from('qrcodes')
+      .select('type, content, expirytime')
+      .eq('id', slug)
+      .single();
+
+    if (fetchError || !qrCode) {
+      statusText.textContent = 'QR code not found';
+      errorText.textContent = 'This QR code does not exist';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    // Check if expired
+    if (qrCode.expirytime && new Date(qrCode.expirytime) < new Date()) {
+      statusText.textContent = 'QR code expired';
+      errorText.textContent = 'This QR code has expired';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    // Record scan
+    const ua = navigator.userAgent.toLowerCase();
+    let os = 'Other';
+    if (ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+    else if (ua.includes('android')) os = 'Android';
+    else if (ua.includes('macintosh') || ua.includes('mac os')) os = 'iOS';
+    else if (ua.includes('win')) os = 'Windows';
+    else if (ua.includes('linux')) os = 'Linux';
+
+    supabase.from('scans').insert({ qrcode_id: slug, os }).then(({ error }) => {
+      if (error) console.error('Failed to record scan:', error);
+    });
+
+    // Increment scan count
+    supabase.rpc('increment_scan_count', { qr_id: slug }).then(({ error }) => {
+      if (error) console.error('Failed to increment scan count:', error);
+    });
+
+    // Build redirect URL
+    const content = qrCode.content;
+    let redirectUrl = null;
+
+    switch (qrCode.type) {
+      case 'url':
+        redirectUrl = content.url;
+        break;
+      case 'email':
+        redirectUrl = `mailto:${content.email}`;
+        break;
+      case 'phone':
+        redirectUrl = `tel:${content.phone}`;
+        break;
+      case 'sms':
+        redirectUrl = `sms:${content.number}`;
+        break;
+      case 'location':
+        redirectUrl = `https://www.google.com/maps?q=${content.latitude},${content.longitude}`;
+        break;
+    }
+
+    if (!redirectUrl) {
+      statusText.textContent = 'Invalid QR code type';
+      errorText.textContent = 'This QR code type is not supported';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    // Redirect
+    statusText.textContent = 'Redirecting you now...';
+    window.location.href = redirectUrl;
+  }
+
+  handleRedirect();
+</script>
