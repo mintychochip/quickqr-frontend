@@ -1,7 +1,7 @@
 import { e as createComponent, f as createAstro } from '../../chunks/astro/server_Z1ggZnD5.mjs';
 import 'piccolore';
 import 'clsx';
-import { s as supabase } from '../../chunks/MainLayout_CCta3uUR.mjs';
+import { s as supabase } from '../../chunks/MainLayout_BufbuezT.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const $$Astro = createAstro();

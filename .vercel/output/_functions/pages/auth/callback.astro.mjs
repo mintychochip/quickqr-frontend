@@ -1,6 +1,6 @@
 import { e as createComponent, f as createAstro, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../../chunks/astro/server_Z1ggZnD5.mjs';
 import 'piccolore';
-import { $ as $$MainLayout } from '../../chunks/MainLayout_CCta3uUR.mjs';
+import { $ as $$MainLayout } from '../../chunks/MainLayout_BufbuezT.mjs';
 /* empty css                                       */
 export { renderers } from '../../renderers.mjs';
 
@@ -11,7 +11,7 @@ const $$Callback = createComponent(async ($$result, $$props, $$slots) => {
   const url = Astro2.request.url;
   const code = new URL(url).searchParams.get("code");
   if (code) {
-    const { supabase } = await import('../../chunks/MainLayout_CCta3uUR.mjs').then(n => n.a);
+    const { supabase } = await import('../../chunks/MainLayout_BufbuezT.mjs').then(n => n.a);
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return Astro2.redirect("/dashboard");
