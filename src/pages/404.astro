@@ -1,0 +1,148 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Redirecting...">
+  <div style="min-height: 100vh; background: #f9fafb; display: flex; align-items: center; justify-content: center;">
+    <div style="text-align: center;">
+      <div style="display: inline-block; padding: 1rem; background: white; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid #e5e7eb;">
+        <div style="width: 64px; height: 64px; border: 4px solid #14b8a6; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">Redirecting...</h2>
+      <p style="color: #6b7280;" id="status-text">Loading QR code...</p>
+      <p style="color: #dc2626; margin-top: 1rem; display: none;" id="error-text"></p>
+      <a href="/" id="home-link" style="display: none; margin-top: 1rem; padding: 0.5rem 1rem; background: #14b8a6; color: white; border-radius: 0.5rem; text-decoration: none;">
+        Go Home
+      </a>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</MainLayout>
+
+<script>
+  import { supabase } from '../config/supabase';
+
+  async function handleRedirect() {
+    const path = window.location.pathname;
+    const statusText = document.getElementById('status-text');
+    const errorText = document.getElementById('error-text');
+    const homeLink = document.getElementById('home-link');
+
+    // Check if this is a QR redirect path
+    const match = path.match(/^\/r\/(.+)$/);
+    if (!match) {
+      // Not a QR redirect, show 404
+      statusText.textContent = 'Page not found';
+      errorText.textContent = 'The page you\'re looking for doesn\'t exist';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    const slug = match[1];
+    statusText.textContent = 'Loading QR code...';
+
+    // Fetch QR code data
+    const { data: qrCode, error: fetchError } = await supabase
+      .from('qrcodes')
+      .select('type, content, expirytime, mode')
+      .eq('id', slug)
+      .single();
+
+    if (fetchError || !qrCode) {
+      statusText.textContent = 'QR code not found';
+      errorText.textContent = 'This QR code does not exist or has been deleted';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    // Check if expired
+    if (qrCode.expirytime && new Date(qrCode.expirytime) < new Date()) {
+      statusText.textContent = 'QR code expired';
+      errorText.textContent = 'This QR code has expired';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    // Only log scans for dynamic QR codes
+    if (qrCode.mode === 'dynamic') {
+      const ua = navigator.userAgent.toLowerCase();
+      let os = 'Other';
+      if (ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+      else if (ua.includes('android')) os = 'Android';
+      else if (ua.includes('macintosh') || ua.includes('mac os')) os = 'macOS';
+      else if (ua.includes('win')) os = 'Windows';
+      else if (ua.includes('linux')) os = 'Linux';
+
+      supabase.from('scans').insert({ qrcode_id: slug, os }).then(({ error }) => {
+        if (error) console.error('Failed to record scan:', error);
+      });
+
+      const { data: current } = await supabase
+        .from('qrcodes')
+        .select('scan_count')
+        .eq('id', slug)
+        .single();
+      
+      if (current) {
+        supabase
+          .from('qrcodes')
+          .update({ scan_count: (current.scan_count || 0) + 1 })
+          .eq('id', slug)
+          .then(({ error }) => {
+            if (error) console.error('Failed to increment scan count:', error);
+          });
+      }
+    }
+
+    // Build redirect URL
+    const content = qrCode.content;
+    let redirectUrl = null;
+
+    switch (qrCode.type) {
+      case 'url':
+        redirectUrl = content?.url;
+        break;
+      case 'email':
+        redirectUrl = content?.email ? `mailto:${content.email}` : null;
+        break;
+      case 'phone':
+        redirectUrl = content?.phone ? `tel:${content.phone}` : null;
+        break;
+      case 'sms':
+        redirectUrl = content?.number ? `sms:${content.number}` : null;
+        break;
+      case 'location':
+        redirectUrl = content?.latitude && content?.longitude 
+          ? `https://www.google.com/maps?q=${content.latitude},${content.longitude}` 
+          : null;
+        break;
+      case 'wifi':
+        statusText.textContent = 'WiFi QR Code';
+        errorText.textContent = 'Scan this QR code with your phone camera to connect to WiFi';
+        errorText.style.color = '#059669';
+        errorText.style.display = 'block';
+        homeLink.style.display = 'inline-block';
+        return;
+    }
+
+    if (!redirectUrl) {
+      statusText.textContent = 'Invalid QR code';
+      errorText.textContent = 'This QR code has no destination configured';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    statusText.textContent = 'Taking you there...';
+    window.location.href = redirectUrl;
+  }
+
+  handleRedirect();
+</script>
