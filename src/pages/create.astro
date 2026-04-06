@@ -129,16 +129,24 @@ import '../styles/create.css';
     const createForm = document.getElementById('create-form');
     const submitBtn = document.getElementById('submit-btn');
 
-    // Check auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    try {
+      // Check auth with timeout
+      const authPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+      );
+      
+      const { data: { session }, error: sessionError } = await Promise.race([authPromise, timeoutPromise]);
+      const user = session?.user;
 
-    if (!user || authError) {
-      authCheck.innerHTML = '<p>Please sign in to create QR codes</p><a href="/" class="btn-primary" style="margin-top:1rem">Go Home</a>';
-      setTimeout(() => {
-        document.getElementById('auth-btn')?.click();
-      }, 500);
-      return;
-    }
+      if (!user || sessionError) {
+        authCheck.innerHTML = '<p>Please sign in to create QR codes</p><button id="create-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>';
+        document.getElementById('create-auth-btn')?.addEventListener('click', () => {
+          (window as any).openAuthSidebar?.();
+        });
+        setTimeout(() => (window as any).openAuthSidebar?.(), 300);
+        return;
+      }
 
     // Show form
     authCheck.style.display = 'none';
@@ -230,6 +238,13 @@ import '../styles/create.css';
         window.location.href = '/dashboard';
       }
     });
+    } catch (err: any) {
+      console.error('Create page init error:', err);
+      authCheck.innerHTML = `<p>Error: ${err.message}</p><button id="create-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>`;
+      document.getElementById('create-auth-btn')?.addEventListener('click', () => {
+        (window as any).openAuthSidebar?.();
+      });
+    }
   }
 
   initCreate();
