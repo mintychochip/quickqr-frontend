@@ -314,20 +314,21 @@
 
   function updateMode() {
     clearError();
+    // Toggle mode first before updating UI
+    mode = mode === 'signin' ? 'signup' : 'signin';
+    
     if (mode === 'signin') {
       titleEl.textContent = 'Welcome back';
       subtitleEl.textContent = 'Sign in to your QuickQR account';
       submitBtn.textContent = 'Sign In';
       toggleText.textContent = "Don't have an account?";
       toggleBtn.textContent = 'Sign up';
-      mode = 'signup';
     } else {
       titleEl.textContent = 'Create your account';
       subtitleEl.textContent = 'Start generating QR codes today';
       submitBtn.textContent = 'Create Account';
       toggleText.textContent = 'Already have an account?';
       toggleBtn.textContent = 'Sign in';
-      mode = 'signin';
     }
   }
 
