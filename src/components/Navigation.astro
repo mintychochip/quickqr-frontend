@@ -1,12 +1,4 @@
 ---
-import { supabase } from '../lib/supabase';
-
-interface User {
-  id: string;
-  email: string;
-  admin?: boolean;
-}
-
 interface Props {
   currentPath?: string;
 }
@@ -15,19 +7,11 @@ const { currentPath = Astro.url.pathname } = Astro.props;
 
 // Check if on hidden routes
 const isHiddenRoute = currentPath.startsWith('/code/') || currentPath === '/create';
-
-// Get session on server side
-const { data: { session } } = await supabase.auth.getSession();
-const user: User | null = session?.user ? {
-  id: session.user.id,
-  email: session.user.email || '',
-  admin: false // We'll need to fetch this client-side for accuracy
-} : null;
 ---
 
 {!isHiddenRoute && (
   <>
-  <nav class="nav">
+  <nav class="nav" id="main-nav">
     <div class="nav-inner">
       {/* Left Section: Logo + Nav Links */}
       <div class="nav-left">
@@ -45,29 +29,11 @@ const user: User | null = session?.user ? {
         </div>
       </div>
 
-      {/* Right Section: CTA */}
-      {user ? (
-        <div class="nav-right">
-          <a href="/dashboard" class="nav-link">Dashboard</a>
-          <div class="nav-user-badge">
-            <div class="nav-user-dot"></div>
-            <span class="nav-user-name">{user.email.split('@')[0]}</span>
-          </div>
-          <button id="logout-btn" class="nav-btn nav-btn-secondary nav-btn-logout">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            <span class="hidden lg:inline">Logout</span>
-          </button>
-        </div>
-      ) : (
-        <div class="nav-right">
-          <button id="open-auth-sidebar-btn" class="nav-btn nav-btn-ghost">Sign In</button>
-          <button id="open-auth-sidebar-btn-start" class="nav-btn nav-btn-primary">Get Started</button>
-        </div>
-      )}
+      {/* Right Section: CTA - Will be updated by client-side JS */}
+      <div class="nav-right" id="nav-auth-section">
+        <button id="open-auth-sidebar-btn" class="nav-btn nav-btn-ghost">Sign In</button>
+        <button id="open-auth-sidebar-btn-start" class="nav-btn nav-btn-primary">Get Started</button>
+      </div>
 
       {/* Mobile Menu Button */}
       <button id="mobile-menu-btn" class="nav-mobile-btn" aria-label="Toggle menu">
@@ -104,39 +70,13 @@ const user: User | null = session?.user ? {
         {/* Mobile Nav Links */}
         <div class="nav-mobile-links">
           <a href="/pricing" class="nav-mobile-link">Pricing</a>
-          {user && (
-            <a href="/dashboard" class="nav-mobile-link">Dashboard</a>
-          )}
+          <a href="/dashboard" class="nav-mobile-link" id="mobile-dashboard-link" style="display: none;">Dashboard</a>
         </div>
 
         {/* Mobile User Info / CTA */}
-        <div class="nav-mobile-actions">
-          {user ? (
-            <>
-              <div class="nav-mobile-user">
-                <div class="nav-mobile-user-info">
-                  <div class="nav-mobile-user-dot"></div>
-                  <div>
-                    <div class="nav-mobile-user-name">{user.email.split('@')[0]}</div>
-                    <div class="nav-mobile-user-email">{user.email}</div>
-                  </div>
-                </div>
-              </div>
-              <button id="mobile-logout-btn" class="nav-mobile-action-btn nav-btn-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                  <polyline points="16 17 21 12 16 7"></polyline>
-                  <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <a href="/auth/signin" class="nav-mobile-action-btn nav-mobile-action-btn-ghost">Sign In</a>
-              <a href="/auth/signup" class="nav-mobile-action-btn nav-mobile-action-btn-primary">Get Started</a>
-            </>
-          )}
+        <div class="nav-mobile-actions" id="mobile-auth-section">
+          <a href="/auth/signin" class="nav-mobile-action-btn nav-mobile-action-btn-ghost">Sign In</a>
+          <a href="/auth/signup" class="nav-mobile-action-btn nav-mobile-action-btn-primary">Get Started</a>
         </div>
       </div>
     </div>
@@ -145,15 +85,16 @@ const user: User | null = session?.user ? {
 )}
 
 <script>
-  import { supabase } from '../lib/supabase';
+  import { supabase } from '../config/supabase';
 
   const mobileMenuBtn = document.getElementById('mobile-menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
   const mobileBackdrop = document.getElementById('mobile-backdrop');
   const menuIcon = document.getElementById('menu-icon');
   const closeIcon = document.getElementById('close-icon');
-  const logoutBtn = document.getElementById('logout-btn');
-  const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+  const navAuthSection = document.getElementById('nav-auth-section');
+  const mobileAuthSection = document.getElementById('mobile-auth-section');
+  const mobileDashboardLink = document.getElementById('mobile-dashboard-link');
 
   function toggleMobileMenu() {
     const isOpen = !mobileMenu?.classList.contains('hidden');
@@ -181,14 +122,100 @@ const user: User | null = session?.user ? {
   mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
   mobileBackdrop?.addEventListener('click', closeMobileMenu);
 
-  document.getElementById('open-auth-sidebar-btn')?.addEventListener('click', () => (window as any).openAuthSidebar?.());
-  document.getElementById('open-auth-sidebar-btn-start')?.addEventListener('click', () => (window as any).openAuthSidebar?.());
+  async function updateAuthUI() {
+    if (!supabase) return;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    if (user) {
+      // User is logged in - show dashboard link and logout
+      const userName = user.email?.split('@')[0] || 'User';
+      
+      if (navAuthSection) {
+        navAuthSection.innerHTML = `
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <div class="nav-user-badge">
+            <div class="nav-user-dot"></div>
+            <span class="nav-user-name">${userName}</span>
+          </div>
+          <button id="logout-btn" class="nav-btn nav-btn-secondary nav-btn-logout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="hidden lg:inline">Logout</span>
+          </button>
+        `;
+        
+        // Attach logout handler
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = '/';
+        });
+      }
+
+      if (mobileAuthSection) {
+        mobileAuthSection.innerHTML = `
+          <div class="nav-mobile-user">
+            <div class="nav-mobile-user-info">
+              <div class="nav-mobile-user-dot"></div>
+              <div>
+                <div class="nav-mobile-user-name">${userName}</div>
+                <div class="nav-mobile-user-email">${user.email}</div>
+              </div>
+            </div>
+          </div>
+          <button id="mobile-logout-btn" class="nav-mobile-action-btn nav-btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        `;
+        
+        // Attach logout handler
+        document.getElementById('mobile-logout-btn')?.addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = '/';
+        });
+      }
+
+      if (mobileDashboardLink) {
+        mobileDashboardLink.style.display = 'block';
+      }
+    } else {
+      // User not logged in - show sign in buttons
+      if (navAuthSection) {
+        navAuthSection.innerHTML = `
+          <button id="open-auth-sidebar-btn" class="nav-btn nav-btn-ghost">Sign In</button>
+          <button id="open-auth-sidebar-btn-start" class="nav-btn nav-btn-primary">Get Started</button>
+        `;
+        
+        document.getElementById('open-auth-sidebar-btn')?.addEventListener('click', () => (window as any).openAuthSidebar?.());
+        document.getElementById('open-auth-sidebar-btn-start')?.addEventListener('click', () => (window as any).openAuthSidebar?.());
+      }
+
+      if (mobileAuthSection) {
+        mobileAuthSection.innerHTML = `
+          <a href="/auth/signin" class="nav-mobile-action-btn nav-mobile-action-btn-ghost">Sign In</a>
+          <a href="/auth/signup" class="nav-mobile-action-btn nav-mobile-action-btn-primary">Get Started</a>
+        `;
+      }
+
+      if (mobileDashboardLink) {
+        mobileDashboardLink.style.display = 'none';
+      }
+    }
   }
 
-  logoutBtn?.addEventListener('click', handleLogout);
-  mobileLogoutBtn?.addEventListener('click', handleLogout);
+  // Check auth on load and listen for auth changes
+  updateAuthUI();
+  
+  supabase?.auth.onAuthStateChange(() => {
+    updateAuthUI();
+  });
 </script>
