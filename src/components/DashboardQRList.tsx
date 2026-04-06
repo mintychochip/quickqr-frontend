@@ -68,14 +68,21 @@ const DashboardQRList = () => {
   async function loadQRCodes() {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      console.log('[Dashboard] Loading QR codes...');
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log('[Dashboard] Session:', session?.user?.id, 'Error:', authError);
+      if (!session?.user) {
+        console.log('[Dashboard] No session, not loading');
+        return;
+      }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('qrcodes')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
+      
+      console.log('[Dashboard] Query result:', data?.length, 'items, Error:', error);
 
       setAllQrCodes(data || []);
       
