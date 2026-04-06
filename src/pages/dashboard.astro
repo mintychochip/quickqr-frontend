@@ -61,8 +61,11 @@ import '../styles/dashboard.css';
     const userEmail = document.getElementById('user-email');
     const qrListContainer = document.getElementById('qr-list-container');
 
-    // Check auth
-    const { data: { user }, error } = await supabase.auth.getUser();
+    // Check auth - use getSession to read from localStorage without server roundtrip
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const user = session?.user;
+    
+    console.log('Dashboard auth check:', { hasSession: !!session, hasUser: !!user, error: sessionError?.message });
 
     if (!user || error) {
       // Not authenticated - trigger auth modal
