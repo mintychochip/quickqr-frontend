@@ -66,6 +66,15 @@ import '../styles/create.css';
                   </span>
                 </label>
                 <label class="type-option">
+                  <input type="radio" name="type" value="sms" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>SMS</span>
+                  </span>
+                </label>
+                <label class="type-option">
                   <input type="radio" name="type" value="wifi" />
                   <span class="type-card">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,6 +84,50 @@ import '../styles/create.css';
                       <line x1="12" y1="20" x2="12.01" y2="20"></line>
                     </svg>
                     <span>WiFi</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="vcard" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Contact</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="location" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Location</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="calendar" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Event</span>
+                  </span>
+                </label>
+                <label class="type-option">
+                  <input type="radio" name="type" value="crypto" />
+                  <span class="type-card">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="6" x2="12" y2="18"></line>
+                      <path d="M15 9l-3-3-3 3"></path>
+                      <path d="M15 15l-3 3-3-3"></path>
+                    </svg>
+                    <span>Crypto</span>
                   </span>
                 </label>
                 <label class="type-option">
@@ -133,6 +186,18 @@ import '../styles/create.css';
                 </div>
               </div>
 
+              <!-- SMS Fields -->
+              <div id="sms-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="smsnumber">Phone Number</label>
+                  <input type="tel" id="smsnumber" name="smsnumber" placeholder="+1 (555) 123-4567" />
+                </div>
+                <div class="form-group">
+                  <label for="smsmessage">Message (optional)</label>
+                  <textarea id="smsmessage" name="smsmessage" rows="3" placeholder="Pre-filled message..."></textarea>
+                </div>
+              </div>
+
               <!-- WiFi Fields -->
               <div id="wifi-fields" class="content-fields" style="display: none;">
                 <div class="form-group">
@@ -150,6 +215,100 @@ import '../styles/create.css';
                     <option value="WEP">WEP</option>
                     <option value="nopass">No Password</option>
                   </select>
+                </div>
+              </div>
+
+              <!-- vCard Fields -->
+              <div id="vcard-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="vcardFirstName">First Name</label>
+                  <input type="text" id="vcardFirstName" name="vcardFirstName" placeholder="John" />
+                </div>
+                <div class="form-group">
+                  <label for="vcardLastName">Last Name</label>
+                  <input type="text" id="vcardLastName" name="vcardLastName" placeholder="Doe" />
+                </div>
+                <div class="form-group">
+                  <label for="vcardPhone">Phone</label>
+                  <input type="tel" id="vcardPhone" name="vcardPhone" placeholder="+1 (555) 123-4567" />
+                </div>
+                <div class="form-group">
+                  <label for="vcardEmail">Email</label>
+                  <input type="email" id="vcardEmail" name="vcardEmail" placeholder="john@example.com" />
+                </div>
+                <div class="form-group">
+                  <label for="vcardCompany">Company</label>
+                  <input type="text" id="vcardCompany" name="vcardCompany" placeholder="Company Name" />
+                </div>
+                <div class="form-group">
+                  <label for="vcardTitle">Job Title</label>
+                  <input type="text" id="vcardTitle" name="vcardTitle" placeholder="Software Engineer" />
+                </div>
+                <div class="form-group">
+                  <label for="vcardWebsite">Website</label>
+                  <input type="url" id="vcardWebsite" name="vcardWebsite" placeholder="https://example.com" />
+                </div>
+              </div>
+
+              <!-- Location Fields -->
+              <div id="location-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="latitude">Latitude</label>
+                  <input type="number" id="latitude" name="latitude" step="any" placeholder="37.7749" />
+                </div>
+                <div class="form-group">
+                  <label for="longitude">Longitude</label>
+                  <input type="number" id="longitude" name="longitude" step="any" placeholder="-122.4194" />
+                </div>
+                <div class="form-group">
+                  <label for="locationQuery">Or Search Location</label>
+                  <input type="text" id="locationQuery" name="locationQuery" placeholder="San Francisco, CA" />
+                </div>
+              </div>
+
+              <!-- Calendar Fields -->
+              <div id="calendar-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="eventTitle">Event Title</label>
+                  <input type="text" id="eventTitle" name="eventTitle" placeholder="Team Meeting" />
+                </div>
+                <div class="form-group">
+                  <label for="eventLocation">Location</label>
+                  <input type="text" id="eventLocation" name="eventLocation" placeholder="Conference Room A" />
+                </div>
+                <div class="form-group">
+                  <label for="eventStart">Start Date/Time</label>
+                  <input type="datetime-local" id="eventStart" name="eventStart" />
+                </div>
+                <div class="form-group">
+                  <label for="eventEnd">End Date/Time</label>
+                  <input type="datetime-local" id="eventEnd" name="eventEnd" />
+                </div>
+                <div class="form-group">
+                  <label for="eventDescription">Description</label>
+                  <textarea id="eventDescription" name="eventDescription" rows="3" placeholder="Event details..."></textarea>
+                </div>
+              </div>
+
+              <!-- Crypto Fields -->
+              <div id="crypto-fields" class="content-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="cryptoType">Cryptocurrency</label>
+                  <select id="cryptoType" name="cryptoType">
+                    <option value="bitcoin">Bitcoin (BTC)</option>
+                    <option value="ethereum">Ethereum (ETH)</option>
+                    <option value="litecoin">Litecoin (LTC)</option>
+                    <option value="dogecoin">Dogecoin (DOGE)</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cryptoAddress">Wallet Address</label>
+                  <input type="text" id="cryptoAddress" name="cryptoAddress" placeholder="bc1q..." />
+                </div>
+                <div class="form-group">
+                  <label for="cryptoAmount">Amount (optional)</label>
+                  <input type="number" id="cryptoAmount" name="cryptoAmount" step="0.00000001" placeholder="0.001" />
                 </div>
               </div>
 
@@ -516,6 +675,14 @@ import '../styles/create.css';
         const phone = document.getElementById('phone')?.value?.trim();
         return phone ? { phone } : null;
       
+      case 'sms':
+        const smsnumber = document.getElementById('smsnumber')?.value?.trim();
+        if (!smsnumber) return null;
+        return {
+          number: smsnumber,
+          message: document.getElementById('smsmessage')?.value || ''
+        };
+      
       case 'wifi':
         const ssid = document.getElementById('ssid')?.value?.trim();
         if (!ssid) return null;
@@ -523,6 +690,47 @@ import '../styles/create.css';
           ssid,
           password: document.getElementById('wifipassword')?.value || '',
           encryption: document.getElementById('encryption')?.value || 'WPA'
+        };
+      
+      case 'vcard':
+        const firstName = document.getElementById('vcardFirstName')?.value?.trim();
+        const lastName = document.getElementById('vcardLastName')?.value?.trim();
+        if (!firstName && !lastName) return null;
+        return {
+          firstName,
+          lastName,
+          phone: document.getElementById('vcardPhone')?.value || '',
+          email: document.getElementById('vcardEmail')?.value || '',
+          company: document.getElementById('vcardCompany')?.value || '',
+          title: document.getElementById('vcardTitle')?.value || '',
+          website: document.getElementById('vcardWebsite')?.value || ''
+        };
+      
+      case 'location':
+        const lat = document.getElementById('latitude')?.value?.trim();
+        const lng = document.getElementById('longitude')?.value?.trim();
+        const query = document.getElementById('locationQuery')?.value?.trim();
+        if (!lat && !lng && !query) return null;
+        return { latitude: lat, longitude: lng, query };
+      
+      case 'calendar':
+        const eventTitle = document.getElementById('eventTitle')?.value?.trim();
+        if (!eventTitle) return null;
+        return {
+          title: eventTitle,
+          location: document.getElementById('eventLocation')?.value || '',
+          start: document.getElementById('eventStart')?.value || '',
+          end: document.getElementById('eventEnd')?.value || '',
+          description: document.getElementById('eventDescription')?.value || ''
+        };
+      
+      case 'crypto':
+        const cryptoAddress = document.getElementById('cryptoAddress')?.value?.trim();
+        if (!cryptoAddress) return null;
+        return {
+          type: document.getElementById('cryptoType')?.value || 'bitcoin',
+          address: cryptoAddress,
+          amount: document.getElementById('cryptoAmount')?.value || ''
         };
       
       case 'text':
@@ -541,17 +749,67 @@ import '../styles/create.css';
     switch (type) {
       case 'url':
         return content.url;
+      
       case 'email':
         const body = content.body ? `&body=${encodeURIComponent(content.body)}` : '';
         const subject = content.subject ? `?subject=${encodeURIComponent(content.subject)}` : '';
         return `mailto:${content.email}${subject}${body}`;
+      
       case 'phone':
         return `tel:${content.phone}`;
+      
+      case 'sms':
+        const msg = content.message ? `?body=${encodeURIComponent(content.message)}` : '';
+        return `sms:${content.number}${msg}`;
+      
       case 'wifi':
         const enc = content.encryption === 'nopass' ? '' : `;P:${content.password}`;
         return `WIFI:S:${content.ssid};T:${content.encryption}${enc};;`;
+      
+      case 'vcard':
+        const name = `${content.firstName || ''} ${content.lastName || ''}`.trim();
+        let vcard = 'BEGIN:VCARD\nVERSION:3.0\n';
+        vcard += `FN:${name}\n`;
+        if (content.phone) vcard += `TEL:${content.phone}\n`;
+        if (content.email) vcard += `EMAIL:${content.email}\n`;
+        if (content.company) vcard += `ORG:${content.company}\n`;
+        if (content.title) vcard += `TITLE:${content.title}\n`;
+        if (content.website) vcard += `URL:${content.website}\n`;
+        vcard += 'END:VCARD';
+        return vcard;
+      
+      case 'location':
+        if (content.latitude && content.longitude) {
+          return `geo:${content.latitude},${content.longitude}`;
+        } else if (content.query) {
+          return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(content.query)}`;
+        }
+        return null;
+      
+      case 'calendar':
+        const formatDate = (dateStr) => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\n';
+        ics += `SUMMARY:${content.title}\n`;
+        if (content.location) ics += `LOCATION:${content.location}\n`;
+        if (content.description) ics += `DESCRIPTION:${content.description}\n`;
+        if (content.start) ics += `DTSTART:${formatDate(content.start)}\n`;
+        if (content.end) ics += `DTEND:${formatDate(content.end)}\n`;
+        ics += 'END:VEVENT\nEND:VCALENDAR';
+        return ics;
+      
+      case 'crypto':
+        const protocols = { bitcoin: 'bitcoin', ethereum: 'ethereum', litecoin: 'litecoin', dogecoin: 'dogecoin' };
+        const protocol = protocols[content.type] || content.type;
+        const amount = content.amount ? `?amount=${content.amount}` : '';
+        return `${protocol}:${content.address}${amount}`;
+      
       case 'text':
         return content.text;
+      
       default:
         return null;
     }
