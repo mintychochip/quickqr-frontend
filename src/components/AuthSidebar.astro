@@ -341,16 +341,24 @@
 
   // OAuth handlers
   document.getElementById('oauth-google-btn')?.addEventListener('click', async () => {
+    if (!supabase) {
+      showError('Auth service not configured');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin + '/dashboard' }
     });
   });
 
   document.getElementById('oauth-github-btn')?.addEventListener('click', async () => {
+    if (!supabase) {
+      showError('Auth service not configured');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin + '/dashboard' }
     });
   });
 
@@ -358,6 +366,12 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearError();
+    
+    if (!supabase) {
+      showError('Auth service not configured. Please try again later.');
+      return;
+    }
+    
     const email = emailInput.value;
     const password = passwordInput.value;
     submitBtn.disabled = true;
@@ -365,10 +379,14 @@
 
     try {
       if (mode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        closeSidebar();
-        window.location.href = '/dashboard';
+        if (data.session) {
+          closeSidebar();
+          window.location.href = '/dashboard';
+        } else {
+          throw new Error('No session returned');
+        }
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
