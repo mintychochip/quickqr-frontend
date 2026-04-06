@@ -32,10 +32,13 @@ import MainLayout from '../layouts/MainLayout.astro';
     const errorText = document.getElementById('error-text');
     const homeLink = document.getElementById('home-link');
 
+    console.log('[404 Handler] Path:', path);
+    console.log('[404 Handler] Full URL:', window.location.href);
+
     // Check if this is a QR redirect path
     const match = path.match(/^\/r\/(.+)$/);
     if (!match) {
-      // Not a QR redirect, show 404
+      console.log('[404 Handler] Not a QR path, showing 404');
       statusText.textContent = 'Page not found';
       errorText.textContent = 'The page you\'re looking for doesn\'t exist';
       errorText.style.display = 'block';
@@ -44,7 +47,9 @@ import MainLayout from '../layouts/MainLayout.astro';
     }
 
     const slug = match[1];
+    console.log('[404 Handler] QR ID extracted:', slug);
     statusText.textContent = 'Loading QR code...';
+    console.log('[404 Handler] Fetching QR code from database...');
 
     // Fetch QR code data
     const { data: qrCode, error: fetchError } = await supabase
@@ -53,9 +58,21 @@ import MainLayout from '../layouts/MainLayout.astro';
       .eq('id', slug)
       .single();
 
-    if (fetchError || !qrCode) {
+    console.log('[404 Handler] Database result:', { qrCode, fetchError });
+
+    if (fetchError) {
+      console.error('[404 Handler] Fetch error:', fetchError);
       statusText.textContent = 'QR code not found';
-      errorText.textContent = 'This QR code does not exist or has been deleted';
+      errorText.textContent = 'Error: ' + fetchError.message + ' (Code: ' + fetchError.code + ')';
+      errorText.style.display = 'block';
+      homeLink.style.display = 'inline-block';
+      return;
+    }
+
+    if (!qrCode) {
+      console.log('[404 Handler] QR code not found in database');
+      statusText.textContent = 'QR code not found';
+      errorText.textContent = 'This QR code (ID: ' + slug + ') does not exist or has been deleted';
       errorText.style.display = 'block';
       homeLink.style.display = 'inline-block';
       return;
