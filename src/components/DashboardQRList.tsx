@@ -52,6 +52,15 @@ const DashboardQRList = () => {
         .order('created_at', { ascending: false });
 
       setAllQrCodes(data || []);
+      
+      // Update stats in parent dashboard
+      const totalEl = document.getElementById('stat-total');
+      const scansEl = document.getElementById('stat-scans');
+      const dynamicEl = document.getElementById('stat-dynamic');
+      
+      if (totalEl) totalEl.textContent = String(data?.length || 0);
+      if (scansEl) scansEl.textContent = String(data?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0);
+      if (dynamicEl) dynamicEl.textContent = String(data?.filter(qr => qr.mode === 'dynamic').length || 0);
     } catch (err) {
       toast.error('Failed to load QR codes');
     } finally {
@@ -184,63 +193,112 @@ const DashboardQRList = () => {
     });
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) return (
+    <div className="qr-grid-loading" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem', gap: '1rem' }}>
+      <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '3px solid rgba(20, 184, 166, 0.2)', borderTopColor: '#14b8a6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+      <p style={{ color: '#6b7280' }}>Loading QR codes...</p>
+    </div>
+  );
 
   return (
     <div className="dashboard-qr-list">
       <Toaster />
       
       {/* Toolbar */}
-      <div className="toolbar">
+      <div className="toolbar" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search QR codes..."
           value={searchQuery}
           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          className="search-input"
+          style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb', minWidth: '200px' }}
         />
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+        <select 
+          value={sortBy} 
+          onChange={(e) => setSortBy(e.target.value as any)}
+          style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}
+        >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
           <option value="name">Name A-Z</option>
           <option value="scans">Most Scans</option>
         </select>
         {selectedIds.size > 0 && (
-          <button onClick={bulkDelete} className="bulk-delete">
-            Delete {selectedIds.size}
+          <button 
+            onClick={bulkDelete} 
+            className="bulk-delete"
+            style={{ padding: '0.5rem 1rem', background: '#dc2626', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
+          >
+            Delete {selectedIds.size} selected
           </button>
         )}
+      </div>
+      
+      <div className="results-info" style={{ marginBottom: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>
+        Showing {paginatedCodes.length} of {filteredCodes.length} QR codes
+        {selectedIds.size > 0 && ` • ${selectedIds.size} selected`}
       </div>
 
       {/* Grid */}
       <div className="qr-grid-enhanced">
         {paginatedCodes.map(qr => (
-          <div key={qr.id} className={`qr-card ${expandedId === qr.id ? 'expanded' : ''}`}>
-            <input 
-              type="checkbox" 
-              checked={selectedIds.has(qr.id)}
-              onChange={() => toggleSelect(qr.id)}
-            />
-            
-            <div className="qr-preview" onClick={() => setPreviewQr(qr)}>
-              <QRCodeSVG
-                value={qr.type === 'url' ? qr.content?.url : `${baseUrl}/r/${qr.id}`}
-                size={80}
-                bgColor={qr.styling?.bgColor || '#fff'}
-                fgColor={qr.styling?.dotsColor || '#000'}
+          <div key={qr.id} className={`qr-card-enhanced ${expandedId === qr.id ? 'expanded' : ''}`}>
+            <div className="qr-card-main">
+              <input 
+                type="checkbox" 
+                checked={selectedIds.has(qr.id)}
+                onChange={() => toggleSelect(qr.id)}
+                className="qr-checkbox"
               />
-            </div>
-            
-            <div className="qr-info">
-              <h3>{qr.name || 'Unnamed'}</h3>
-              <p>{qr.type.toUpperCase()} • {qr.scan_count || 0} scans</p>
-              {qr.mode === 'dynamic' && <span className="badge">Dynamic</span>}
-            </div>
-            
-            <div className="qr-actions">
-              <button onClick={() => copyUrl(qr)} title="Copy URL">📋</button>
-              <button onClick={() => downloadQR(qr, 'png')} title="Download PNG">⬇️</button>
-              <button onClick={() => duplicateQR(qr)} title="Duplicate">📄</button>
-              <button onClick={() => deleteQR(qr.id)} disabled={deletingId === qr.id} title="Delete">🗑️</button>
+              
+              <div className="qr-preview-enhanced" onClick={() => setPreviewQr(qr)} style={{ cursor: 'pointer' }}>
+                <QRCodeSVG
+                  value={qr.type === 'url' ? qr.content?.url : `${baseUrl}/r/${qr.id}`}
+                  size={80}
+                  bgColor={qr.styling?.bgColor || '#ffffff'}
+                  fgColor={qr.styling?.dotsColor || '#000000'}
+                />
+              </div>
+              
+              <div className="qr-info-enhanced">
+                <h3 className="qr-name">{qr.name || 'Unnamed QR'}</h3>
+                <p className="qr-type">{(qr.type || 'QR').toUpperCase()}</p>
+                {qr.mode === 'dynamic' ? (
+                  <p className="qr-scans">{qr.scan_count || 0} scans</p>
+                ) : (
+                  <p className="qr-scans static">Static — scans not tracked</p>
+                )}
+                {qr.mode === 'dynamic' && <span className="qr-badge dynamic">Dynamic</span>}
+              </div>
+              
+              <div className="qr-actions-enhanced">
+                <button onClick={() => copyUrl(qr)} className="action-btn copy" title="Copy URL">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+                <button onClick={() => downloadQR(qr, 'png')} className="action-btn download" title="Download PNG">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+                <button onClick={() => duplicateQR(qr)} className="action-btn duplicate" title="Duplicate">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+                <button onClick={() => deleteQR(qr.id)} disabled={deletingId === qr.id} className="action-btn delete" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -248,28 +306,56 @@ const DashboardQRList = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>←</button>
-          <span>Page {currentPage} of {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>→</button>
+        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => p - 1)}
+            style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '0.5rem', 
+              border: '1px solid #e5e7eb', 
+              background: 'white',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1
+            }}
+          >
+            ← Previous
+          </button>
+          <span style={{ color: '#6b7280' }}>Page {currentPage} of {totalPages}</span>
+          <button 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => p + 1)}
+            style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '0.5rem', 
+              border: '1px solid #e5e7eb', 
+              background: 'white',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1
+            }}
+          >
+            Next →
+          </button>
         </div>
       )}
 
       {/* Preview Modal */}
       {previewQr && (
-        <div className="modal-overlay" onClick={() => setPreviewQr(null)}>
-          <div className="preview-modal" onClick={e => e.stopPropagation()}>
-            <h3>{previewQr.name}</h3>
-            <QRCodeSVG
-              value={previewQr.type === 'url' ? previewQr.content?.url : `${baseUrl}/r/${previewQr.id}`}
-              size={300}
-              bgColor={previewQr.styling?.bgColor || '#fff'}
-              fgColor={previewQr.styling?.dotsColor || '#000'}
-            />
-            <div className="preview-actions">
-              <button onClick={() => downloadQR(previewQr, 'png')}>Download PNG</button>
-              <button onClick={() => downloadQR(previewQr, 'svg')}>Download SVG</button>
-              <button onClick={() => setPreviewQr(null)}>Close</button>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setPreviewQr(null)}>
+          <div className="modal-content" style={{ background: 'white', padding: '2rem', borderRadius: '1rem', maxWidth: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '1rem' }}>{previewQr.name}</h3>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <QRCodeSVG
+                value={previewQr.type === 'url' ? previewQr.content?.url : `${baseUrl}/r/${previewQr.id}`}
+                size={300}
+                bgColor={previewQr.styling?.bgColor || '#ffffff'}
+                fgColor={previewQr.styling?.dotsColor || '#000000'}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+              <button onClick={() => downloadQR(previewQr, 'png')} style={{ padding: '0.5rem 1rem', background: '#14b8a6', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Download PNG</button>
+              <button onClick={() => downloadQR(previewQr, 'svg')} style={{ padding: '0.5rem 1rem', background: '#14b8a6', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Download SVG</button>
+              <button onClick={() => setPreviewQr(null)} style={{ padding: '0.5rem 1rem', background: '#e5e7eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Close</button>
             </div>
           </div>
         </div>
