@@ -61,25 +61,27 @@ import '../styles/dashboard.css';
     const userEmail = document.getElementById('user-email');
     const qrListContainer = document.getElementById('qr-list-container');
 
-    // Check auth - use getSession to read from localStorage without server roundtrip
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    const user = session?.user;
-    
-    console.log('Dashboard auth check:', { hasSession: !!session, hasUser: !!user, error: sessionError?.message });
+    try {
+      // Check auth with timeout
+      const authPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+      );
+      
+      const { data: { session }, error: sessionError } = await Promise.race([authPromise, timeoutPromise]);
+      const user = session?.user;
+      
+      console.log('Dashboard auth check:', { hasSession: !!session, hasUser: !!user, error: sessionError?.message });
 
-    if (!user || error) {
-      // Not authenticated - trigger auth modal
-      authCheck.innerHTML = '<p>Please sign in to view your dashboard</p><button id="dashboard-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>';
-      // Open auth modal when button clicked
-      document.getElementById('dashboard-auth-btn')?.addEventListener('click', () => {
-        (window as any).openAuthSidebar?.();
-      });
-      // Also try to open automatically after a moment
-      setTimeout(() => {
-        (window as any).openAuthSidebar?.();
-      }, 500);
-      return;
-    }
+      if (!user || sessionError) {
+        // Not authenticated - show sign in button
+        authCheck.innerHTML = '<p>Please sign in to view your dashboard</p><button id="dashboard-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>';
+        document.getElementById('dashboard-auth-btn')?.addEventListener('click', () => {
+          (window as any).openAuthSidebar?.();
+        });
+        setTimeout(() => (window as any).openAuthSidebar?.(), 300);
+        return;
+      }
 
     // Show dashboard
     authCheck.style.display = 'none';
@@ -153,6 +155,13 @@ import '../styles/dashboard.css';
           `).join('')}
         </div>
       `;
+    }
+    } catch (err: any) {
+      console.error('Dashboard init error:', err);
+      authCheck.innerHTML = `<p>Error loading dashboard: ${err.message}</p><button id="dashboard-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>`;
+      document.getElementById('dashboard-auth-btn')?.addEventListener('click', () => {
+        (window as any).openAuthSidebar?.();
+      });
     }
   }
 
