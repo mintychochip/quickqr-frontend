@@ -368,7 +368,7 @@
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         closeSidebar();
-        window.location.reload();
+        window.location.href = '/dashboard';
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
