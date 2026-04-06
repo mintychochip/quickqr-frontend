@@ -1,8 +1,8 @@
 /* Footer Styles */
 .footer {
-  background-color: rgb(255 255 255 / 0.95);
+  background-color: rgba(10, 10, 15, 0.95);
   backdrop-filter: blur(8px);
-  border-top: 1px solid var(--color-gray-200);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: 3rem 0;
 }
 
@@ -69,12 +69,12 @@
 .footer-logo-text {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-gray-900);
+  color: white;
 }
 
 .footer-tagline {
   font-size: 0.875rem;
-  color: var(--color-gray-600);
+  color: #9ca3af;
   max-width: 16rem;
 }
 
@@ -87,7 +87,7 @@
 .footer-section-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-gray-900);
+  color: white;
   margin-bottom: 0.75rem;
 }
 
@@ -99,29 +99,29 @@
 
 .footer-link {
   font-size: 0.875rem;
-  color: var(--color-gray-600);
+  color: #9ca3af;
   transition: color 0.2s;
   cursor: pointer;
 }
 
 .footer-link:hover {
-  color: var(--color-gray-900);
+  color: white;
 }
 
 /* Footer Bottom */
 .footer-bottom {
   padding-top: 2rem;
-  border-top: 1px solid var(--color-gray-200);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   text-align: center;
 }
 
 .footer-copyright {
   font-size: 0.875rem;
-  color: var(--color-gray-600);
+  color: #9ca3af;
 }
 
 .footer-legal {
   font-size: 0.75rem;
-  color: var(--color-gray-500);
+  color: #6b7280;
   margin-top: 0.5rem;
 }

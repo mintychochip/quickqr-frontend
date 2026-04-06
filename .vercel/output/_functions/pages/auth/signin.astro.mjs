@@ -1,6 +1,6 @@
 import { e as createComponent, f as createAstro, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../../chunks/astro/server_Z1ggZnD5.mjs';
 import 'piccolore';
-import { $ as $$MainLayout } from '../../chunks/MainLayout_D_v9-u5d.mjs';
+import { $ as $$MainLayout } from '../../chunks/MainLayout_BrB7dypR.mjs';
 /* empty css                                       */
 export { renderers } from '../../renderers.mjs';
 
@@ -13,7 +13,7 @@ const $$Signin = createComponent(async ($$result, $$props, $$slots) => {
     const formData = await Astro2.request.formData();
     const email = formData.get("email")?.toString() || "";
     const password = formData.get("password")?.toString() || "";
-    const { supabase } = await import('../../chunks/MainLayout_D_v9-u5d.mjs').then(n => n.a);
+    const { supabase } = await import('../../chunks/MainLayout_BrB7dypR.mjs').then(n => n.a);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password

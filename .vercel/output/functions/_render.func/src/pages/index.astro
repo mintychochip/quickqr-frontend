@@ -17,7 +17,6 @@ const companies = [
 <MainLayout title="QuickQR — Lightning-Fast QR Codes">
   <!-- Hero -->
   <section class="hero">
-    <div class="hero-grid-bg"></div>
     <div class="hero-glow"></div>
     <div class="hero-content">
       <div class="hero-eyebrow">
@@ -77,7 +76,7 @@ const companies = [
           <div class="qr-input-group">
             <div>
               <label class="qr-label" id="qr-content-label" for="qr-content">URL</label>
-              <input type="text" id="qr-content" class="qr-input" placeholder="https://example.com" autocomplete="off" />
+              <input type="text" id="qr-content" class="qr-input" placeholder="https://example.com" value="https://quickqr.app" autocomplete="off" />
             </div>
           </div>
 
@@ -235,7 +234,9 @@ const companies = [
 </MainLayout>
 
 <script>
-  import { QRCodeStyling } from 'qr-code-styling';
+  // Dynamically import QR library only on client side
+  let QRCodeStyling: any = null;
+  let qrLibLoaded = false;
 
   const contentInput = document.getElementById('qr-content') as HTMLInputElement;
   const dotsColorHex = document.getElementById('dots-color-hex') as HTMLInputElement;
@@ -251,26 +252,64 @@ const companies = [
   const comparisonCtaBtn = document.getElementById('comparison-cta-btn');
 
   let currentType = 'url';
-  let qr: QRCodeStyling | null = null;
+  let qr: any = null;
   let currentData = '';
 
-  function buildQR(data: string) {
+  // Load QR library dynamically
+  async function loadQRLibrary() {
+    if (qrLibLoaded) return;
+    try {
+      const mod = await import('qr-code-styling');
+      QRCodeStyling = mod.default || mod;
+      qrLibLoaded = true;
+    } catch (e) {
+      console.error('Failed to load QR library:', e);
+      qrHint.textContent = 'Error loading QR generator. Please refresh.';
+    }
+  }
+
+  // Initialize library on first interaction
+  loadQRLibrary();
+
+  async function buildQR(data: string) {
     if (!data) {
       qrPreview.innerHTML = '';
       qrHint.style.display = '';
       qrHint.textContent = 'Start typing to see your QR code';
       return;
     }
+    
+    // Clear previous QR before generating new one
+    qrPreview.innerHTML = '';
+    
+    // Ensure library is loaded
+    if (!qrLibLoaded) {
+      await loadQRLibrary();
+    }
+    
+    if (!QRCodeStyling) {
+      qrHint.textContent = 'QR generator loading...';
+      return;
+    }
+    
     qrHint.style.display = 'none';
     qr = new QRCodeStyling({
       width: 200,
       height: 200,
       data,
-      dotsColor: dotsColorHex.value,
-      bgColor: bgColorHex.value,
-      dotsType: 'square',
-      cornerSquareType: 'square',
-      cornerDotType: 'square',
+      dotsOptions: {
+        color: dotsColorHex.value,
+        type: 'square',
+      },
+      backgroundOptions: {
+        color: bgColorHex.value,
+      },
+      cornersSquareOptions: {
+        type: 'square',
+      },
+      cornersDotOptions: {
+        type: 'square',
+      },
     });
     qr.append(qrPreview);
   }
@@ -316,6 +355,10 @@ const companies = [
     currentData = getData();
     buildQR(currentData);
   });
+
+  // Generate QR on page load with default value
+  currentData = getData();
+  buildQR(currentData);
 
   dotsColorPicker.addEventListener('input', () => { dotsColorHex.value = dotsColorPicker.value; buildQR(currentData); });
   dotsColorHex.addEventListener('input', () => { if (/^#[0-9a-fA-F]{6}$/.test(dotsColorHex.value)) { dotsColorPicker.value = dotsColorHex.value; buildQR(currentData); } });

@@ -6,11 +6,16 @@ import '../../styles/auth.css';
 const url = Astro.request.url;
 const code = new URL(url).searchParams.get('code');
 
+let authError = null;
+
 if (code) {
   const { supabase } = await import('../../lib/supabase');
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-  if (!error) {
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+  if (error) {
+    authError = error.message;
+  } else if (data.session) {
+    // Successfully authenticated, redirect to dashboard
     return Astro.redirect('/dashboard');
   }
 }
@@ -19,10 +24,18 @@ if (code) {
 <MainLayout title="Signing In - QuickQR">
   <div class="auth-container">
     <div class="auth-card">
-      <div class="auth-loading">
-        <div class="spinner"></div>
-        <p>Signing you in...</p>
-      </div>
+      {authError ? (
+        <div class="auth-header">
+          <h1>Sign In Error</h1>
+          <p style="color: #ef4444;">{authError}</p>
+          <a href="/auth/signin" style="color: #14b8a6; marginTop: "1rem", display: "inline-block"}>Try again</a>
+        </div>
+      ) : (
+        <div class="auth-loading">
+          <div class="spinner"></div>
+          <p>Signing you in...</p>
+        </div>
+      )}
     </div>
   </div>
 </MainLayout>

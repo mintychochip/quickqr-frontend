@@ -22,3 +22,7 @@ Thumbs.db
 npm-debug.log*
 .vercel
 .env*.local
+
+# supabase
+supabase/config.toml
+supabase/.temp/
