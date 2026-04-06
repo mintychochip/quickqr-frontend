@@ -1,9 +1,9 @@
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import netlify from '@astrojs/netlify';
 
 export default defineConfig({
   output: 'server',
-  adapter: vercel(),
+  adapter: netlify(),
   vite: {
     optimizeDeps: {
       include: ['qr-code-styling'],
