@@ -1,11 +1,10 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import '../styles/create.css';
+import { getUser } from '../lib/supabase';
 
-const { supabase } = await import('../lib/supabase');
-
-// Check auth
-const { data: { user } } = await supabase.auth.getUser();
+// Check auth using cookies
+const user = await getUser(Astro.cookies);
 
 if (!user) {
   return Astro.redirect('/auth/signin');
@@ -51,7 +50,11 @@ if (Astro.request.method === 'POST') {
         cornerDotColor: dotsColor,
       };
 
-      const { error } = await supabase
+      // Create server client with cookies for database operation
+      const { createServerClient } = await import('../lib/supabase');
+      const serverSupabase = createServerClient(Astro.cookies);
+      
+      const { error } = await serverSupabase
         .from('qrcodes')
         .insert({
           user_id: user.id,

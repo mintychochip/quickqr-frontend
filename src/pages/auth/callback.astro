@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import '../../styles/auth.css';
+import { createServerClient } from '../../lib/supabase';
 
 // Exchange code for session
 const url = Astro.request.url;
@@ -9,7 +10,7 @@ const code = new URL(url).searchParams.get('code');
 let authError = null;
 
 if (code) {
-  const { supabase } = await import('../../lib/supabase');
+  const supabase = createServerClient(Astro.cookies);
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   
   if (error) {
