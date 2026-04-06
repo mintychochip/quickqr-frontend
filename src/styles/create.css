@@ -1,9 +1,200 @@
 /* Create QR Code Page Styles */
 
 .create-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
+}
+
+.create-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .create-layout {
+    grid-template-columns: 1fr;
+  }
+  .preview-column {
+    order: -1;
+  }
+}
+
+.success-message {
+  padding: 0.75rem 1rem;
+  background-color: #d1fae5;
+  border: 1px solid #6ee7b7;
+  border-radius: 0.5rem;
+  color: #065f46;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.content-fields {
+  display: none;
+}
+
+.content-fields:not([style*="none"]) {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 1rem;
+}
+
+.mode-option {
+  flex: 1;
+  cursor: pointer;
+}
+
+.mode-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.mode-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--color-gray-50, #f9fafb);
+  border: 2px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.mode-card span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mode-card strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-900, #111827);
+}
+
+.mode-card small {
+  font-size: 0.75rem;
+  color: var(--color-gray-500, #6b7280);
+}
+
+.mode-option input:checked + .mode-card {
+  border-color: var(--color-teal-500, #14b8a6);
+  background: var(--color-teal-50, #f0fdfa);
+}
+
+.mode-option input:checked + .mode-card svg {
+  color: var(--color-teal-600, #0d9488);
+}
+
+.style-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.style-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--border-radius, 0.5rem);
+  font-size: 1rem;
+  color: var(--color-gray-900, #111827);
+  background-color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-teal-500, #14b8a6);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.preview-card {
+  background: white;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.preview-card h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-gray-900, #111827);
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.qr-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 280px;
+  background: var(--color-gray-50, #f9fafb);
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.qr-placeholder {
+  text-align: center;
+  color: var(--color-gray-500, #6b7280);
+}
+
+.qr-placeholder p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-gray-100, #f3f4f6);
+  color: var(--color-gray-700, #374151);
+  border: none;
+  border-radius: var(--border-radius, 0.5rem);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.download-btn:hover:not(:disabled) {
+  background-color: var(--color-gray-200, #e5e7eb);
+}
+
+.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .create-header {
