@@ -30,6 +30,11 @@ const DashboardQRList = () => {
   const [editContent, setEditContent] = useState<any>(null);
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [loadingAnalytics, setLoadingAnalytics] = useState<Record<string, boolean>>({});
+  
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [qrToDelete, setQrToDelete] = useState<QRCode | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch QR codes on mount
   useEffect(() => {
@@ -164,18 +169,33 @@ const DashboardQRList = () => {
     }
   };
 
-  const deleteQR = async (qrId: string) => {
-    if (!confirm('Are you sure you want to delete this QR code?')) return;
+  const openDeleteModal = (qr: QRCode) => {
+    setQrToDelete(qr);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setQrToDelete(null);
+    setDeleting(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!qrToDelete) return;
+    
+    setDeleting(true);
     
     const { error } = await supabase
       .from('qrcodes')
       .delete()
-      .eq('id', qrId);
+      .eq('id', qrToDelete.id);
     
     if (!error) {
-      setQrCodes(prev => prev.filter(q => q.id !== qrId));
+      setQrCodes(prev => prev.filter(q => q.id !== qrToDelete.id));
+      closeDeleteModal();
     } else {
       alert('Failed to delete: ' + error.message);
+      setDeleting(false);
     }
   };
 
@@ -322,7 +342,7 @@ const DashboardQRList = () => {
                   </svg>
                 </a>
                 <button 
-                  onClick={() => deleteQR(qr.id)} 
+                  onClick={() => openDeleteModal(qr)} 
                   className="action-btn delete"
                   title="Delete"
                 >
@@ -394,6 +414,44 @@ const DashboardQRList = () => {
           </div>
         );
       })}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && qrToDelete && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-icon warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <h3>Delete QR Code</h3>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete <strong>{qrToDelete.name || 'Unnamed QR'}</strong>?</p>
+              <p className="modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                onClick={closeDeleteModal} 
+                className="modal-btn cancel"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                className="modal-btn delete"
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
