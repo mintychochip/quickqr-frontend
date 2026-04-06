@@ -10,8 +10,8 @@ max_rows = 1000
 
 [auth]
 enabled = true
-site_url = "https://quickqr-frontend.netlify.app"
-additional_redirect_urls = ["https://quickqr-frontend.netlify.app/auth/callback", "https://quickqr-frontend.netlify.app"]
+site_url = "https://quickqr.app"
+additional_redirect_urls = ["https://quickqr.app/auth/callback", "https://quickqr.app", "https://www.quickqr.app/auth/callback", "https://www.quickqr.app"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
@@ -22,7 +22,7 @@ enable_anonymous_sign_ins = false
 enabled = true
 client_id = "YOUR_GOOGLE_CLIENT_ID"
 secret = "YOUR_GOOGLE_SECRET"
-redirect_uri = "https://quickqr-frontend.netlify.app/auth/callback"
+redirect_uri = "https://quickqr.app/auth/callback"
 url = ""
 
 [auth.external.github]
