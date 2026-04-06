@@ -66,10 +66,14 @@ import '../styles/dashboard.css';
 
     if (!user || error) {
       // Not authenticated - trigger auth modal
-      authCheck.innerHTML = '<p>Please sign in to view your dashboard</p><a href="/" class="btn-primary" style="margin-top:1rem">Go Home</a>';
-      // Open auth modal after a moment
+      authCheck.innerHTML = '<p>Please sign in to view your dashboard</p><button id="dashboard-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>';
+      // Open auth modal when button clicked
+      document.getElementById('dashboard-auth-btn')?.addEventListener('click', () => {
+        (window as any).openAuthSidebar?.();
+      });
+      // Also try to open automatically after a moment
       setTimeout(() => {
-        document.getElementById('auth-btn')?.click();
+        (window as any).openAuthSidebar?.();
       }, 500);
       return;
     }
