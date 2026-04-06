@@ -6,12 +6,29 @@ import { createServerClient } from '../../lib/supabase';
 // Exchange code for session
 const url = Astro.request.url;
 const code = new URL(url).searchParams.get('code');
+const accessToken = new URL(url).searchParams.get('access_token');
+const refreshToken = new URL(url).searchParams.get('refresh_token');
 
 let authError = null;
 
 if (code) {
+  // PKCE flow - exchange code for session
   const supabase = createServerClient(Astro.cookies);
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+  if (error) {
+    authError = error.message;
+  } else if (data.session) {
+    // Successfully authenticated, redirect to dashboard
+    return Astro.redirect('/dashboard');
+  }
+} else if (accessToken) {
+  // Implicit flow - set session from tokens
+  const supabase = createServerClient(Astro.cookies);
+  const { data, error } = await supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken || '',
+  });
   
   if (error) {
     authError = error.message;

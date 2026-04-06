@@ -1,6 +1,13 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import '../styles/home.css';
+import { getSession } from '../lib/supabase';
+
+// Check if user is already logged in via cookies
+const session = await getSession(Astro.cookies);
+if (session) {
+  return Astro.redirect('/dashboard');
+}
 
 const companies = [
   { name: 'Google', logo: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png' },
@@ -369,4 +376,11 @@ const companies = [
     if (!currentData || !qr) return;
     await qr.download({ name: 'quickqr', extension: 'png' });
   });
+
+  // Handle OAuth redirect with access_token in hash
+  if (window.location.hash.includes('access_token=')) {
+    // Extract the hash content and redirect to callback
+    const hash = window.location.hash.substring(1);
+    window.location.href = '/auth/callback?' + hash;
+  }
 </script>
