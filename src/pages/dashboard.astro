@@ -74,12 +74,8 @@ import '../styles/dashboard.css';
       console.log('Dashboard auth check:', { hasSession: !!session, hasUser: !!user, error: sessionError?.message });
 
       if (!user || sessionError) {
-        // Not authenticated - show sign in button
-        authCheck.innerHTML = '<p>Please sign in to view your dashboard</p><button id="dashboard-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>';
-        document.getElementById('dashboard-auth-btn')?.addEventListener('click', () => {
-          (window as any).openAuthSidebar?.();
-        });
-        setTimeout(() => (window as any).openAuthSidebar?.(), 300);
+        // Not authenticated - redirect to homepage
+        window.location.href = '/';
         return;
       }
 

@@ -486,11 +486,8 @@ import '../styles/create.css';
       user = session?.user;
 
       if (!user || sessionError) {
-        authCheck.innerHTML = '<p>Please sign in to create QR codes</p><button id="create-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>';
-        document.getElementById('create-auth-btn')?.addEventListener('click', () => {
-          (window as any).openAuthSidebar?.();
-        });
-        setTimeout(() => (window as any).openAuthSidebar?.(), 300);
+        // Not authenticated - redirect to homepage
+        window.location.href = '/';
         return;
       }
 
