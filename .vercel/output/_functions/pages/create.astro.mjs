@@ -1,6 +1,6 @@
 import { e as createComponent, f as createAstro, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_Z1ggZnD5.mjs';
 import 'piccolore';
-import { $ as $$MainLayout } from '../chunks/MainLayout_DrlpgbZt.mjs';
+import { $ as $$MainLayout } from '../chunks/MainLayout_CCta3uUR.mjs';
 /* empty css                                  */
 export { renderers } from '../renderers.mjs';
 
@@ -8,7 +8,7 @@ const $$Astro = createAstro();
 const $$Create = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$Create;
-  const { supabase } = await import('../chunks/MainLayout_DrlpgbZt.mjs').then(n => n.a);
+  const { supabase } = await import('../chunks/MainLayout_CCta3uUR.mjs').then(n => n.a);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return Astro2.redirect("/auth/signin");
