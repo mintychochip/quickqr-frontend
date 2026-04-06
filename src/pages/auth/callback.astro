@@ -1,120 +1,79 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import '../../styles/auth.css';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
-const supabasePublishableKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-
-// Debug logging
-console.log('Callback env vars present:', { 
-  hasUrl: !!supabaseUrl, 
-  hasKey: !!supabasePublishableKey,
-  url: supabaseUrl?.slice(0, 20) + '...'
-});
-
-// Exchange code for session
-const url = Astro.request.url;
-const code = new URL(url).searchParams.get('code');
-const accessToken = new URL(url).searchParams.get('access_token');
-const refreshToken = new URL(url).searchParams.get('refresh_token');
-const errorParam = new URL(url).searchParams.get('error');
-const errorDescription = new URL(url).searchParams.get('error_description');
-
-console.log('Callback params:', { code: !!code, accessToken: !!accessToken, error: errorParam });
-
-let authError = errorParam ? `${errorParam}: ${errorDescription}` : null;
-
-if (code && supabaseUrl && supabasePublishableKey) {
-  // PKCE flow - exchange code for session
-  const supabase = createClient(supabaseUrl, supabasePublishableKey);
-  
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-  
-  console.log('Exchange result:', { success: !!data?.session, error: error?.message });
-  
-  if (error) {
-    authError = error.message;
-  } else if (data.session) {
-    // Extract session tokens
-    const { access_token, refresh_token } = data.session;
-    
-    // Set auth cookies for SSR
-    Astro.cookies.set('sb-access-token', access_token, {
-      path: '/',
-      httpOnly: false,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-    
-    Astro.cookies.set('sb-refresh-token', refresh_token, {
-      path: '/',
-      httpOnly: false,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-    
-    console.log('Cookies set, redirecting to dashboard');
-    
-    // Successfully authenticated, redirect to dashboard
-    return Astro.redirect('/dashboard');
-  }
-} else if (accessToken && supabaseUrl && supabasePublishableKey) {
-  // Implicit flow - set session from tokens
-  const supabase = createClient(supabaseUrl, supabasePublishableKey);
-  
-  const { data, error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken || '',
-  });
-  
-  if (error) {
-    authError = error.message;
-  } else if (data.session) {
-    // Set auth cookies for SSR
-    Astro.cookies.set('sb-access-token', data.session.access_token, {
-      path: '/',
-      httpOnly: false,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    
-    Astro.cookies.set('sb-refresh-token', data.session.refresh_token, {
-      path: '/',
-      httpOnly: false,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    
-    // Successfully authenticated, redirect to dashboard
-    return Astro.redirect('/dashboard');
-  }
-} else if (!code && !accessToken && !errorParam) {
-  // No code and no error - just redirect to home
-  console.log('No auth params, redirecting to home');
-  return Astro.redirect('/');
-}
 ---
 
 <MainLayout title="Signing In - QuickQR">
   <div class="auth-container">
-    <div class="auth-card">
-      {authError ? (
-        <div class="auth-header">
-          <h1>Sign In Error</h1>
-          <p style="color: #ef4444;">{authError}</p>
-          <a href="/" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Try again</a>
-        </div>
-      ) : (
-        <div class="auth-loading">
-          <div class="spinner"></div>
-          <p>Signing you in...</p>
-        </div>
-      )}
+    <div class="auth-card" id="auth-card">
+      <div class="auth-loading" id="auth-loading">
+        <div class="spinner"></div>
+        <p>Signing you in...</p>
+      </div>
+      <div class="auth-header" id="auth-error" style="display: none;">
+        <h1>Sign In Error</h1>
+        <p id="error-message" style="color: #ef4444;"></p>
+        <a href="/" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Try again</a>
+      </div>
     </div>
   </div>
 </MainLayout>
+
+<script>
+  import { supabase } from '../../config/supabase';
+
+  async function handleCallback() {
+    const loadingEl = document.getElementById('auth-loading');
+    const errorEl = document.getElementById('auth-error');
+    const errorMsg = document.getElementById('error-message');
+
+    // Get tokens from URL
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('code');
+    const accessToken = url.searchParams.get('access_token');
+    const refreshToken = url.searchParams.get('refresh_token');
+    const error = url.searchParams.get('error');
+    const errorDescription = url.searchParams.get('error_description');
+
+    if (error) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      errorMsg.textContent = `${error}: ${errorDescription}`;
+      return;
+    }
+
+    if (code) {
+      // PKCE flow - exchange code for session
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (exchangeError) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorMsg.textContent = exchangeError.message;
+      } else if (data.session) {
+        // Success - redirect to dashboard
+        window.location.href = '/dashboard';
+      }
+    } else if (accessToken) {
+      // Implicit flow - set session from tokens
+      const { data, error: setError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      });
+      
+      if (setError) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorMsg.textContent = setError.message;
+      } else if (data.session) {
+        // Success - redirect to dashboard
+        window.location.href = '/dashboard';
+      }
+    } else {
+      // No auth params - go home
+      window.location.href = '/';
+    }
+  }
+
+  handleCallback();
+</script>

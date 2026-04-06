@@ -1,72 +1,105 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import '../styles/dashboard.css';
-import { getUser, createServerClient } from '../lib/supabase';
-
-// Check auth using cookies
-const user = await getUser(Astro.cookies);
-
-if (!user) {
-  return Astro.redirect('/');
-}
-
-// Create server client with cookies for data fetching
-const supabase = createServerClient(Astro.cookies);
-
-// Fetch user's QR codes
-const { data: qrCodes, error } = await supabase
-  .from('qrcodes')
-  .select('*')
-  .eq('user_id', user.id)
-  .order('created_at', { ascending: false })
-  .limit(100);
-
-const userEmail = user.email;
 ---
 
 <MainLayout title="Dashboard - QuickQR">
-  <div class="dashboard-container">
-    <div class="dashboard-header">
-      <div class="header-content">
-        <h1>Welcome back</h1>
-        <p>{userEmail}</p>
-      </div>
-      <a href="/create" class="create-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Create QR Code
-      </a>
+  <div class="dashboard-container" id="dashboard-container">
+    <!-- Auth check overlay -->
+    <div id="auth-check" class="auth-loading-overlay">
+      <div class="spinner"></div>
+      <p>Checking authentication...</p>
     </div>
 
-    <div class="dashboard-stats">
-      <div class="stat-card">
-        <div class="stat-value">{qrCodes?.length || 0}</div>
-        <div class="stat-label">Total QR Codes</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{qrCodes?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0}</div>
-        <div class="stat-label">Total Scans</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{qrCodes?.filter(qr => qr.mode === 'dynamic').length || 0}</div>
-        <div class="stat-label">Dynamic Codes</div>
-      </div>
-    </div>
-
-    <div class="qr-list-section">
-      <div class="section-header">
-        <h2>Your QR Codes</h2>
-      </div>
-
-      {error && (
-        <div class="error-message">
-          <p>Error loading QR codes: {error.message}</p>
+    <!-- Dashboard content (hidden until auth check) -->
+    <div id="dashboard-content" style="display: none;">
+      <div class="dashboard-header">
+        <div class="header-content">
+          <h1>Welcome back</h1>
+          <p id="user-email">Loading...</p>
         </div>
-      )}
+        <a href="/create" class="create-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Create QR Code
+        </a>
+      </div>
 
-      {!error && (!qrCodes || qrCodes.length === 0) && (
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total QR Codes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-scans">0</div>
+          <div class="stat-label">Total Scans</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-dynamic">0</div>
+          <div class="stat-label">Dynamic Codes</div>
+        </div>
+      </div>
+
+      <div class="qr-list-section">
+        <div class="section-header">
+          <h2>Your QR Codes</h2>
+        </div>
+        <div id="qr-list-container"></div>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import { supabase } from '../config/supabase';
+
+  async function initDashboard() {
+    const authCheck = document.getElementById('auth-check');
+    const dashboardContent = document.getElementById('dashboard-content');
+    const userEmail = document.getElementById('user-email');
+    const qrListContainer = document.getElementById('qr-list-container');
+
+    // Check auth
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (!user || error) {
+      // Not authenticated - trigger auth modal
+      authCheck.innerHTML = '<p>Please sign in to view your dashboard</p><a href="/" class="btn-primary" style="margin-top:1rem">Go Home</a>';
+      // Open auth modal after a moment
+      setTimeout(() => {
+        document.getElementById('auth-btn')?.click();
+      }, 500);
+      return;
+    }
+
+    // Show dashboard
+    authCheck.style.display = 'none';
+    dashboardContent.style.display = 'block';
+    userEmail.textContent = user.email || 'Unknown';
+
+    // Load QR codes
+    const { data: qrCodes, error: qrError } = await supabase
+      .from('qrcodes')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (qrError) {
+      qrListContainer.innerHTML = `<div class="error-message">Error loading QR codes: ${qrError.message}</div>`;
+      return;
+    }
+
+    // Update stats
+    document.getElementById('stat-total').textContent = qrCodes?.length || 0;
+    document.getElementById('stat-scans').textContent = qrCodes?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0;
+    document.getElementById('stat-dynamic').textContent = qrCodes?.filter(qr => qr.mode === 'dynamic').length || 0;
+
+    // Render QR list
+    if (!qrCodes || qrCodes.length === 0) {
+      qrListContainer.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -80,11 +113,11 @@ const userEmail = user.email;
           <p>Create your first QR code to get started</p>
           <a href="/create" class="create-btn">Create QR Code</a>
         </div>
-      )}
-
-      {qrCodes && qrCodes.length > 0 && (
+      `;
+    } else {
+      qrListContainer.innerHTML = `
         <div class="qr-grid">
-          {qrCodes.map((qr) => (
+          ${qrCodes.map(qr => `
             <div class="qr-card">
               <div class="qr-preview">
                 <div class="qr-placeholder">
@@ -97,12 +130,12 @@ const userEmail = user.email;
                 </div>
               </div>
               <div class="qr-info">
-                <h3 class="qr-name">{qr.name || 'Unnamed QR'}</h3>
-                <p class="qr-type">{qr.type?.toUpperCase() || 'QR'}</p>
-                <p class="qr-scans">{qr.scan_count || 0} scans</p>
+                <h3 class="qr-name">${qr.name || 'Unnamed QR'}</h3>
+                <p class="qr-type">${(qr.type || 'QR').toUpperCase()}</p>
+                <p class="qr-scans">${qr.scan_count || 0} scans</p>
               </div>
               <div class="qr-actions">
-                <a href={`/r/${qr.id}`} class="action-btn view" title="View">
+                <a href="/r/${qr.id}" class="action-btn view" title="View">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
@@ -110,9 +143,43 @@ const userEmail = user.email;
                 </a>
               </div>
             </div>
-          ))}
+          `).join('')}
         </div>
-      )}
-    </div>
-  </div>
-</MainLayout>
+      `;
+    }
+  }
+
+  initDashboard();
+</script>
+
+<style>
+  .auth-loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(94, 234, 212, 0.2);
+    border-top-color: #5eead4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: #5eead4;
+    color: #0f172a;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>
