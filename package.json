@@ -10,9 +10,12 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
     "chart.js": "^4.5.1",
+    "framer-motion": "^12.38.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
-    "qr-code-styling": "^1.9.2"
+    "lucide-react": "^1.7.0",
+    "qr-code-styling": "^1.9.2",
+    "qrcode.react": "^4.2.0"
   },
   "devDependencies": {
     "@astrojs/vercel": "^8.0.0",
