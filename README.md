@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>📱 Pay-as-you-go QR Code Generator</strong>
+  <strong>Pay-as-you-go QR Code Generator</strong>
 </p>
 
 <p align="center">
@@ -17,20 +17,20 @@
 
 ---
 
-## ✨ Features
+## Features
 
-- **📲 Multiple QR Types** — URL, Text, Email, Phone, SMS, Location, vCard, MeCard, WiFi, Event
-- **🎨 Custom Styling** — Customize colors, patterns, and designs with `qr-code-styling`
-- **📊 Analytics Dashboard** — Track scan counts and usage statistics
-- **📄 PDF Export** — Generate and download QR codes as PDF documents with `jsPDF`
-- **🔒 User Authentication** — Secure account management with Supabase Auth
-- **☁️ Cloud Storage** — Save and manage your QR codes in the cloud
-- **⏱️ Expiration Options** — Set expiry times for temporary QR codes
-- **🛡️ Abuse Detection** — Built-in protection against misuse
+- **Multiple QR Types** — URL, Text, Email, Phone, SMS, Location, vCard, MeCard, WiFi, Event
+- **Custom Styling** — Customize colors, patterns, and designs with `qr-code-styling`
+- **Analytics Dashboard** — Track scan counts and usage statistics
+- **PDF Export** — Generate and download QR codes as PDF documents with `jsPDF`
+- **User Authentication** — Secure account management with Supabase Auth
+- **Cloud Storage** — Save and manage your QR codes in the cloud
+- **Expiration Options** — Set expiry times for temporary QR codes
+- **Abuse Detection** — Built-in protection against misuse
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |----------|------------|
@@ -46,7 +46,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -86,7 +86,7 @@ npm run preview
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 quickqr-frontend/
@@ -109,7 +109,7 @@ quickqr-frontend/
 
 ---
 
-## 🎯 QR Code Types Supported
+## QR Code Types Supported
 
 | Type | Description |
 |------|-------------|
@@ -126,7 +126,7 @@ quickqr-frontend/
 
 ---
 
-## 🔧 Services
+## Services
 
 ### QR Code Management
 - `fetchUserQRCodes()` — Retrieve all user QR codes
@@ -144,7 +144,7 @@ quickqr-frontend/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -156,12 +156,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-## 📄 License
+## License
 
 This project is available under the MIT License.
 
 ---
 
 <p align="center">
-  Built with 💜 by mintychochip
+  Built with love by mintychochip
 </p>
