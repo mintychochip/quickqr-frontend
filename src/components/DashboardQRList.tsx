@@ -302,24 +302,30 @@ const DashboardQRList = () => {
                   <>
                     <h3 className="qr-name">{qr.name || 'Unnamed QR'}</h3>
                     <p className="qr-type">{(qr.type || 'QR').toUpperCase()}</p>
-                    <p className="qr-scans">{qr.scan_count || 0} scans</p>
+                    {qr.mode === 'dynamic' ? (
+                      <p className="qr-scans">{qr.scan_count || 0} scans</p>
+                    ) : (
+                      <p className="qr-scans static">Static — scans not tracked</p>
+                    )}
                     {qr.mode === 'dynamic' && <span className="qr-badge dynamic">Dynamic</span>}
                   </>
                 )}
               </div>
               
               <div className="qr-actions-enhanced">
-                <button 
-                  onClick={() => toggleAnalytics(qr.id)} 
-                  className={`action-btn analytics ${isExpanded ? 'active' : ''}`}
-                  title="Analytics"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y4="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                  </svg>
-                </button>
+                {qr.mode === 'dynamic' && (
+                  <button 
+                    onClick={() => toggleAnalytics(qr.id)} 
+                    className={`action-btn analytics ${isExpanded ? 'active' : ''}`}
+                    title="Analytics"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="20" x2="18" y2="10"></line>
+                      <line x1="12" y1="20" x2="12" y4="4"></line>
+                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                  </button>
+                )}
                 <button 
                   onClick={() => startEdit(qr)} 
                   className="action-btn edit"
