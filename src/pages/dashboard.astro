@@ -1,5 +1,6 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import DashboardQRList from '../components/DashboardQRList';
 import '../styles/dashboard.css';
 ---
 
@@ -46,7 +47,9 @@ import '../styles/dashboard.css';
         <div class="section-header">
           <h2>Your QR Codes</h2>
         </div>
-        <div id="qr-list-container"></div>
+        <div id="qr-list-container">
+          <DashboardQRList client:only="react" />
+        </div>
       </div>
     </div>
   </div>
@@ -59,7 +62,6 @@ import '../styles/dashboard.css';
     const authCheck = document.getElementById('auth-check');
     const dashboardContent = document.getElementById('dashboard-content');
     const userEmail = document.getElementById('user-email');
-    const qrListContainer = document.getElementById('qr-list-container');
 
     try {
       // Check auth with timeout
@@ -74,85 +76,41 @@ import '../styles/dashboard.css';
       console.log('Dashboard auth check:', { hasSession: !!session, hasUser: !!user, error: sessionError?.message });
 
       if (!user || sessionError) {
-        // Not authenticated - redirect to homepage
         window.location.href = '/';
         return;
       }
 
-    // Show dashboard
-    authCheck.style.display = 'none';
-    dashboardContent.style.display = 'block';
-    userEmail.textContent = user.email || 'Unknown';
+      // Show dashboard
+      authCheck.style.display = 'none';
+      dashboardContent.style.display = 'block';
+      userEmail.textContent = user.email || 'Unknown';
 
-    // Load QR codes
-    const { data: qrCodes, error: qrError } = await supabase
-      .from('qrcodes')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(100);
+      // Load QR codes
+      const { data: qrCodes, error: qrError } = await supabase
+        .from('qrcodes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    if (qrError) {
-      qrListContainer.innerHTML = `<div class="error-message">Error loading QR codes: ${qrError.message}</div>`;
-      return;
-    }
+      if (qrError) {
+        document.getElementById('qr-list-container').innerHTML = `<div class="error-message">Error loading QR codes: ${qrError.message}</div>`;
+        return;
+      }
 
-    // Update stats
-    document.getElementById('stat-total').textContent = qrCodes?.length || 0;
-    document.getElementById('stat-scans').textContent = qrCodes?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0;
-    document.getElementById('stat-dynamic').textContent = qrCodes?.filter(qr => qr.mode === 'dynamic').length || 0;
+      // Update stats
+      document.getElementById('stat-total').textContent = qrCodes?.length || 0;
+      document.getElementById('stat-scans').textContent = qrCodes?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0;
+      document.getElementById('stat-dynamic').textContent = qrCodes?.filter(qr => qr.mode === 'dynamic').length || 0;
 
-    // Render QR list
-    if (!qrCodes || qrCodes.length === 0) {
-      qrListContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-          </div>
-          <h3>No QR codes yet</h3>
-          <p>Create your first QR code to get started</p>
-          <a href="/create" class="create-btn">Create QR Code</a>
-        </div>
-      `;
-    } else {
-      qrListContainer.innerHTML = `
-        <div class="qr-grid">
-          ${qrCodes.map(qr => `
-            <div class="qr-card">
-              <div class="qr-preview">
-                <div class="qr-placeholder">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                  </svg>
-                </div>
-              </div>
-              <div class="qr-info">
-                <h3 class="qr-name">${qr.name || 'Unnamed QR'}</h3>
-                <p class="qr-type">${(qr.type || 'QR').toUpperCase()}</p>
-                <p class="qr-scans">${qr.scan_count || 0} scans</p>
-              </div>
-              <div class="qr-actions">
-                <a href="/r/${qr.id}" class="action-btn view" title="View">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </a>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    } catch (err: any) {
+      // Store data for React component
+      window.__DASHBOARD_DATA__ = {
+        qrCodes: qrCodes || [],
+        baseUrl: window.location.origin,
+        userId: user.id
+      };
+
+    } catch (err) {
       console.error('Dashboard init error:', err);
       authCheck.innerHTML = `<p>Error loading dashboard: ${err.message}</p><button id="dashboard-auth-btn" class="btn-primary" style="margin-top:1rem">Sign In</button>`;
       document.getElementById('dashboard-auth-btn')?.addEventListener('click', () => {

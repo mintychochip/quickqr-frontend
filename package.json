@@ -8,6 +8,7 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@astrojs/react": "^5.0.3",
     "@supabase/supabase-js": "^2.101.1",
     "chart.js": "^4.5.1",
     "framer-motion": "^12.38.0",
@@ -15,7 +16,9 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^1.7.0",
     "qr-code-styling": "^1.9.2",
-    "qrcode.react": "^4.2.0"
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "astro": "^5.2.3",
