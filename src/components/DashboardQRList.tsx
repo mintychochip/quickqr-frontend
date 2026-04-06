@@ -1,7 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
-import Chart from 'chart.js/auto';
 
 interface QRCode {
   id: string;
@@ -31,8 +30,6 @@ const DashboardQRList = () => {
   const [editContent, setEditContent] = useState<any>(null);
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [loadingAnalytics, setLoadingAnalytics] = useState<Record<string, boolean>>({});
-  const chartRefs = useRef<Record<string, Chart | null>>({});
-  const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
   // Fetch QR codes on mount
   useEffect(() => {
@@ -181,58 +178,6 @@ const DashboardQRList = () => {
       alert('Failed to delete: ' + error.message);
     }
   };
-
-  // Render charts when analytics are expanded
-  useEffect(() => {
-    if (!expandedId || !scanData[expandedId]) return;
-
-    const scans = scanData[expandedId];
-    if (scans.length === 0) return;
-
-    if (chartRefs.current[expandedId]) {
-      chartRefs.current[expandedId]?.destroy();
-    }
-
-    const osCounts: Record<string, number> = {};
-    const dailyCounts: Record<string, number> = {};
-    
-    scans.forEach(scan => {
-      osCounts[scan.os] = (osCounts[scan.os] || 0) + 1;
-      const date = new Date(scan.scanned_at).toLocaleDateString();
-      dailyCounts[date] = (dailyCounts[date] || 0) + 1;
-    });
-
-    const canvas = canvasRefs.current[expandedId];
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    chartRefs.current[expandedId] = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Object.keys(dailyCounts).slice(-14),
-        datasets: [{
-          label: 'Scans',
-          data: Object.values(dailyCounts).slice(-14),
-          borderColor: '#14b8a6',
-          backgroundColor: 'rgba(20, 184, 166, 0.1)',
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
-    });
-
-    return () => {
-      chartRefs.current[expandedId]?.destroy();
-    };
-  }, [expandedId, scanData]);
 
   if (loading) {
     return (
@@ -402,46 +347,45 @@ const DashboardQRList = () => {
                   <div className="analytics-empty">No scan data yet</div>
                 ) : (
                   <div className="analytics-content">
-                    <div className="chart-container">
-                      <canvas 
-                        ref={(el) => { canvasRefs.current[qr.id] = el; }}
-                        width={400}
-                        height={150}
-                      />
+                    <div className="scans-table-container">
+                      <table className="scans-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Device</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {scans.map((scan, i) => {
+                            const date = new Date(scan.scanned_at);
+                            return (
+                              <tr key={i}>
+                                <td>{date.toLocaleDateString()}</td>
+                                <td>{date.toLocaleTimeString()}</td>
+                                <td>
+                                  <span className={`device-badge device-${scan.os.toLowerCase()}`}>
+                                    {scan.os}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                     
-                    <div className="os-breakdown">
-                      <h5>By Device</h5>
-                      <div className="os-bars">
+                    <div className="os-summary">
+                      <h5>Summary</h5>
+                      <div className="os-pills">
                         {Object.entries(osCounts)
                           .sort(([,a], [,b]) => b - a)
                           .map(([os, count]) => (
-                            <div key={os} className="os-bar">
-                              <span className="os-label">{os}</span>
-                              <div className="os-bar-track">
-                                <div 
-                                  className="os-bar-fill" 
-                                  style={{ width: `${(count / scans.length) * 100}%` }}
-                                />
-                              </div>
-                              <span className="os-count">{count}</span>
-                            </div>
+                            <span key={os} className="os-pill">
+                              {os}: {count}
+                            </span>
                           ))}
                       </div>
-                    </div>
-                    
-                    <div className="recent-scans">
-                      <h5>Recent Activity</h5>
-                      <ul>
-                        {scans.slice(0, 5).map((scan, i) => (
-                          <li key={i}>
-                            <span className="scan-os">{scan.os}</span>
-                            <span className="scan-time">
-                              {new Date(scan.scanned_at).toLocaleString()}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   </div>
                 )}
