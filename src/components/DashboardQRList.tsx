@@ -225,7 +225,7 @@ const DashboardQRList = () => {
       <Toaster />
       
       {/* Toolbar */}
-      <div className="toolbar" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div className="toolbar" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           type="text"
           placeholder="Search QR codes..."
@@ -234,6 +234,12 @@ const DashboardQRList = () => {
           className="search-input"
           style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb', minWidth: '200px' }}
         />
+        <button 
+          onClick={loadQRCodes}
+          style={{ padding: '0.5rem 1rem', background: '#f3f4f6', borderRadius: '0.5rem', border: '1px solid #e5e7eb', cursor: 'pointer' }}
+        >
+          🔄 Refresh
+        </button>
         <select 
           value={sortBy} 
           onChange={(e) => setSortBy(e.target.value as any)}
@@ -285,7 +291,7 @@ const DashboardQRList = () => {
                 <h3 className="qr-name">{qr.name || 'Unnamed QR'}</h3>
                 <p className="qr-type">{(qr.type || 'QR').toUpperCase()}</p>
                 {qr.mode === 'dynamic' ? (
-                  <p className="qr-scans">{qr.scan_count || 0} scans</p>
+                  <p className="qr-scans">{qr.scan_count || 0} scans (ID: {qr.id.slice(0,8)})</p>
                 ) : (
                   <p className="qr-scans static">Static — scans not tracked</p>
                 )}

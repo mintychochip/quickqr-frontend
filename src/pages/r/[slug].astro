@@ -72,6 +72,7 @@ export function getStaticPaths() {
     }
 
     // Only log scans for dynamic QR codes
+    console.log('QR Code mode:', qrCode.mode);
     if (qrCode.mode === 'dynamic') {
       // Detect OS
       const ua = navigator.userAgent.toLowerCase();
@@ -82,13 +83,20 @@ export function getStaticPaths() {
       else if (ua.includes('win')) os = 'Windows';
       else if (ua.includes('linux')) os = 'Linux';
 
+      console.log('Recording scan for', slug, 'OS:', os);
+      
       // Record scan and increment count in parallel
-      await Promise.all([
+      const [scanResult, countResult] = await Promise.all([
         // Record scan
         supabase.from('scans').insert({ qrcode_id: slug, os }),
         // Increment scan count
         supabase.rpc('increment_scan_count', { qr_id: slug })
       ]);
+      
+      console.log('Scan result:', scanResult);
+      console.log('Count result:', countResult);
+    } else {
+      console.log('Static QR code - no scan recorded');
     }
 
     // Build redirect URL
