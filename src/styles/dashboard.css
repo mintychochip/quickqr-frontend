@@ -274,6 +274,15 @@
 .qr-preview-enhanced svg {
   max-width: 100%;
   max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.qr-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .qr-info-enhanced {
@@ -383,6 +392,37 @@
 .qr-actions-enhanced .action-btn.delete:hover {
   background-color: var(--color-red-100, #fee2e2);
   color: var(--color-red-700, #b91c1c);
+}
+
+/* New action buttons */
+.qr-actions-enhanced .action-btn.copy {
+  background-color: var(--color-gray-50, #f9fafb);
+  color: var(--color-gray-600, #4b5563);
+}
+
+.qr-actions-enhanced .action-btn.copy:hover {
+  background-color: var(--color-blue-100, #dbeafe);
+  color: var(--color-blue-700, #1d4ed8);
+}
+
+.qr-actions-enhanced .action-btn.download {
+  background-color: var(--color-gray-50, #f9fafb);
+  color: var(--color-gray-600, #4b5563);
+}
+
+.qr-actions-enhanced .action-btn.download:hover {
+  background-color: var(--color-green-100, #dcfce7);
+  color: var(--color-green-700, #15803d);
+}
+
+.qr-actions-enhanced .action-btn.duplicate {
+  background-color: var(--color-gray-50, #f9fafb);
+  color: var(--color-gray-600, #4b5563);
+}
+
+.qr-actions-enhanced .action-btn.duplicate:hover {
+  background-color: var(--color-purple-100, #f3e8ff);
+  color: var(--color-purple-700, #7c3aed);
 }
 
 /* Edit Form */
