@@ -39,20 +39,26 @@ const DashboardQRList = () => {
     loadQRCodes();
     
     // Subscribe to realtime updates for scan counts
+    console.log('[Dashboard] Setting up realtime subscription...');
     const subscription = supabase
       .channel('qr-scans')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'qrcodes' },
         (payload) => {
+          console.log('[Dashboard] Realtime update received:', payload);
           if (payload.eventType === 'UPDATE') {
             const updated = payload.new as QRCode;
+            console.log('[Dashboard] QR updated:', updated.id, 'New count:', updated.scan_count);
             setAllQrCodes(prev => prev.map(qr => 
               qr.id === updated.id ? { ...qr, scan_count: updated.scan_count } : qr
             ));
+            toast.success(`${updated.name || 'QR'}: ${updated.scan_count} scans`);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Dashboard] Subscription status:', status);
+      });
     
     return () => {
       subscription.unsubscribe();

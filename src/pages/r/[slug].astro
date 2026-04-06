@@ -72,7 +72,9 @@ export function getStaticPaths() {
     }
 
     // Only log scans for dynamic QR codes
-    console.log('QR Code mode:', qrCode.mode);
+    console.log('[QR Redirect] Code:', slug);
+    console.log('[QR Redirect] Mode:', qrCode.mode, '| Type:', qrCode.type);
+    
     if (qrCode.mode === 'dynamic') {
       // Detect OS
       const ua = navigator.userAgent.toLowerCase();
@@ -83,20 +85,22 @@ export function getStaticPaths() {
       else if (ua.includes('win')) os = 'Windows';
       else if (ua.includes('linux')) os = 'Linux';
 
-      console.log('Recording scan for', slug, 'OS:', os);
+      console.log('[QR Redirect] Recording scan - OS:', os);
       
-      // Record scan and increment count in parallel
-      const [scanResult, countResult] = await Promise.all([
+      try {
         // Record scan
-        supabase.from('scans').insert({ qrcode_id: slug, os }),
+        const scanResult = await supabase.from('scans').insert({ qrcode_id: slug, os });
+        console.log('[QR Redirect] Scan insert result:', scanResult.error ? 'ERROR: ' + scanResult.error.message : 'SUCCESS');
+        
         // Increment scan count
-        supabase.rpc('increment_scan_count', { qr_id: slug })
-      ]);
-      
-      console.log('Scan result:', scanResult);
-      console.log('Count result:', countResult);
+        const countResult = await supabase.rpc('increment_scan_count', { qr_id: slug });
+        console.log('[QR Redirect] Count increment result:', countResult.error ? 'ERROR: ' + countResult.error.message : 'SUCCESS');
+        console.log('[QR Redirect] New count data:', countResult.data);
+      } catch (err) {
+        console.error('[QR Redirect] Exception during scan recording:', err);
+      }
     } else {
-      console.log('Static QR code - no scan recorded');
+      console.log('[QR Redirect] Skipped - not a dynamic QR code');
     }
 
     // Build redirect URL
