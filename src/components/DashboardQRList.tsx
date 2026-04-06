@@ -254,7 +254,7 @@ const DashboardQRList = () => {
               
               <div className="qr-preview-enhanced" onClick={() => setPreviewQr(qr)} style={{ cursor: 'pointer' }}>
                 <QRCodeSVG
-                  value={qr.type === 'url' ? qr.content?.url : `${baseUrl}/r/${qr.id}`}
+                  value={`${baseUrl}/r/${qr.id}`}
                   size={60}
                   bgColor={qr.styling?.bgColor || '#ffffff'}
                   fgColor={qr.styling?.dotsColor || '#000000'}
