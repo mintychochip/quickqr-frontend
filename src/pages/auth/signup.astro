@@ -1,89 +1,11 @@
 ---
-import MainLayout from '../../layouts/MainLayout.astro';
-import '../../styles/auth.css';
+export const prerender = false;
+
+// Redirect signup to home page - signup only through sidebar
+return new Response(null, {
+  status: 302,
+  headers: {
+    'Location': '/'
+  }
+});
 ---
-
-<MainLayout title="Sign Up - QuickQR">
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-header">
-        <h1>Create your account</h1>
-        <p>Start generating QR codes today</p>
-      </div>
-
-      <div id="error-message" class="auth-error" style="display: none;"></div>
-
-      <form class="auth-form" id="signup-form">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="you@example.com"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Create a password"
-            minlength="6"
-            required
-          />
-        </div>
-
-        <button type="submit" class="auth-submit" id="submit-btn">Create Account</button>
-      </form>
-
-      <div class="auth-footer">
-        <p>Already have an account? <a href="/auth/signin">Sign in</a></p>
-      </div>
-    </div>
-  </div>
-</MainLayout>
-
-<script>
-  import { supabase } from '../../config/supabase';
-
-  const form = document.getElementById('signup-form');
-  const errorDiv = document.getElementById('error-message');
-  const submitBtn = document.getElementById('submit-btn');
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(form);
-    const email = formData.get('email')?.toString() || '';
-    const password = formData.get('password')?.toString() || '';
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Creating account...';
-    errorDiv.style.display = 'none';
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      errorDiv.textContent = error.message;
-      errorDiv.style.display = 'block';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Create Account';
-    } else if (data.session) {
-      window.location.href = '/dashboard';
-    } else {
-      // Email confirmation required
-      errorDiv.textContent = 'Check your email to confirm your account';
-      errorDiv.style.display = 'block';
-      errorDiv.style.color = '#14b8a6';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Create Account';
-    }
-  });
-</script>
