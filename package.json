@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
@@ -18,9 +19,10 @@
     "qrcode.react": "^4.2.0"
   },
   "devDependencies": {
-    "@astrojs/netlify": "^6.2.3",
+    "@astrojs/netlify": "^6.6.5",
     "astro": "^5.2.3",
     "playwright": "^1.59.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.3"
   }
 }
