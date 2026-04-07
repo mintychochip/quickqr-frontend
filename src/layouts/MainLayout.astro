@@ -33,5 +33,41 @@ const { title, description = 'Lightning-fast QR code generation for everyone.' }
     </main>
     <Footer />
     <AuthSidebar />
+
+    <script>
+      // Direct sidebar toggle setup - inline to ensure it works
+      (function() {
+        const signinBtn = document.getElementById('nav-signin');
+        const closeBtn = document.getElementById('close-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const sidebar = document.getElementById('auth-sidebar');
+        
+        console.log('[Sidebar Setup] Elements:', { signinBtn: !!signinBtn, sidebar: !!sidebar, closeBtn: !!closeBtn, overlay: !!overlay });
+
+        if (signinBtn && sidebar) {
+          signinBtn.addEventListener('click', function(e) {
+            console.log('[Sidebar] Sign in button clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            sidebar.classList.add('open');
+            overlay?.classList.add('show');
+          });
+        }
+
+        if (closeBtn && sidebar) {
+          closeBtn.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            overlay?.classList.remove('show');
+          });
+        }
+
+        if (overlay && sidebar) {
+          overlay.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
