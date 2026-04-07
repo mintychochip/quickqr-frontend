@@ -71,10 +71,11 @@
 </div>
 
 <style>
+  /* Dark mode sidebar styles */
   .auth-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     z-index: 998;
     opacity: 0;
@@ -93,13 +94,13 @@
     width: 100%;
     max-width: 420px;
     height: 100vh;
-    background: white;
+    background: #0f172a; /* Dark slate background */
     z-index: 999;
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
     overflow-y: auto;
-    border-left: 1px solid var(--color-gray-200, #e5e7eb);
+    border-left: 1px solid #334155;
   }
   .auth-sidebar.open {
     transform: translateX(0);
@@ -117,14 +118,14 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--color-gray-500, #6b7280);
+    color: #94a3b8;
     padding: 0.5rem;
     border-radius: 0.5rem;
     transition: background 0.2s, color 0.2s;
   }
   .auth-close-btn:hover {
-    background: var(--color-gray-100, #f3f4f6);
-    color: var(--color-gray-900, #111827);
+    background: #1e293b;
+    color: #f1f5f9;
   }
 
   .auth-sidebar-header {
@@ -134,18 +135,18 @@
   .auth-sidebar-header h2 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--color-gray-900, #111827);
+    color: #f8fafc;
     margin-bottom: 0.5rem;
   }
   .auth-sidebar-header p {
-    color: var(--color-gray-600, #4b5563);
+    color: #94a3b8;
     font-size: 0.95rem;
   }
 
   .auth-sidebar-error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
+    background: rgba(220, 38, 38, 0.2);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    color: #fca5a5;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     margin-bottom: 1rem;
@@ -171,21 +172,21 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid var(--color-gray-300, #d1d5db);
-    background: white;
-    color: var(--color-gray-700, #374151);
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #e2e8f0;
   }
   .oauth-btn:hover {
-    background: var(--color-gray-50, #f9fafb);
-    border-color: var(--color-gray-400, #9ca3af);
+    background: #334155;
+    border-color: #64748b;
   }
   .oauth-btn-google:hover {
     border-color: #4285F4;
-    background: rgba(66, 133, 244, 0.05);
+    background: rgba(66, 133, 244, 0.15);
   }
   .oauth-btn-github:hover {
-    border-color: #333;
-    background: rgba(0, 0, 0, 0.05);
+    border-color: #6b7280;
+    background: rgba(107, 114, 128, 0.15);
   }
 
   .auth-divider {
@@ -193,7 +194,7 @@
     align-items: center;
     gap: 1rem;
     margin-bottom: 1.5rem;
-    color: var(--color-gray-500, #6b7280);
+    color: #64748b;
     font-size: 0.8rem;
   }
   .auth-divider::before,
@@ -201,7 +202,7 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--color-gray-300, #d1d5db);
+    background: #475569;
   }
 
   .auth-form {
@@ -219,30 +220,30 @@
   .auth-form .form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-gray-700, #374151);
+    color: #e2e8f0;
   }
   .auth-form .form-group input {
     padding: 0.625rem 0.875rem;
-    border: 1px solid var(--color-gray-300, #d1d5db);
+    border: 1px solid #475569;
     border-radius: 0.5rem;
     font-size: 0.95rem;
     transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
-    background: white;
-    color: var(--color-gray-900, #111827);
+    background: #1e293b;
+    color: #f8fafc;
   }
   .auth-form .form-group input:focus {
-    border-color: var(--color-teal-500, #14b8a6);
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
   }
   .auth-form .form-group input::placeholder {
-    color: var(--color-gray-400, #9ca3af);
+    color: #64748b;
   }
 
   .auth-submit-btn {
     width: 100%;
     padding: 0.75rem;
-    background: var(--color-teal-500, #14b8a6);
+    background: #14b8a6;
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -252,18 +253,18 @@
     transition: background 0.2s;
   }
   .auth-submit-btn:hover {
-    background: var(--color-teal-600, #0d9488);
+    background: #0d9488;
   }
 
   .auth-toggle {
     text-align: center;
     font-size: 0.875rem;
-    color: var(--color-gray-600, #4b5563);
+    color: #94a3b8;
   }
   .auth-toggle-btn {
     background: none;
     border: none;
-    color: var(--color-teal-600, #0d9488);
+    color: #14b8a6;
     font-weight: 600;
     cursor: pointer;
     margin-left: 0.25rem;
@@ -271,6 +272,7 @@
   }
   .auth-toggle-btn:hover {
     text-decoration: underline;
+    color: #2dd4bf;
   }
 </style>
 
