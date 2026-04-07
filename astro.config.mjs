@@ -14,5 +14,14 @@ export default defineConfig({
     optimizeDeps: {
       include: ['qr-code-styling', 'qrcode.react', 'chart.js'],
     },
+    plugins: [{
+      name: 'fix-react-dom-server',
+      enforce: 'pre',
+      resolveId(source) {
+        if (source === 'react-dom/server' || source === 'react-dom/server.browser') {
+          return this.resolve('react-dom/server.edge', undefined, { skipSelf: true });
+        }
+      },
+    }],
   },
 });
