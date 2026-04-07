@@ -40,6 +40,20 @@ export interface TimelineStat {
   scan_count: number;
 }
 
+export interface LocationStat {
+    country: string;
+    country_code: string;
+    scan_count: number;
+    percentage: number;
+}
+
+export interface CityStat {
+    city: string;
+    country: string;
+    scan_count: number;
+    percentage: number;
+}
+
 export interface ListStatsResponse {
   success: boolean;
   data?: unknown[];
@@ -231,6 +245,114 @@ export async function fetchScansTimeline(days: number = 30): Promise<ListStatsRe
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch scans timeline',
+    };
+  }
+}
+
+/**
+ * Fetches scans by country (geolocation breakdown)
+ */
+export async function fetchScansByCountry(days: number = 30): Promise<ListStatsResponse> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('country, country_code, qrcodes!inner(user_id)')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    if (error) return { success: false, error: error.message };
+
+    // Aggregate by country
+    const countryMap: Record<string, LocationStat & { code: string }> = {};
+    const total = scans?.length || 0;
+
+    scans?.forEach(scan => {
+      const country = scan.country || 'Unknown';
+      const code = scan.country_code || 'UN';
+      if (!countryMap[country]) {
+        countryMap[country] = {
+          country,
+          country_code: code,
+          scan_count: 0,
+          percentage: 0,
+        };
+      }
+      countryMap[country].scan_count++;
+    });
+
+    const data = Object.values(countryMap)
+      .map(item => ({
+        ...item,
+        percentage: total ? (item.scan_count / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.scan_count - a.scan_count);
+
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch scans by country',
+    };
+  }
+}
+
+/**
+ * Fetches scans by city (top cities)
+ */
+export async function fetchScansByCity(days: number = 30, limit: number = 10): Promise<ListStatsResponse> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('city, country, qrcodes!inner(user_id)')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    if (error) return { success: false, error: error.message };
+
+    // Aggregate by city
+    const cityMap: Record<string, CityStat> = {};
+    const total = scans?.length || 0;
+
+    scans?.forEach(scan => {
+      const city = scan.city || 'Unknown';
+      const country = scan.country || 'Unknown';
+      const key = `${city}, ${country}`;
+      if (!cityMap[key]) {
+        cityMap[key] = {
+          city,
+          country,
+          scan_count: 0,
+          percentage: 0,
+        };
+      }
+      cityMap[key].scan_count++;
+    });
+
+    const data = Object.values(cityMap)
+      .map(item => ({
+        ...item,
+        percentage: total ? (item.scan_count / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.scan_count - a.scan_count)
+      .slice(0, limit);
+
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch scans by city',
     };
   }
 }

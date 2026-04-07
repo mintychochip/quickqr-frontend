@@ -7,6 +7,8 @@ import {
   fetchOperatingSystems,
   fetchScansByQRCode,
   fetchScansTimeline,
+  fetchScansByCountry,
+  fetchScansByCity,
 } from '../statsService';
 
 describe('statsService exports', () => {
@@ -24,6 +26,14 @@ describe('statsService exports', () => {
 
   test('fetchScansTimeline is exported as a function', () => {
     expect(typeof fetchScansTimeline).toBe('function');
+  });
+
+  test('fetchScansByCountry is exported as a function', () => {
+    expect(typeof fetchScansByCountry).toBe('function');
+  });
+
+  test('fetchScansByCity is exported as a function', () => {
+    expect(typeof fetchScansByCity).toBe('function');
   });
 });
 
@@ -52,6 +62,18 @@ describe('statsService response shapes', () => {
     expect(result).toHaveProperty('success');
     expect(result).toHaveProperty('error');
   });
+
+  test('fetchScansByCountry returns proper error when unauthenticated', async () => {
+    const result = await fetchScansByCountry();
+    expect(result).toHaveProperty('success');
+    expect(result).toHaveProperty('error');
+  });
+
+  test('fetchScansByCity returns proper error when unauthenticated', async () => {
+    const result = await fetchScansByCity();
+    expect(result).toHaveProperty('success');
+    expect(result).toHaveProperty('error');
+  });
 });
 
 describe('statsService interfaces', () => {
@@ -66,5 +88,15 @@ describe('statsService interfaces', () => {
     expect(() => fetchScansByQRCode(7)).not.toThrow();
     expect(() => fetchScansTimeline()).not.toThrow();
     expect(() => fetchScansTimeline(7)).not.toThrow();
+    expect(() => fetchScansByCountry()).not.toThrow();
+    expect(() => fetchScansByCountry(7)).not.toThrow();
+    expect(() => fetchScansByCity()).not.toThrow();
+    expect(() => fetchScansByCity(7)).not.toThrow();
+  });
+
+  test('fetchScansByCity accepts optional limit parameter', () => {
+    expect(() => fetchScansByCity(30, 5)).not.toThrow();
+    expect(() => fetchScansByCity(30, 10)).not.toThrow();
+    expect(() => fetchScansByCity(undefined, 15)).not.toThrow();
   });
 });
