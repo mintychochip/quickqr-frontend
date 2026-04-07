@@ -2,22 +2,17 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import DashboardQRList from '../components/DashboardQRList';
 import '../styles/dashboard.css';
+
+const user = Astro.locals.user;
 ---
 
 <MainLayout title="Dashboard - QuickQR">
-  <div class="dashboard-container" id="dashboard-container">
-    <!-- Auth check overlay -->
-    <div id="auth-check" class="auth-loading-overlay">
-      <div class="spinner"></div>
-      <p>Checking authentication...</p>
-    </div>
-
-    <!-- Dashboard content (hidden until auth check) -->
-    <div id="dashboard-content" style="display: none;">
+  <div class="dashboard-container">
+    <div class="dashboard-content">
       <div class="dashboard-header">
         <div class="header-content">
           <h1>Welcome back</h1>
-          <p id="user-email">Loading...</p>
+          <p>{user?.email || 'Unknown'}</p>
         </div>
         <a href="/create" class="create-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -54,54 +49,3 @@ import '../styles/dashboard.css';
     </div>
   </div>
 </MainLayout>
-
-<script>
-  import { supabase } from '../config/supabase';
-
-  async function initDashboard() {
-    const authCheck = document.getElementById('auth-check');
-    const dashboardContent = document.getElementById('dashboard-content');
-    const userEmail = document.getElementById('user-email');
-
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      const user = session?.user;
-      
-      if (!user || sessionError) {
-        window.location.href = '/';
-        return;
-      }
-
-      authCheck.style.display = 'none';
-      dashboardContent.style.display = 'block';
-      userEmail.textContent = user.email || 'Unknown';
-
-    } catch (err) {
-      console.error('Dashboard init error:', err);
-      authCheck.innerHTML = `<p>Error: ${err.message}</p>`;
-    }
-  }
-
-  initDashboard();
-</script>
-
-<style>
-  .auth-loading-overlay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 50vh;
-  }
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(94, 234, 212, 0.2);
-    border-top-color: #5eead4;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-</style>

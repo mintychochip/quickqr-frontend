@@ -24,7 +24,6 @@ client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
 redirect_uri = "https://quickqr.app/auth/callback"
 url = "https://quickqr.app"
-url = ""
 
 [auth.external.github]
 enabled = false
