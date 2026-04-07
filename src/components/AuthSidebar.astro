@@ -355,10 +355,17 @@
       showError('Auth service not configured');
       return;
     }
-    await supabase.auth.signInWithOAuth({
+    console.log('[OAuth] Starting Google sign in...');
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/dashboard' }
+      options: { redirectTo: window.location.origin + '/auth/callback' }
     });
+    if (error) {
+      console.error('[OAuth] Google error:', error);
+      showError(error.message);
+    } else {
+      console.log('[OAuth] Google initiated:', data);
+    }
   });
 
   document.getElementById('oauth-github-btn')?.addEventListener('click', async () => {
@@ -366,10 +373,17 @@
       showError('Auth service not configured');
       return;
     }
-    await supabase.auth.signInWithOAuth({
+    console.log('[OAuth] Starting GitHub sign in...');
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: window.location.origin + '/dashboard' }
+      options: { redirectTo: window.location.origin + '/auth/callback' }
     });
+    if (error) {
+      console.error('[OAuth] GitHub error:', error);
+      showError(error.message);
+    } else {
+      console.log('[OAuth] GitHub initiated:', data);
+    }
   });
 
   // Email/password form
