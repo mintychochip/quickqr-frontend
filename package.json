@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.1.0",
@@ -40,10 +41,10 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@astrojs/netlify": "^6.6.5",
     "astro": "^5.2.3",
     "playwright": "^1.59.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.3"
   }
 }
