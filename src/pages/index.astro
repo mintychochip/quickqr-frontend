@@ -98,10 +98,43 @@ const companies = [
             </div>
           </div>
 
-          <button id="download-qr-btn" class="qr-download-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download PNG
-          </button>
+          <!-- Logo Upload -->
+          <div class="qr-logo-section">
+            <label class="qr-label">Logo (Optional)</label>
+            <div class="logo-upload-box" id="logo-upload-box">
+              <input type="file" id="logo-input" accept="image/*" style="display: none;" />
+              <div id="logo-preview-container" class="logo-preview-container" style="display: none;">
+                <img id="logo-preview" alt="Logo preview" />
+                <button id="remove-logo" class="btn-remove-logo" title="Remove logo">×</button>
+              </div>
+              <div id="logo-placeholder" class="logo-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Click to add logo</span>
+              </div>
+            </div>
+            <p class="logo-hint">Max 200x200px, centered in QR</p>
+          </div>
+
+          <div class="qr-download-options">
+            <button id="download-qr-btn" class="qr-download-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download PNG
+            </button>
+            <button id="download-svg-btn" class="qr-download-btn btn-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M9 13h6"></path>
+                <path d="M9 17h6"></path>
+                <path d="M9 9h1"></path>
+              </svg>
+              Download SVG
+            </button>
+          </div>
         </div>
 
         <div class="qr-preview-area">
@@ -247,14 +280,24 @@ const companies = [
   const qrPreview = document.getElementById('qr-preview') as HTMLDivElement;
   const qrHint = document.getElementById('qr-hint') as HTMLParagraphElement;
   const downloadBtn = document.getElementById('download-qr-btn') as HTMLButtonElement;
+  const downloadSvgBtn = document.getElementById('download-svg-btn') as HTMLButtonElement;
   const contentLabel = document.getElementById('qr-content-label') as HTMLLabelElement;
   const typeBtns = document.querySelectorAll<HTMLButtonElement>('.qr-tab-btn');
   const heroCtaBtn = document.getElementById('hero-cta-btn');
   const comparisonCtaBtn = document.getElementById('comparison-cta-btn');
 
+  // Logo elements
+  const logoInput = document.getElementById('logo-input') as HTMLInputElement;
+  const logoUploadBox = document.getElementById('logo-upload-box') as HTMLDivElement;
+  const logoPreviewContainer = document.getElementById('logo-preview-container') as HTMLDivElement;
+  const logoPreview = document.getElementById('logo-preview') as HTMLImageElement;
+  const logoPlaceholder = document.getElementById('logo-placeholder') as HTMLDivElement;
+  const removeLogoBtn = document.getElementById('remove-logo') as HTMLButtonElement;
+
   let currentType = 'url';
   let qr: any = null;
   let currentData = '';
+  let logoDataUrl: string | null = null;
 
   // Load QR library dynamically
   async function loadQRLibrary() {
@@ -294,7 +337,9 @@ const companies = [
     }
     
     qrHint.style.display = 'none';
-    qr = new QRCodeStyling({
+    
+    // Build QR config
+    const qrConfig: any = {
       width: 200,
       height: 200,
       data,
@@ -311,9 +356,108 @@ const companies = [
       cornersDotOptions: {
         type: 'square',
       },
-    });
+    };
+    
+    // Add logo if present
+    if (logoDataUrl) {
+      qrConfig.image = logoDataUrl;
+      qrConfig.imageOptions = {
+        crossOrigin: 'anonymous',
+        hideBackgroundDots: true,
+        imageSize: 0.4,
+        margin: 0,
+      };
+    }
+    
+    qr = new QRCodeStyling(qrConfig);
     qr.append(qrPreview);
   }
+
+  // Logo upload handling
+  function handleLogoUpload(file: File) {
+    if (!file || !file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image too large. Max 5MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      logoDataUrl = e.target?.result as string;
+      logoPreview.src = logoDataUrl;
+      logoPlaceholder.style.display = 'none';
+      logoPreviewContainer.style.display = 'block';
+      buildQR(currentData);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    logoDataUrl = null;
+    logoInput.value = '';
+    logoPreview.src = '';
+    logoPreviewContainer.style.display = 'none';
+    logoPlaceholder.style.display = 'flex';
+    buildQR(currentData);
+  }
+
+  // SVG download function
+  async function downloadSVG() {
+    if (!currentData || !qr) return;
+    
+    try {
+      const svgString = await qr.getRawData('svg');
+      if (!svgString) {
+        alert('Failed to generate SVG');
+        return;
+      }
+      
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'quickqr.svg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('SVG download error:', err);
+      alert('Failed to download SVG. Please try PNG instead.');
+    }
+  }
+
+  // Logo event listeners
+  logoUploadBox?.addEventListener('click', () => logoInput.click());
+  logoInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) handleLogoUpload(file);
+  });
+  removeLogoBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeLogo();
+  });
+  
+  // Drag and drop for logo
+  logoUploadBox?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    logoUploadBox.classList.add('dragover');
+  });
+  logoUploadBox?.addEventListener('dragleave', () => {
+    logoUploadBox.classList.remove('dragover');
+  });
+  logoUploadBox?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    logoUploadBox.classList.remove('dragover');
+    const file = e.dataTransfer?.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleLogoUpload(file);
+    }
+  });
 
   function getData(): string {
     const v = contentInput.value.trim();
@@ -370,6 +514,8 @@ const companies = [
     if (!currentData || !qr) return;
     await qr.download({ name: 'quickqr', extension: 'png' });
   });
+
+  downloadSvgBtn?.addEventListener('click', downloadSVG);
 
   // Handle OAuth redirect with access_token in query params or hash
   const urlParams = new URLSearchParams(window.location.search);

@@ -316,6 +316,107 @@
   transform: translateY(-1px);
 }
 
+.qr-download-btn.btn-secondary {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+.qr-download-btn.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.1);
+}
+
+.qr-download-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Logo Upload Section */
+.qr-logo-section {
+  margin-bottom: 1.5rem;
+}
+
+.logo-upload-box {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-upload-box:hover,
+.logo-upload-box.dragover {
+  border-color: #14b8a6;
+  background: rgba(20, 184, 166, 0.05);
+}
+
+.logo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+}
+
+.logo-placeholder svg {
+  stroke: #14b8a6;
+}
+
+.logo-placeholder span {
+  font-size: 0.85rem;
+}
+
+.logo-preview-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-preview-container img {
+  max-width: 60px;
+  max-height: 60px;
+  border-radius: 0.5rem;
+  object-fit: contain;
+}
+
+.btn-remove-logo {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-remove-logo:hover {
+  background: #b91c1c;
+  transform: scale(1.1);
+}
+
+.logo-hint {
+  font-size: 0.75rem;
+  color: #4b5563;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
 .qr-preview-area {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,431 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import '../styles/scan.css';
+---
+
+<MainLayout title="Scan QR Code - QuickQR">
+  <div class="scan-container">
+    <div class="scan-header">
+      <h1>Scan QR Code</h1>
+      <p>Point your camera at any QR code to decode it instantly</p>
+    </div>
+
+    <div class="scan-layout">
+      <!-- Camera Scanner -->
+      <div class="scanner-section">
+        <div id="reader" class="scanner-box"></div>
+        <div id="scanner-placeholder" class="scanner-placeholder">
+          <div class="scanner-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+              <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+              <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+              <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+            </svg>
+          </div>
+          <p>Camera access required to scan QR codes</p>
+          <button id="start-camera" class="btn-primary">Start Camera</button>
+        </div>
+        
+        <!-- Camera Controls -->
+        <div id="camera-controls" class="camera-controls" style="display: none;">
+          <button id="stop-camera" class="btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+            </svg>
+            Stop Camera
+          </button>
+          <button id="switch-camera" class="btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"></path>
+              <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="m18 22-3-3 3-3"></path>
+              <path d="m6 2 3 3-3 3"></path>
+            </svg>
+            Switch Camera
+          </button>
+        </div>
+      </div>
+
+      <!-- Upload Alternative -->
+      <div class="upload-section">
+        <div class="upload-box" id="upload-box">
+          <input type="file" id="file-input" accept="image/*" style="display: none;" />
+          <div class="upload-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <p class="upload-text">Or drop an image here</p>
+          <p class="upload-hint">Supports PNG, JPG, WEBP</p>
+          <button class="btn-outline" onclick="document.getElementById('file-input').click()">
+            Choose File
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scan Result -->
+    <div id="scan-result" class="scan-result" style="display: none;">
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-badge" id="result-type">URL</span>
+          <button id="close-result" class="btn-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="result-content">
+          <label>Decoded Content</label>
+          <textarea id="result-data" readonly rows="4"></textarea>
+        </div>
+
+        <div class="result-actions">
+          <button id="copy-result" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy
+          </button>
+          <button id="open-result" class="btn-secondary" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            Open Link
+          </button>
+          <button id="create-qr-from-scan" class="btn-accent">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <path d="M14 14h.01M17.5 14h.01M21 17v.01M21 21h.01M14 17v.01M17.5 17v.01"></path>
+            </svg>
+            Create QR from This
+          </button>
+        </div>
+
+        <!-- QR Preview of scanned content -->
+        <div class="scanned-qr-preview">
+          <label>QR Code Preview</label>
+          <div id="scanned-qr-display"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scan History -->
+    <div class="scan-history-section">
+      <h2>Recent Scans</h2>
+      <div id="scan-history" class="scan-history">
+        <p class="empty-state">No recent scans</p>
+      </div>
+      <button id="clear-history" class="btn-text" style="display: none;">Clear History</button>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  // Dynamically import the QR scanner library
+  let html5QrCode: any = null;
+  let currentCamera = 'environment';
+  let scanHistory: Array<{data: string, type: string, timestamp: number}> = [];
+
+  const readerElement = document.getElementById('reader') as HTMLDivElement;
+  const placeholderElement = document.getElementById('scanner-placeholder') as HTMLDivElement;
+  const cameraControls = document.getElementById('camera-controls') as HTMLDivElement;
+  const resultSection = document.getElementById('scan-result') as HTMLDivElement;
+  const resultData = document.getElementById('result-data') as HTMLTextAreaElement;
+  const resultType = document.getElementById('result-type') as HTMLSpanElement;
+  const openResultBtn = document.getElementById('open-result') as HTMLButtonElement;
+  const scanHistoryContainer = document.getElementById('scan-history') as HTMLDivElement;
+  const clearHistoryBtn = document.getElementById('clear-history') as HTMLButtonElement;
+
+  // Load scan history from localStorage
+  function loadHistory() {
+    const saved = localStorage.getItem('quickqr_scan_history');
+    if (saved) {
+      scanHistory = JSON.parse(saved);
+      renderHistory();
+    }
+  }
+
+  // Save scan history to localStorage
+  function saveHistory() {
+    localStorage.setItem('quickqr_scan_history', JSON.stringify(scanHistory.slice(0, 20)));
+  }
+
+  // Add scan to history
+  function addToHistory(data: string, type: string) {
+    scanHistory.unshift({ data, type, timestamp: Date.now() });
+    saveHistory();
+    renderHistory();
+  }
+
+  // Render scan history
+  function renderHistory() {
+    if (scanHistory.length === 0) {
+      scanHistoryContainer.innerHTML = '<p class="empty-state">No recent scans</p>';
+      clearHistoryBtn.style.display = 'none';
+      return;
+    }
+
+    clearHistoryBtn.style.display = 'block';
+    scanHistoryContainer.innerHTML = scanHistory.map((scan, index) => `
+      <div class="history-item" data-index="${index}">
+        <div class="history-content">
+          <span class="history-type">${scan.type}</span>
+          <p class="history-data" title="${escapeHtml(scan.data)}">${truncate(scan.data, 50)}</p>
+          <span class="history-time">${formatTime(scan.timestamp)}</span>
+        </div>
+        <div class="history-actions">
+          <button class="btn-icon-small" onclick="copyHistoryItem(${index})" title="Copy">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          ${scan.type === 'URL' ? `
+          <button class="btn-icon-small" onclick="openHistoryItem(${index})" title="Open">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Escape HTML to prevent XSS
+  function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Truncate text
+  function truncate(text: string, maxLength: number): string {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+
+  // Format timestamp
+  function formatTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return date.toLocaleDateString();
+  }
+
+  // Detect QR content type
+  function detectType(data: string): string {
+    if (data.startsWith('http://') || data.startsWith('https://')) return 'URL';
+    if (data.startsWith('mailto:')) return 'Email';
+    if (data.startsWith('tel:') || data.startsWith('sms:')) return 'Phone';
+    if (data.startsWith('WIFI:')) return 'WiFi';
+    if (data.startsWith('BEGIN:VCARD')) return 'Contact';
+    if (data.startsWith('BEGIN:VEVENT')) return 'Event';
+    if (data.startsWith('geo:')) return 'Location';
+    if (data.startsWith('upi://') || data.startsWith('bitcoin:') || data.startsWith('ethereum:')) return 'Payment';
+    return 'Text';
+  }
+
+  // Show scan result
+  function showResult(data: string) {
+    const type = detectType(data);
+    resultData.value = data;
+    resultType.textContent = type;
+    
+    // Show open button only for URLs
+    openResultBtn.style.display = (type === 'URL') ? 'flex' : 'none';
+    
+    // Generate QR preview of scanned content
+    generateScannedQR(data);
+    
+    resultSection.style.display = 'block';
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Add to history
+    addToHistory(data, type);
+  }
+
+  // Generate QR preview for scanned content
+  async function generateScannedQR(data: string) {
+    const container = document.getElementById('scanned-qr-display') as HTMLDivElement;
+    container.innerHTML = '';
+    
+    try {
+      const mod = await import('qr-code-styling');
+      const QRCodeStyling = mod.default || mod;
+      
+      const qr = new QRCodeStyling({
+        width: 180,
+        height: 180,
+        data,
+        dotsOptions: { color: '#000000', type: 'square' },
+        backgroundOptions: { color: '#ffffff' },
+      });
+      
+      qr.append(container);
+    } catch (e) {
+      container.innerHTML = '<p class="error">Failed to generate preview</p>';
+    }
+  }
+
+  // Initialize camera scanner
+  async function startScanner() {
+    try {
+      const mod = await import('html5-qrcode');
+      const { Html5Qrcode } = mod;
+      
+      html5QrCode = new Html5Qrcode('reader');
+      
+      await html5QrCode.start(
+        { facingMode: currentCamera },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText: string) => {
+          // On successful scan
+          showResult(decodedText);
+          // Don't stop camera, let user scan more
+        },
+        (errorMessage: string) => {
+          // Ignore scan errors (no QR found in frame)
+        }
+      );
+      
+      placeholderElement.style.display = 'none';
+      cameraControls.style.display = 'flex';
+    } catch (err) {
+      console.error('Camera error:', err);
+      alert('Could not access camera. Please check permissions or try uploading an image instead.');
+    }
+  }
+
+  // Stop scanner
+  async function stopScanner() {
+    if (html5QrCode) {
+      await html5QrCode.stop();
+      html5QrCode = null;
+    }
+    placeholderElement.style.display = 'flex';
+    cameraControls.style.display = 'none';
+  }
+
+  // Switch camera
+  async function switchCamera() {
+    currentCamera = currentCamera === 'environment' ? 'user' : 'environment';
+    if (html5QrCode) {
+      await stopScanner();
+      await startScanner();
+    }
+  }
+
+  // Handle file upload scanning
+  async function handleFileUpload(file: File) {
+    try {
+      const mod = await import('html5-qrcode');
+      const { Html5Qrcode } = mod;
+      
+      // Create temporary scanner instance for file scanning
+      const fileScanner = new Html5Qrcode('file-reader');
+      
+      const result = await fileScanner.scanFile(file, /* verbose= */ false);
+      showResult(result.text || result);
+      
+      // Cleanup
+      fileScanner.clear();
+    } catch (err) {
+      console.error('File scan error:', err);
+      alert('Could not find a QR code in this image. Please try a different image or use the camera.');
+    }
+  }
+
+  // Event listeners
+  document.getElementById('start-camera')?.addEventListener('click', startScanner);
+  document.getElementById('stop-camera')?.addEventListener('click', stopScanner);
+  document.getElementById('switch-camera')?.addEventListener('click', switchCamera);
+  
+  document.getElementById('close-result')?.addEventListener('click', () => {
+    resultSection.style.display = 'none';
+  });
+  
+  document.getElementById('copy-result')?.addEventListener('click', () => {
+    navigator.clipboard.writeText(resultData.value);
+    alert('Copied to clipboard!');
+  });
+  
+  document.getElementById('open-result')?.addEventListener('click', () => {
+    window.open(resultData.value, '_blank');
+  });
+  
+  document.getElementById('create-qr-from-scan')?.addEventListener('click', () => {
+    const params = new URLSearchParams();
+    params.set('content', resultData.value);
+    params.set('type', 'text');
+    window.location.href = `/create?${params.toString()}`;
+  });
+  
+  // File upload handling
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const uploadBox = document.getElementById('upload-box') as HTMLDivElement;
+  
+  fileInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) handleFileUpload(file);
+  });
+  
+  // Drag and drop
+  uploadBox?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadBox.classList.add('dragover');
+  });
+  
+  uploadBox?.addEventListener('dragleave', () => {
+    uploadBox.classList.remove('dragover');
+  });
+  
+  uploadBox?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadBox.classList.remove('dragover');
+    const file = e.dataTransfer?.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleFileUpload(file);
+    }
+  });
+  
+  // Clear history
+  clearHistoryBtn?.addEventListener('click', () => {
+    scanHistory = [];
+    saveHistory();
+    renderHistory();
+  });
+
+  // Global functions for history actions
+  (window as any).copyHistoryItem = (index: number) => {
+    navigator.clipboard.writeText(scanHistory[index].data);
+    alert('Copied!');
+  };
+  
+  (window as any).openHistoryItem = (index: number) => {
+    window.open(scanHistory[index].data, '_blank');
+  };
+
+  // Load history on page load
+  loadHistory();
+</script>

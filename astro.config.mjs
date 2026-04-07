@@ -12,7 +12,10 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     optimizeDeps: {
-      include: ['qr-code-styling', 'qrcode.react', 'chart.js'],
+      include: ['qr-code-styling', 'qrcode.react', 'chart.js', 'html5-qrcode'],
+    },
+    define: {
+      'process.env.MESSAGE_CHANNEL': 'undefined',
     },
     plugins: [{
       name: 'fix-react-dom-server',
@@ -24,4 +27,8 @@ export default defineConfig({
       },
     }],
   },
+  server: {
+    port: 4321,
+    host: true
+  }
 });

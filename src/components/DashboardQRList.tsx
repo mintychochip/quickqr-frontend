@@ -133,9 +133,56 @@ const DashboardQRList = () => {
     toast.success('URL copied!');
   };
 
-  const downloadQR = (qr: QRCode, format: 'png' | 'svg') => {
-    // Implementation would use canvas/svg export
-    toast.success(`Downloading ${format.toUpperCase()}...`);
+  const downloadQR = async (qr: QRCode, format: 'png' | 'svg') => {
+    try {
+      const mod = await import('qr-code-styling');
+      const QRCodeStyling = mod.default || mod;
+      
+      // Get the QR code URL
+      const qrUrl = `${baseUrl}/r/${qr.id}`;
+      
+      // Create QR instance with the same styling
+      const qrInstance = new QRCodeStyling({
+        width: 800,
+        height: 800,
+        data: qrUrl,
+        dotsOptions: {
+          color: qr.styling?.dotsColor || '#000000',
+          type: 'square',
+        },
+        backgroundOptions: {
+          color: qr.styling?.bgColor || '#ffffff',
+        },
+        cornersSquareOptions: { type: 'square' },
+        cornersDotOptions: { type: 'square' },
+      });
+      
+      if (format === 'png') {
+        await qrInstance.download({ name: qr.name || 'quickqr', extension: 'png' });
+        toast.success('PNG downloaded!');
+      } else {
+        // SVG export
+        const svgData = await qrInstance.getRawData('svg');
+        if (!svgData) {
+          toast.error('Failed to generate SVG');
+          return;
+        }
+        
+        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${qr.name || 'quickqr'}.svg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success('SVG downloaded!');
+      }
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error('Failed to download');
+    }
   };
 
   const duplicateQR = async (qr: QRCode) => {
