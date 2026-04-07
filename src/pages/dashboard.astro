@@ -21,13 +21,13 @@ const { data: qrCodes, error } = await supabase
   .order('created_at', { ascending: false })
   .limit(100);
 
-// Fetch analytics data for the last 30 days
+// Fetch analytics data for the last 30 days (including geolocation)
 const thirtyDaysAgo = new Date();
 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
 const { data: scans, error: scansError } = await supabase
   .from('scans')
-  .select('os, scanned_at, qrcodes!inner(user_id, name, type)')
+  .select('os, scanned_at, country, country_code, city, qrcodes!inner(user_id, name, type)')
   .eq('qrcodes.user_id', user.id)
   .gte('scanned_at', thirtyDaysAgo.toISOString())
   .order('scanned_at', { ascending: false });
@@ -41,6 +41,46 @@ scans?.forEach(scan => {
 const osData = Object.entries(osCounts)
   .map(([os, count]) => ({ os, count, percentage: scans?.length ? (count / scans.length) * 100 : 0 }))
   .sort((a, b) => b.count - a.count);
+
+// Calculate country breakdown
+const countryCounts: Record<string, { count: number; code: string }> = {};
+scans?.forEach(scan => {
+  const country = scan.country || 'Unknown';
+  const code = scan.country_code || 'UN';
+  if (!countryCounts[country]) {
+    countryCounts[country] = { count: 0, code };
+  }
+  countryCounts[country].count++;
+});
+const countryData = Object.entries(countryCounts)
+  .map(([country, data]) => ({ 
+    country, 
+    code: data.code, 
+    count: data.count, 
+    percentage: scans?.length ? (data.count / scans.length) * 100 : 0 
+  }))
+  .sort((a, b) => b.count - a.count);
+
+// Calculate city breakdown (top cities)
+const cityCounts: Record<string, { count: number; country: string }> = {};
+scans?.forEach(scan => {
+  const city = scan.city || 'Unknown';
+  const country = scan.country || 'Unknown';
+  const key = `${city}, ${country}`;
+  if (!cityCounts[key]) {
+    cityCounts[key] = { count: 0, country };
+  }
+  cityCounts[key].count++;
+});
+const cityData = Object.entries(cityCounts)
+  .map(([key, data]) => ({ 
+    city: key.split(',')[0], 
+    country: data.country, 
+    count: data.count, 
+    percentage: scans?.length ? (data.count / scans.length) * 100 : 0 
+  }))
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 5);
 
 // Calculate timeline data (last 7 days)
 const timelineData: Record<string, number> = {};
@@ -59,6 +99,16 @@ scans?.forEach(scan => {
 const userEmail = user.email;
 const totalScans = qrCodes?.reduce((sum, qr) => sum + (qr.scan_count || 0), 0) || 0;
 const recentScans = scans?.length || 0;
+
+// Helper function to get country flag emoji from country code
+function getCountryFlag(code: string): string {
+  if (!code || code === 'UN' || code === 'LO') return '🌍';
+  const codePoints = code
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 ---
 
 <MainLayout title="Dashboard - QuickQR">
@@ -143,6 +193,27 @@ const recentScans = scans?.length || 0;
               </div>
             </div>
           )}
+
+          {/* Country Breakdown */}
+          {countryData.length > 0 && (
+            <div class="analytics-card location-card">
+              <h3>Top Countries</h3>
+              <div class="location-list">
+                {countryData.slice(0, 5).map((item) => (
+                  <div class="location-item">
+                    <div class="location-info">
+                      <span class="location-flag">{getCountryFlag(item.code)}</span>
+                      <span class="location-name">{item.country}</span>
+                      <span class="location-count">{item.count}</span>
+                    </div>
+                    <div class="location-bar-container">
+                      <div class="location-bar" style={`width: ${item.percentage}%`}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recent Activity */}
@@ -176,7 +247,12 @@ const recentScans = scans?.length || 0;
                   </div>
                   <div class="activity-details">
                     <span class="activity-qr">{Array.isArray(scan.qrcodes) ? scan.qrcodes[0]?.name : scan.qrcodes?.name}</span>
-                    <span class="activity-meta">{scan.os} • {new Date(scan.scanned_at).toLocaleDateString()}</span>
+                    <span class="activity-meta">
+                      {scan.os}
+                      {scan.country && ` • ${scan.country}`}
+                      {' • '}
+                      {new Date(scan.scanned_at).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -263,9 +339,15 @@ const recentScans = scans?.length || 0;
 
   .analytics-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr;
     gap: 1rem;
     margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    .analytics-grid {
+      grid-template-columns: 2fr 1fr;
+    }
   }
 
   @media (max-width: 768px) {
@@ -376,6 +458,60 @@ const recentScans = scans?.length || 0;
   .os-bar {
     height: 100%;
     background: linear-gradient(to right, #14b8a6, #5eead4);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+  }
+
+  /* Location Card Styles */
+  .location-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .location-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .location-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .location-flag {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .location-name {
+    color: #374151;
+    font-weight: 500;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .location-count {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-left: auto;
+  }
+
+  .location-bar-container {
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .location-bar {
+    height: 100%;
+    background: linear-gradient(to right, #f59e0b, #fbbf24);
     border-radius: 9999px;
     transition: width 0.3s ease;
   }

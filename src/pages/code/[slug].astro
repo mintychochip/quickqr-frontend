@@ -1,6 +1,7 @@
 ---
 import { supabase } from '../../lib/supabase';
 import MainLayout from '../../layouts/MainLayout.astro';
+import { lookupGeolocation, extractClientIP } from '../../services/geolocationService';
 
 const { slug } = Astro.params;
 
@@ -57,7 +58,7 @@ if (!redirectUrl) {
   return Astro.redirect('/?error=invalid_type');
 }
 
-// Record scan asynchronously (doesn't block redirect)
+// Record scan asynchronously with geolocation (doesn't block redirect)
 const detectOS = (): string => {
   const ua = Astro.request.headers.get('user-agent') || '';
   const uaLower = ua.toLowerCase();
@@ -70,16 +71,39 @@ const detectOS = (): string => {
 };
 
 const os = detectOS();
+const clientIP = extractClientIP(Astro.request.headers);
 
-supabase
-  .from('scans')
-  .insert({
-    qrcode_id: slug,
-    os,
-  })
-  .then(({ error: scanError }) => {
+// Perform geolocation lookup and record scan
+(async () => {
+  try {
+    const geoResult = await lookupGeolocation(clientIP);
+    const location = geoResult.success ? geoResult.location : undefined;
+
+    const { error: scanError } = await supabase
+      .from('scans')
+      .insert({
+        qrcode_id: slug,
+        os,
+        ip_address: clientIP !== 'unknown' ? clientIP : null,
+        country: location?.country,
+        country_code: location?.country_code,
+        city: location?.city,
+        region: location?.region,
+        latitude: location?.latitude,
+        longitude: location?.longitude,
+      });
+
     if (scanError) console.error('Failed to record scan:', scanError);
-  });
+  } catch (err) {
+    // Fallback: record scan without geolocation
+    supabase
+      .from('scans')
+      .insert({ qrcode_id: slug, os })
+      .then(({ error: scanError }) => {
+        if (scanError) console.error('Failed to record scan:', scanError);
+      });
+  }
+})();
 
 // Redirect to destination
 return Astro.redirect(redirectUrl);
