@@ -1,99 +1,42 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import '../../styles/auth.css';
+import { createClient } from '../../lib/supabase-ssr';
+
+const code = Astro.url.searchParams.get('code');
+const error = Astro.url.searchParams.get('error');
+const errorDescription = Astro.url.searchParams.get('error_description');
+
+if (error) {
+  // Will be rendered below
+} else if (code) {
+  const supabase = createClient(Astro);
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (!exchangeError) {
+    return Astro.redirect('/dashboard');
+  }
+}
 ---
 
 <MainLayout title="Signing In - QuickQR">
   <div class="auth-container">
     <div class="auth-card" id="auth-card">
-      <div class="auth-loading" id="auth-loading">
-        <div class="spinner"></div>
-        <p>Signing you in...</p>
-      </div>
-      <div class="auth-header" id="auth-error" style="display: none;">
-        <h1>Sign In Error</h1>
-        <p id="error-message" style="color: #ef4444;"></p>
-        <a href="/" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Try again</a>
-      </div>
+      {error || Astro.url.searchParams.get('code') ? (
+        <div class="auth-header">
+          <h1>Sign In Error</h1>
+          <p style="color: #ef4444;">
+            {error ? `${error}: ${errorDescription}` : 'Failed to exchange auth code. Please try again.'}
+          </p>
+          <a href="/" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Try again</a>
+        </div>
+      ) : (
+        <div class="auth-header">
+          <h1>No auth parameters</h1>
+          <p style="color: #ef4444;">No authentication data found.</p>
+          <a href="/" style="color: #14b8a6; margin-top: 1rem; display: inline-block;">Go home</a>
+        </div>
+      )}
     </div>
   </div>
 </MainLayout>
-
-<script>
-  import { supabase } from '../../config/supabase';
-
-  async function handleCallback() {
-    const loadingEl = document.getElementById('auth-loading');
-    const errorEl = document.getElementById('auth-error');
-    const errorMsg = document.getElementById('error-message');
-
-    console.log('[Auth Callback] Handling callback...');
-
-    // Get tokens from URL
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('code');
-    const accessToken = url.searchParams.get('access_token');
-    const refreshToken = url.searchParams.get('refresh_token');
-    const error = url.searchParams.get('error');
-    const errorDescription = url.searchParams.get('error_description');
-
-    console.log('[Auth Callback] URL params:', { code: !!code, accessToken: !!accessToken, error });
-
-    if (error) {
-      console.error('[Auth Callback] Error:', error, errorDescription);
-      loadingEl.style.display = 'none';
-      errorEl.style.display = 'block';
-      errorMsg.textContent = `${error}: ${errorDescription}`;
-      return;
-    }
-
-    if (code) {
-      // PKCE flow - exchange code for session
-      console.log('[Auth Callback] Exchanging code for session...');
-      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-      
-      console.log('[Auth Callback] Exchange result:', { success: !!data.session, error: exchangeError?.message });
-      
-      if (exchangeError) {
-        loadingEl.style.display = 'none';
-        errorEl.style.display = 'block';
-        errorMsg.textContent = exchangeError.message;
-      } else if (data.session) {
-        console.log('[Auth Callback] Success! Redirecting to dashboard...');
-        // Success - redirect to dashboard
-        window.location.href = '/dashboard';
-      } else {
-        console.error('[Auth Callback] No session returned');
-        window.location.href = '/?error=no_session';
-      }
-    } else if (accessToken) {
-      // Implicit flow - set session from tokens
-      console.log('[Auth Callback] Setting session from tokens...');
-      const { data, error: setError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-      });
-      
-      console.log('[Auth Callback] Set session result:', { success: !!data.session, error: setError?.message });
-      
-      if (setError) {
-        loadingEl.style.display = 'none';
-        errorEl.style.display = 'block';
-        errorMsg.textContent = setError.message;
-      } else if (data.session) {
-        console.log('[Auth Callback] Success! Redirecting to dashboard...');
-        // Success - redirect to dashboard
-        window.location.href = '/dashboard';
-      } else {
-        console.error('[Auth Callback] No session returned');
-        window.location.href = '/?error=no_session';
-      }
-    } else {
-      console.log('[Auth Callback] No auth params found, redirecting home');
-      // No auth params - go home
-      window.location.href = '/';
-    }
-  }
-
-  handleCallback();
-</script>
