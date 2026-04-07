@@ -315,6 +315,32 @@ function getCountryFlag(code: string): string {
                     <circle cx="12" cy="12" r="3"></circle>
                   </svg>
                 </a>
+                <button
+                  class="action-btn download"
+                  title="Download QR Code"
+                  data-qr-id={qr.id}
+                  data-qr-name={qr.name}
+                  data-qr-type={qr.type}
+                  data-qr-content={JSON.stringify(qr.content)}
+                  data-qr-styling={JSON.stringify(qr.styling)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+                <button
+                  class="action-btn delete"
+                  title="Delete QR Code"
+                  data-qr-id={qr.id}
+                  data-qr-name={qr.name}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
               </div>
             </div>
           ))}
@@ -586,5 +612,159 @@ function getCountryFlag(code: string): string {
 
   .stat-card.highlight .stat-label {
     color: rgba(255, 255, 255, 0.8);
+  }
+
+  .action-btn.delete {
+    color: #ef4444;
+  }
+
+  .action-btn.delete:hover {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .action-btn.download {
+    color: #14b8a6;
+  }
+
+  .action-btn.download:hover {
+    background: #f0fdfa;
+    color: #0d9488;
+  }
+</style>
+
+<script>
+  import { supabase } from '../config/supabase';
+
+  // Handle delete button clicks
+  document.querySelectorAll('.action-btn.delete').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const qrId = button.dataset.qrId;
+      const qrName = button.dataset.qrName;
+
+      if (!qrId) return;
+
+      if (!confirm(`Delete "${qrName || 'this QR code'}"? This cannot be undone.`)) {
+        return;
+      }
+
+      button.disabled = true;
+      button.style.opacity = '0.5';
+
+      try {
+        const { error } = await supabase
+          .from('qrcodes')
+          .delete()
+          .eq('id', qrId);
+
+        if (error) {
+          alert('Failed to delete: ' + error.message);
+          button.disabled = false;
+          button.style.opacity = '1';
+        } else {
+          // Remove the card from the UI
+          const card = button.closest('.qr-card');
+          if (card) {
+            card.remove();
+          }
+        }
+      } catch (err) {
+        alert('An error occurred while deleting');
+        button.disabled = false;
+        button.style.opacity = '1';
+      }
+    });
+  });
+
+  // Handle download button clicks
+  document.querySelectorAll('.action-btn.download').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const qrId = button.dataset.qrId;
+      const qrName = button.dataset.qrName;
+      const qrType = button.dataset.qrType;
+      const qrContent = button.dataset.qrContent;
+      const qrStyling = button.dataset.qrStyling;
+
+      if (!qrId || !qrContent) return;
+
+      button.disabled = true;
+      const originalContent = button.innerHTML;
+      button.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid #14b8a6;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></span>';
+
+      try {
+        // Dynamically import qr-code-styling
+        const QRCodeStyling = (await import('qr-code-styling')).default;
+
+        const content = JSON.parse(qrContent);
+        const styling = qrStyling ? JSON.parse(qrStyling) : null;
+
+        // Build the QR data string based on type
+        let qrData = '';
+        switch (qrType) {
+          case 'url':
+            qrData = content.url || '';
+            break;
+          case 'email':
+            qrData = `mailto:${content.email || ''}`;
+            break;
+          case 'sms':
+            qrData = `sms:${content.number || ''}`;
+            break;
+          case 'text':
+            qrData = content.text || '';
+            break;
+          default:
+            qrData = JSON.stringify(content);
+        }
+
+        const qrCode = new QRCodeStyling({
+          width: 400,
+          height: 400,
+          type: 'png',
+          data: qrData,
+          dotsOptions: {
+            color: styling?.dotsColor || '#000000',
+            type: (styling?.dotsType as any) || 'square',
+          },
+          backgroundOptions: {
+            color: styling?.bgColor || '#ffffff',
+          },
+          cornersSquareOptions: {
+            color: styling?.cornerSquareColor || styling?.dotsColor || '#000000',
+            type: (styling?.cornerSquareType as any) || 'square',
+          },
+          cornersDotOptions: {
+            color: styling?.cornerDotColor || styling?.dotsColor || '#000000',
+            type: (styling?.cornerDotType as any) || 'square',
+          },
+        });
+
+        const blob = await qrCode.getBlob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${qrName || 'qr-code'}-${qrId.slice(0, 8)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        button.innerHTML = originalContent;
+        button.disabled = false;
+      } catch (err) {
+        console.error('Download failed:', err);
+        alert('Failed to generate QR code. Please try again.');
+        button.innerHTML = originalContent;
+        button.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>
