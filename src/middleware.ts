@@ -8,24 +8,22 @@ const protectedRoutes = ['/dashboard', '/create', '/admin'];
 const publicRoutes = ['/auth', '/r', '/privacy', '/terms', '/demo'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { request, url } = context;
-  const pathname = url.pathname;
-  
+  const pathname = context.url.pathname;
+
   // Skip middleware for public routes
   const isPublic = publicRoutes.some(route => pathname.startsWith(route));
   if (isPublic) {
     return next();
   }
-  
+
   // Check if this is a protected route
   const isProtected = protectedRoutes.some(route => pathname.startsWith(route));
-  
+
   if (isProtected) {
-    const supabase = createClient({ headers: request.headers, cookies: context.cookies });
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error || !session) {
-      // Redirect to home if not authenticated
+    const supabase = createClient(context);
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
       return new Response(null, {
         status: 302,
         headers: {
@@ -33,11 +31,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
       });
     }
-    
+
     // Add user to context for use in pages
-    context.locals.user = session.user;
+    context.locals.user = user;
   }
-  
+
   return next();
 });
 

@@ -1,14 +1,9 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import '../styles/admin.css';
+import { createClient } from '../lib/supabase-ssr';
 
-const { supabase } = await import('../config/supabase').catch(() => ({ supabase: null }));
-
-if (!supabase) {
-  return Astro.redirect('/');
-}
-
-// Check auth
+const supabase = createClient(Astro);
 const { data: { user } } = await supabase.auth.getUser();
 
 if (!user) {
