@@ -27,6 +27,8 @@ import '../../styles/auth.css';
     const errorEl = document.getElementById('auth-error');
     const errorMsg = document.getElementById('error-message');
 
+    console.log('[Auth Callback] Handling callback...');
+
     // Get tokens from URL
     const url = new URL(window.location.href);
     const code = url.searchParams.get('code');
@@ -35,7 +37,10 @@ import '../../styles/auth.css';
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
 
+    console.log('[Auth Callback] URL params:', { code: !!code, accessToken: !!accessToken, error });
+
     if (error) {
+      console.error('[Auth Callback] Error:', error, errorDescription);
       loadingEl.style.display = 'none';
       errorEl.style.display = 'block';
       errorMsg.textContent = `${error}: ${errorDescription}`;
@@ -44,32 +49,47 @@ import '../../styles/auth.css';
 
     if (code) {
       // PKCE flow - exchange code for session
+      console.log('[Auth Callback] Exchanging code for session...');
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      
+      console.log('[Auth Callback] Exchange result:', { success: !!data.session, error: exchangeError?.message });
       
       if (exchangeError) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
         errorMsg.textContent = exchangeError.message;
       } else if (data.session) {
+        console.log('[Auth Callback] Success! Redirecting to dashboard...');
         // Success - redirect to dashboard
         window.location.href = '/dashboard';
+      } else {
+        console.error('[Auth Callback] No session returned');
+        window.location.href = '/?error=no_session';
       }
     } else if (accessToken) {
       // Implicit flow - set session from tokens
+      console.log('[Auth Callback] Setting session from tokens...');
       const { data, error: setError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken || '',
       });
+      
+      console.log('[Auth Callback] Set session result:', { success: !!data.session, error: setError?.message });
       
       if (setError) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
         errorMsg.textContent = setError.message;
       } else if (data.session) {
+        console.log('[Auth Callback] Success! Redirecting to dashboard...');
         // Success - redirect to dashboard
         window.location.href = '/dashboard';
+      } else {
+        console.error('[Auth Callback] No session returned');
+        window.location.href = '/?error=no_session';
       }
     } else {
+      console.log('[Auth Callback] No auth params found, redirecting home');
       // No auth params - go home
       window.location.href = '/';
     }
