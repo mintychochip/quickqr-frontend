@@ -260,16 +260,16 @@
 
 .qr-preview-enhanced {
   flex-shrink: 0;
-  width: 60px;
-  height: 60px;
+  width: 76px;
   background: white;
   border: 1px solid var(--color-gray-200, #e5e7eb);
   border-radius: 0.5rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 4px;
+  padding: 6px;
 }
 
 .qr-preview-enhanced svg {
@@ -976,7 +976,6 @@
 
 .modal-btn.delete:hover:not(:disabled) {
   background-color: #b91c1c;
-}
 }
 
 /* Responsive adjustments */
