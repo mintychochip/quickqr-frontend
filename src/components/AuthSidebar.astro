@@ -79,12 +79,12 @@
     backdrop-filter: blur(4px);
     z-index: 998;
     opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
   }
   .auth-backdrop.open {
     opacity: 1;
-    pointer-events: all;
+    visibility: visible;
   }
 
   .auth-sidebar {
@@ -96,6 +96,7 @@
     height: 100vh;
     background: #0f172a; /* Dark slate background */
     z-index: 999;
+    visibility: hidden;
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
@@ -104,6 +105,7 @@
   }
   .auth-sidebar.open {
     transform: translateX(0);
+    visibility: visible;
   }
 
   .auth-sidebar-inner {
@@ -295,6 +297,8 @@
   let mode: 'signin' | 'signup' = 'signin';
 
   function openSidebar() {
+    sidebar.style.visibility = 'visible';
+    backdrop.style.visibility = 'visible';
     sidebar.classList.add('open');
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -302,6 +306,10 @@
   function closeSidebar() {
     sidebar.classList.remove('open');
     backdrop.classList.remove('open');
+    setTimeout(() => {
+      sidebar.style.visibility = 'hidden';
+      backdrop.style.visibility = 'hidden';
+    }, 300);
     document.body.style.overflow = '';
   }
 
