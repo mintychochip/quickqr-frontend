@@ -1,5 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
-import { createClient } from '../lib/supabase-ssr';
+import { createClient } from './lib/supabase-ssr';
 
 // Protected routes that require authentication
 const protectedRoutes = ['/dashboard', '/create', '/admin'];
