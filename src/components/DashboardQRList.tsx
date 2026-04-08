@@ -254,6 +254,34 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
     }
   };
 
+  const bulkUpdateStyling = async (stylingUpdate: any) => {
+    if (selectedIds.size === 0) {
+      toast.error('Select QR codes to update');
+      return;
+    }
+    
+    const ids = Array.from(selectedIds);
+    const updates = allQrCodes
+      .filter(qr => selectedIds.has(qr.id))
+      .map(qr => => ({
+        id: qr.id,
+        styling: { ...qr.styling, ...stylingUpdate }
+      }));
+    
+    const { error } = await supabase.from('qrcodes').upsert(updates);
+    
+    if (!error) {
+      setAllQrCodes(prev => prev.map(qr => 
+        selectedIds.has(qr.id) 
+          ? { ...qr, styling: { ...qr.styling, ...stylingUpdate } }
+          : qr
+      ));
+      toast.success(`${ids.length} QR codes updated`);
+    } else {
+      toast.error('Failed to update');
+    }
+  };
+
   const exportCSV = (qr: QRCode) => {
     const scans = scanData[qr.id];
     if (!scans?.length) {

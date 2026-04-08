@@ -1,0 +1,17 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+---
+<MainLayout title="Teams - QuickQR">
+  <div class="teams-container">
+    <h1>Team Workspaces</h1>
+    <div id="team-manager-root"></div>
+  </div>
+</MainLayout>
+<script>
+  import('react-dom/client').then(({ createRoot }) => {
+    import('../../components/teams/TeamManager.tsx').then(({ default: TeamManager }) => {
+      const root = createRoot(document.getElementById('team-manager-root'));
+      root.render(TeamManager({}));
+    });
+  });
+</script>
