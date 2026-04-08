@@ -21,7 +21,12 @@ interface ScanData {
 
 const ITEMS_PER_PAGE = 10;
 
-const DashboardQRList = () => {
+interface DashboardQRListProps {
+  selectedFolder?: string | null;
+  selectedTags?: string[];
+}
+
+const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps) => {
   const [allQrCodes, setAllQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,12 +109,25 @@ const DashboardQRList = () => {
   const filteredCodes = useMemo(() => {
     let filtered = allQrCodes;
     
+    // Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(qr => 
         qr.name?.toLowerCase().includes(q) ||
         qr.type?.toLowerCase().includes(q)
       );
+    }
+    
+    // Folder filter (requires loading folder relationships)
+    if (selectedFolder) {
+      // TODO: Filter by folder - need to load qr_folders relationship
+      // For now, this will show all until we implement the database query
+    }
+    
+    // Tag filter (requires loading tag relationships)
+    if (selectedTags && selectedTags.length > 0) {
+      // TODO: Filter by tags - need to load qr_tags relationship
+      // For now, this will show all until we implement the database query
     }
     
     // Sort
@@ -123,7 +141,7 @@ const DashboardQRList = () => {
     });
     
     return filtered;
-  }, [allQrCodes, searchQuery, sortBy]);
+  }, [allQrCodes, searchQuery, sortBy, selectedFolder, selectedTags]);
 
   const totalPages = Math.ceil(filteredCodes.length / ITEMS_PER_PAGE);
   const paginatedCodes = filteredCodes.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);

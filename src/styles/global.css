@@ -1,8 +1,28 @@
 /* CSS Variables */
 :root {
   /* Colors - Teal */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-300: #5eead4;
   --color-teal-500: #14b8a6;
   --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+
+  /* Colors - Blue */
+  --color-blue-100: #dbeafe;
+  --color-blue-700: #1d4ed8;
+
+  /* Colors - Green */
+  --color-green-100: #dcfce7;
+  --color-green-700: #15803d;
+
+  /* Colors - Red */
+  --color-red-100: #fee2e2;
+  --color-red-700: #b91c1c;
+
+  /* Colors - Purple */
+  --color-purple-100: #f3e8ff;
+  --color-purple-700: #7c3aed;
 
   /* Colors - Gray */
   --color-gray-50: #f9fafb;
