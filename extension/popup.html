@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { width: 300px; padding: 16px; font-family: system-ui, sans-serif; }
+    h1 { font-size: 18px; margin-bottom: 12px; }
+    input { width: 100%; padding: 8px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; }
+    button { width: 100%; padding: 10px; background: #14b8a6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    #qr-container { text-align: center; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>QuickQR</h1>
+  <input type="text" id="url-input" placeholder="Enter URL or text">
+  <button id="generate-btn">Generate QR</button>
+  <div id="qr-container"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
