@@ -17,6 +17,21 @@ export default function QRStudio() {
   const [bgColor, setBgColor] = useState('#000000');
   const [showContent, setShowContent] = useState(true);
   const [history, setHistory] = useState<{ id: string; type: string; content: string; displayContent: string; dataUrl: string; timestamp: number }[]>([]);
+  
+  // Design Templates
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('default');
+  const templates = {
+    default: { name: 'Default', fgColor: '#ffffff', bgColor: '#000000', dotType: 'rounded', cornerType: 'square' },
+    restaurant: { name: 'Restaurant', fgColor: '#14b8a6', bgColor: '#ffffff', dotType: 'rounded', cornerType: 'extra-rounded' },
+    event: { name: 'Event', fgColor: '#8b5cf6', bgColor: '#1e1b4b', dotType: 'classy', cornerType: 'extra-rounded' },
+    minimal: { name: 'Minimal', fgColor: '#1f2937', bgColor: '#f9fafb', dotType: 'square', cornerType: 'square' },
+    bold: { name: 'Bold', fgColor: '#dc2626', bgColor: '#ffffff', dotType: 'dots', cornerType: 'extra-rounded' },
+    neon: { name: 'Neon', fgColor: '#00ff88', bgColor: '#0a0a0f', dotType: 'rounded', cornerType: 'extra-rounded' },
+    gold: { name: 'Gold', fgColor: '#f59e0b', bgColor: '#1f1f1f', dotType: 'classy-rounded', cornerType: 'extra-rounded' }
+  };
+  
+  const [dotType, setDotType] = useState<'rounded' | 'square' | 'dots' | 'classy' | 'classy-rounded'>('rounded');
+  const [cornerType, setCornerType] = useState<'square' | 'rounded' | 'extra-rounded'>('square');
 
   const tabs = [
     { id: 'generate' as const, label: 'Generate', icon: QrCode },
@@ -61,10 +76,16 @@ export default function QRStudio() {
       },
       dotsOptions: {
         color: fgColor,
-        type: 'rounded'
+        type: dotType
       },
       backgroundOptions: {
         color: bgColor
+      },
+      cornersSquareOptions: {
+        type: cornerType
+      },
+      cornersDotOptions: {
+        type: cornerType
       }
     });
     
@@ -81,7 +102,7 @@ export default function QRStudio() {
     
     setGeneratedQR(qrData);
     setHistory(prev => [qrData, ...prev].slice(0, 50));
-  }, [qrType, formData, fgColor, bgColor]);
+  }, [qrType, formData, fgColor, bgColor, dotType, cornerType]);
 
   const getFields = () => {
     switch (qrType) {
@@ -122,7 +143,9 @@ export default function QRStudio() {
 
   // Batch Tab State
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [batchItems, setBatchItems] = useState<{ type: string; content: string; filename: string; status: 'pending' | 'generating' | 'done' | 'error'; dataUrl?: string }[]>([]);
+  const [batchItems, setBatchItems] = useState<{ type: string; content: string; filename: string; status: 'pending' | 'generating' | 'done' | 'error'; dataUrl?: string; variables?: Record<string, string> }[]>([]);
+  const [batchTemplate, setBatchTemplate] = useState<string>('url');
+  const [batchContentTemplate, setBatchContentTemplate] = useState<string>('https://example.com/{{id}}');
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchProcessing, setBatchProcessing] = useState(false);
 
@@ -166,33 +189,64 @@ export default function QRStudio() {
     }
   }, []);
 
-  const parseCSV = (text: string) => {
+  const parseCSV = (text: string, contentTemplate: string) => {
     const lines = text.trim().split('\n');
     const items = [];
     
-    for (let i = 0; i < lines.length; i++) {
+    // Check if first line is headers
+    const hasHeaders = lines[0]?.toLowerCase().includes('name') || 
+                      lines[0]?.toLowerCase().includes('id') ||
+                      lines[0]?.toLowerCase().includes('type');
+    const startIndex = hasHeaders ? 1 : 0;
+    
+    // Parse headers if present
+    let headers: string[] = [];
+    if (hasHeaders) {
+      headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+    } else {
+      // Default headers: id, name, email, phone, etc.
+      headers = ['id', 'name', 'email', 'phone', 'company', 'url'];
+    }
+    
+    for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line || line.startsWith('#')) continue;
       
       const parts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
-      if (parts.length >= 2) {
-        items.push({
-          type: parts[0],
-          content: parts[1],
-          filename: parts[2] || `qr-${i + 1}`,
-          status: 'pending' as const
-        });
-      }
+      
+      // Build variable map from headers
+      const variables: Record<string, string> = {};
+      headers.forEach((header, idx) => {
+        if (parts[idx]) variables[header] = parts[idx];
+      });
+      
+      // Generate filename from first available field
+      const filename = variables['name'] || variables['id'] || variables['company'] || `qr-${i + 1}`;
+      
+      // Replace template variables
+      let content = contentTemplate;
+      Object.entries(variables).forEach(([key, value]) => {
+        content = content.replace(new RegExp(`{{${key}}}`, 'gi'), value);
+        content = content.replace(new RegExp(`{{${key.toUpperCase()}}}`, 'gi'), value);
+      });
+      
+      items.push({
+        type: 'url',
+        content,
+        filename,
+        status: 'pending' as const,
+        variables
+      });
     }
     
     return items;
   };
 
-  const handleBatchUpload = useCallback((file: File) => {
+  const handleBatchUpload = useCallback((file: File, template: string) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const items = parseCSV(text);
+      const items = parseCSV(text, template);
       setBatchItems(items);
       setCsvFile(file);
     };
@@ -215,7 +269,7 @@ export default function QRStudio() {
       setBatchItems([...updated]);
       
       try {
-        const content = generateQRContent(item.type as any, { [item.type]: item.content });
+        const content = item.content;
         
         const qrCode = new QRCodeStyling({
           width: 400,
@@ -228,11 +282,17 @@ export default function QRStudio() {
             errorCorrectionLevel: 'H'
           },
           dotsOptions: {
-            color: '#ffffff',
-            type: 'rounded'
+            color: fgColor,
+            type: dotType
           },
           backgroundOptions: {
-            color: '#000000'
+            color: bgColor
+          },
+          cornersSquareOptions: {
+            type: cornerType
+          },
+          cornersDotOptions: {
+            type: cornerType
           }
         });
         
@@ -245,7 +305,7 @@ export default function QRStudio() {
           id: crypto.randomUUID(),
           type: item.type,
           content,
-          displayContent: item.content.slice(0, 50),
+          displayContent: item.filename || content.slice(0, 50),
           dataUrl,
           timestamp: Date.now()
         };
@@ -420,33 +480,114 @@ export default function QRStudio() {
                     ))}
                   </div>
 
-                  {/* Color Options */}
-                  <div className="flex gap-4 pt-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-2">Foreground</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={fgColor}
-                          onChange={(e) => setFgColor(e.target.value)}
-                          className="w-12 h-10 rounded-lg bg-transparent cursor-pointer border-0"
-                        />
-                        <span className="text-sm text-gray-400 font-mono">{fgColor}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-2">Background</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={bgColor}
-                          onChange={(e) => setBgColor(e.target.value)}
-                          className="w-12 h-10 rounded-lg bg-transparent cursor-pointer border-0"
-                        />
-                        <span className="text-sm text-gray-400 font-mono">{bgColor}</span>
-                      </div>
+                  {/* Design Templates */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">Design Template</label>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                      {Object.entries(templates).map(([key, template]) => (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setSelectedTemplate(key);
+                            setFgColor(template.fgColor);
+                            setBgColor(template.bgColor);
+                            setDotType(template.dotType as any);
+                            setCornerType(template.cornerType as any);
+                          }}
+                          className={`p-2 rounded-lg border transition-all text-center ${
+                            selectedTemplate === key
+                              ? 'border-[#14b8a6] bg-[#14b8a6]/10'
+                              : 'border-white/[0.08] hover:border-white/20'
+                          }`}
+                        >
+                          <div
+                            className="w-full aspect-square rounded mb-1"
+                            style={{ backgroundColor: template.bgColor, border: `2px solid ${template.fgColor}` }}
+                          />
+                          <span className="text-[10px] text-gray-400">{template.name}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
+
+                  {/* Advanced Styling */}
+                  <details className="group">
+                    <summary className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white transition-colors">
+                      <span>Advanced Styling</span>
+                      <svg className="w-4 h-4 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </summary>
+                    <div className="mt-4 space-y-4">
+                      {/* Color Options */}
+                      <div className="flex gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-2">Foreground</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={fgColor}
+                              onChange={(e) => { setFgColor(e.target.value); setSelectedTemplate('custom'); }}
+                              className="w-12 h-10 rounded-lg bg-transparent cursor-pointer border-0"
+                            />
+                            <span className="text-sm text-gray-400 font-mono">{fgColor}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-2">Background</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={bgColor}
+                              onChange={(e) => { setBgColor(e.target.value); setSelectedTemplate('custom'); }}
+                              className="w-12 h-10 rounded-lg bg-transparent cursor-pointer border-0"
+                            />
+                            <span className="text-sm text-gray-400 font-mono">{bgColor}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Dot Style */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-2">Dot Style</label>
+                        <div className="flex gap-2">
+                          {(['rounded', 'square', 'dots', 'classy', 'classy-rounded'] as const).map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => { setDotType(type); setSelectedTemplate('custom'); }}
+                              className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                                dotType === type
+                                  ? 'border-[#14b8a6] bg-[#14b8a6]/10 text-white'
+                                  : 'border-white/[0.08] text-gray-400 hover:text-white'
+                              }`}
+                            >
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Corner Style */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-2">Corner Style</label>
+                        <div className="flex gap-2">
+                          {(['square', 'rounded', 'extra-rounded'] as const).map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => { setCornerType(type); setSelectedTemplate('custom'); }}
+                              className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                                cornerType === type
+                                  ? 'border-[#14b8a6] bg-[#14b8a6]/10 text-white'
+                                  : 'border-white/[0.08] text-gray-400 hover:text-white'
+                              }`}
+                            >
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </details>
 
                   {/* Actions */}
                   <div className="flex gap-3 pt-4">
@@ -627,7 +768,37 @@ export default function QRStudio() {
                     <FileSpreadsheet className="w-10 h-10 text-[#14b8a6]" />
                   </div>
                   <h2 className="text-2xl font-bold text-white mb-2">Batch Generator</h2>
-                  <p className="text-gray-400 mb-6">Upload a CSV file to generate multiple QR codes at once</p>
+                  <p className="text-gray-400 mb-2">Upload a CSV with variables to generate personalized QR codes</p>
+                  
+                  {/* Template Configuration */}
+                  <div className="bg-[#0a0a0f] rounded-xl p-4 mb-6 text-left">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">URL Template (use {{variable}})</label>
+                    <input
+                      type="text"
+                      value={batchContentTemplate}
+                      onChange={(e) => setBatchContentTemplate(e.target.value)}
+                      placeholder="https://example.com/{{id}}"
+                      className="w-full px-4 py-2 bg-[#111118] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#14b8a6] mb-3"
+                    />
+                    <p className="text-xs text-gray-500">CSV columns become variables: {{name}}, {{id}}, {{email}}, etc.</p>
+                    
+                    <div className="mt-3 flex gap-2">
+                      <span className="text-xs text-gray-500">Quick templates:</span>
+                      {[
+                        { label: 'Conference', template: 'https://check.in/{{id}}' },
+                        { label: 'Tickets', template: 'https://tickets.com/{{id}}?name={{name}}' },
+                        { label: 'WiFi', template: 'WIFI:T:WPA;S:Guest;P:{{password}};;' }
+                      ].map((t) => (
+                        <button
+                          key={t.label}
+                          onClick={() => setBatchContentTemplate(t.template)}
+                          className="text-xs px-2 py-1 bg-[#14b8a6]/20 text-[#14b8a6] rounded hover:bg-[#14b8a6]/30 transition-all"
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   
                   <input
                     type="file"
@@ -636,7 +807,7 @@ export default function QRStudio() {
                     id="batch-file-input"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) handleBatchUpload(file);
+                      if (file) handleBatchUpload(file, batchContentTemplate);
                     }}
                   />
                   
@@ -646,17 +817,17 @@ export default function QRStudio() {
                   >
                     <Upload className="w-12 h-12 text-[#14b8a6] mx-auto mb-4" />
                     <p className="text-white font-medium mb-2">Upload CSV file</p>
-                    <p className="text-sm text-gray-400">Drop file here or click to browse</p>
-                    <p className="text-xs text-gray-500 mt-4">Format: type, content, filename</p>
+                    <p className="text-sm text-gray-400">Headers: name,id,email,company,...</p>
+                    <p className="text-xs text-gray-500 mt-2">Each row generates a personalized QR</p>
                   </label>
                   
                   <a
-                    href="data:text/csv,url,https://example.com,example-qr%0Atext,Hello World,hello-qr%0Aemail,test@test.com,email-qr"
+                    href={`data:text/csv,name,id,email%0AJohn Doe,jd123,john@example.com%0AJane Smith,js456,jane@example.com`}
                     download="qr-batch-template.csv"
                     className="inline-flex items-center gap-2 mt-4 text-sm text-[#14b8a6] hover:text-[#0d9488] transition-colors"
                   >
                     <Download className="w-4 h-4" />
-                    Download template
+                    Download sample CSV
                   </a>
                 </div>
               </div>
@@ -689,12 +860,12 @@ export default function QRStudio() {
                 )}
                 
                 {/* Items List */}
-                <div className="bg-[#111118] border border-white/[0.06] rounded-2xl overflow-hidden">
-                  <div className="p-4 border-b border-white/[0.06]">
+                <div className="bg-[#111118] border border-white/[0.06] rounded-2xl overflow-hidden max-h-[400px] overflow-y-auto">
+                  <div className="p-4 border-b border-white/[0.06] sticky top-0 bg-[#111118]">
                     <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <div className="col-span-2">Type</div>
-                      <div className="col-span-6">Content</div>
-                      <div className="col-span-2">Filename</div>
+                      <div className="col-span-3">Filename</div>
+                      <div className="col-span-6">Generated URL</div>
+                      <div className="col-span-1">Vars</div>
                       <div className="col-span-2">Status</div>
                     </div>
                   </div>
@@ -702,22 +873,32 @@ export default function QRStudio() {
                     {batchItems.map((item, idx) => (
                       <div key={idx} className="p-4">
                         <div className="grid grid-cols-12 gap-4 items-center">
-                          <div className="col-span-2">
-                            <span className="px-2 py-1 bg-[#0a0a0f] text-gray-400 text-xs rounded">
-                              {item.type}
-                            </span>
+                          <div className="col-span-3">
+                            <p className="text-sm text-gray-300 truncate">{item.filename}</p>
+                            {item.variables && (
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {Object.entries(item.variables).slice(0, 2).map(([k, v]) => (
+                                  <span key={k} className="text-[10px] px-1.5 py-0.5 bg-[#0a0a0f] text-gray-500 rounded">
+                                    {k}: {v.slice(0, 10)}{v.length > 10 && '...'}
+                                  </span>
+                                ))}
+                                {Object.keys(item.variables).length > 2 && (
+                                  <span className="text-[10px] text-gray-600">+{Object.keys(item.variables).length - 2}</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <div className="col-span-6">
-                            <p className="text-sm text-gray-300 truncate">{item.content}</p>
+                            <p className="text-sm text-gray-300 truncate font-mono">{item.content}</p>
+                          </div>
+                          <div className="col-span-1">
+                            <span className="text-xs text-gray-500">{Object.keys(item.variables || {}).length}</span>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-sm text-gray-500">{item.filename}</p>
-                          </div>
-                          <div className="col-span-2">
-                            {item.status === 'pending' && <span className="text-sm text-gray-500">⏳ Pending</span>}
-                            {item.status === 'generating' && <span className="text-sm text-[#14b8a6]">⏳ Working...</span>}
-                            {item.status === 'done' && <span className="text-sm text-green-400">✅ Done</span>}
-                            {item.status === 'error' && <span className="text-sm text-red-400">❌ Error</span>}
+                            {item.status === 'pending' && <span className="text-sm text-gray-500">⏳</span>}
+                            {item.status === 'generating' && <span className="text-sm text-[#14b8a6]">⏳</span>}
+                            {item.status === 'done' && <span className="text-sm text-green-400">✅</span>}
+                            {item.status === 'error' && <span className="text-sm text-red-400">❌</span>}
                           </div>
                         </div>
                       </div>

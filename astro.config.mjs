@@ -17,15 +17,11 @@ export default defineConfig({
     define: {
       'process.env.MESSAGE_CHANNEL': 'undefined',
     },
-    plugins: [{
-      name: 'fix-react-dom-server',
-      enforce: 'pre',
-      resolveId(source) {
-        if (source === 'react-dom/server' || source === 'react-dom/server.browser') {
-          return this.resolve('react-dom/server.edge', undefined, { skipSelf: true });
-        }
+    resolve: {
+      alias: {
+        'react-dom/server': 'react-dom/server.browser',
       },
-    }],
+    },
   },
   server: {
     port: 4321,
