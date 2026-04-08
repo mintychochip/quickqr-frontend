@@ -27,6 +27,11 @@ import '../styles/create.css';
       <div id="error-message" class="error-message" style="display: none;"></div>
       <div id="success-message" class="success-message" style="display: none;"></div>
 
+      <!-- Templates Gallery -->
+      <div class="templates-section" style="margin-bottom: 2rem;">
+        <div id="templates-gallery-root"></div>
+      </div>
+
       <div class="create-layout">
         <!-- Form Column -->
         <div class="form-column">
@@ -578,6 +583,42 @@ import '../styles/create.css';
                     <option value="extra-rounded">Extra Rounded</option>
                   </select>
                 </div>
+                <div class="form-group">
+                  <label for="errorLevel">Error Correction</label>
+                  <select id="errorLevel" name="errorLevel">
+                    <option value="L">Low (7%)</option>
+                    <option value="M" selected>Medium (15%)</option>
+                    <option value="Q">Quartile (25%)</option>
+                    <option value="H">High (30%)</option>
+                  </select>
+                  <small class="hint">Higher = better scan reliability with logos</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logo Overlay -->
+            <div class="form-section">
+              <h2>Logo (Optional)</h2>
+              <p class="section-hint">Add your logo to the center of the QR code</p>
+              <div id="logo-uploader-root"></div>
+              <input type="hidden" id="logoDataUrl" name="logoDataUrl" />
+              <div id="logo-options" style="display: none; margin-top: 1rem;">
+                <div class="form-group">
+                  <label for="logoSize">Logo Size</label>
+                  <input type="range" id="logoSize" name="logoSize" min="40" max="100" value="60" />
+                  <span id="logoSizeValue">60px</span>
+                </div>
+                <div class="form-group">
+                  <label for="logoShape">Logo Shape</label>
+                  <select id="logoShape" name="logoShape">
+                    <option value="square">Square</option>
+                    <option value="rounded">Rounded</option>
+                    <option value="circle">Circle</option>
+                  </select>
+                </div>
+              </div>
+              <div class="logo-warning" style="display: none;" id="logo-warning">
+                <p>⚠️ Logo requires High error correction (30%). Auto-adjusting...</p>
               </div>
             </div>
 
@@ -654,6 +695,9 @@ import '../styles/create.css';
       authCheck.style.display = 'none';
       createContent.style.display = 'block';
 
+      // Initialize Templates Gallery
+      initTemplatesGallery();
+
       // Initialize QR code
       initQRCode();
 
@@ -674,6 +718,21 @@ import '../styles/create.css';
       setupColorPicker('bgColor', 'bgColorText');
       setupColorPicker('cornerSquareColor', 'cornerSquareColorText');
       setupColorPicker('cornerDotColor', 'cornerDotColorText');
+
+      // Logo uploader
+      initLogoUploader();
+
+      // Logo options
+      const logoSizeInput = document.getElementById('logoSize');
+      const logoSizeValue = document.getElementById('logoSizeValue');
+      const logoShapeSelect = document.getElementById('logoShape');
+      
+      logoSizeInput?.addEventListener('input', (e) => {
+        logoSizeValue.textContent = e.target.value + 'px';
+        updateQRPreview();
+      });
+      
+      logoShapeSelect?.addEventListener('change', () => updateQRPreview());
 
       // Live preview updates
       const previewInputs = createForm.querySelectorAll('input, textarea, select');
@@ -722,6 +781,11 @@ import '../styles/create.css';
           cornerSquareColor: formData.get('cornerSquareColor') || '#000000',
           cornerDotType: formData.get('cornerDotType') || 'square',
           cornerDotColor: formData.get('cornerDotColor') || '#000000',
+          errorLevel: formData.get('errorLevel') || 'M',
+          // Logo overlay options
+          logoDataUrl: formData.get('logoDataUrl') || null,
+          logoSize: formData.get('logoSize') || '60',
+          logoShape: formData.get('logoShape') || 'square',
         };
 
         const { error } = await supabase
@@ -762,6 +826,113 @@ import '../styles/create.css';
         (window as any).openAuthSidebar?.();
       });
     }
+  }
+
+  function initTemplatesGallery() {
+    const templatesRoot = document.getElementById('templates-gallery-root');
+    if (!templatesRoot) return;
+    
+    // Dynamically import React and components
+    import('react-dom/client').then(({ createRoot }) => {
+      import('../components/templates/TemplateGallery.tsx').then(({ default: TemplateGallery }) => {
+        const root = createRoot(templatesRoot);
+        
+        const handleTemplateSelect = (template) => {
+          // Set the QR type
+          const typeInput = document.querySelector(`input[name="type"][value="${template.type}"]`);
+          if (typeInput) {
+            typeInput.checked = true;
+            updateContentFields(template.type);
+          }
+          
+          // Apply styling
+          const dotsColorInput = document.getElementById('dotsColor');
+          const dotsColorText = document.getElementById('dotsColorText');
+          const bgColorInput = document.getElementById('bgColor');
+          const bgColorText = document.getElementById('bgColorText');
+          const dotsTypeSelect = document.getElementById('dotsType');
+          const cornerSquareTypeSelect = document.getElementById('cornerSquareType');
+          const cornerDotTypeSelect = document.getElementById('cornerDotType');
+          const errorLevelSelect = document.getElementById('errorLevel');
+          
+          if (template.styling.dotsOptions?.color) {
+            dotsColorInput.value = template.styling.dotsOptions.color;
+            dotsColorText.value = template.styling.dotsOptions.color;
+          }
+          if (template.styling.backgroundOptions?.color) {
+            bgColorInput.value = template.styling.backgroundOptions.color;
+            bgColorText.value = template.styling.backgroundOptions.color;
+          }
+          if (template.styling.dotsOptions?.type) {
+            dotsTypeSelect.value = template.styling.dotsOptions.type;
+          }
+          if (template.styling.cornersSquareOptions?.type) {
+            cornerSquareTypeSelect.value = template.styling.cornersSquareOptions.type;
+          }
+          if (template.styling.cornersDotOptions?.type) {
+            cornerDotTypeSelect.value = template.styling.cornersDotOptions.type;
+          }
+          if (template.styling.errorCorrectionLevel) {
+            errorLevelSelect.value = template.styling.errorCorrectionLevel;
+          }
+          
+          // Scroll to form
+          document.getElementById('create-form')?.scrollIntoView({ behavior: 'smooth' });
+          
+          // Update preview
+          updateQRPreview();
+          
+          // Show success toast if available
+          if (typeof toast !== 'undefined') {
+            toast.success(`Template "${template.name}" applied!`);
+          }
+        };
+        
+        root.render(TemplateGallery({ onTemplateSelect: handleTemplateSelect }));
+      });
+    });
+  }
+
+  function initLogoUploader() {
+    const logoRoot = document.getElementById('logo-uploader-root');
+    const logoDataInput = document.getElementById('logoDataUrl');
+    const logoOptionsDiv = document.getElementById('logo-options');
+    const logoWarning = document.getElementById('logo-warning');
+    
+    if (!logoRoot) return;
+    
+    // Dynamically import React and the LogoUploader component
+    import('react-dom/client').then(({ createRoot }) => {
+      import('../components/styling/LogoUploader.tsx').then(({ default: LogoUploader }) => {
+        const root = createRoot(logoRoot);
+        
+        const handleLogoSelected = (file) => {
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const dataUrl = e.target.result;
+              logoDataInput.value = dataUrl;
+              logoOptionsDiv.style.display = 'block';
+              logoWarning.style.display = 'block';
+              
+              // Auto-set error correction to High for logos
+              const errorLevelSelect = document.getElementById('errorLevel');
+              if (errorLevelSelect) errorLevelSelect.value = 'H';
+              
+              updateQRPreview();
+            };
+            reader.readAsDataURL(file);
+          } else {
+            logoDataInput.value = '';
+            logoOptionsDiv.style.display = 'none';
+            logoWarning.style.display = 'none';
+            updateQRPreview();
+          }
+        };
+        
+        root.render(LogoUploader({ onLogoSelected: handleLogoSelected }));
+      });
+    });
   }
 
   function initQRCode() {

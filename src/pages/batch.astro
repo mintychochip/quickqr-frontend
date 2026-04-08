@@ -1,0 +1,108 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import '../styles/create.css';
+---
+
+<MainLayout title="Batch QR Generation - QuickQR">
+  <div class="create-container">
+    <div class="create-header">
+      <a href="/dashboard" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Dashboard
+      </a>
+      <h1>Batch QR Generation</h1>
+      <p class="subtitle">Generate multiple QR codes at once from a CSV file</p>
+    </div>
+
+    <div class="batch-layout">
+      <!-- Upload Section -->
+      <div id="upload-section" class="form-column">
+        <div id="batch-upload-root"></div>
+      </div>
+
+      <!-- Preview Section -->
+      <div id="preview-section" class="preview-column" style="display: none;">
+        <div id="batch-preview-root"></div>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import { createRoot } from 'react-dom/client';
+  import BatchUpload from '../components/batch/BatchUpload.tsx';
+  import BatchPreview from '../components/batch/BatchPreview.tsx';
+  
+  let currentItems = [];
+  
+  const uploadRoot = document.getElementById('batch-upload-root');
+  const previewRoot = document.getElementById('batch-preview-root');
+  const previewSection = document.getElementById('preview-section');
+  
+  function handleItemsLoaded(items) {
+    currentItems = items;
+    previewSection.style.display = 'block';
+    renderPreview();
+    previewSection.scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  function handleItemsChange(newItems) {
+    currentItems = newItems;
+    renderPreview();
+  }
+  
+  function renderPreview() {
+    if (previewRoot) {
+      const root = createRoot(previewRoot);
+      root.render(
+        BatchPreview({ 
+          items: currentItems, 
+          onItemsChange: handleItemsChange 
+        })
+      );
+    }
+  }
+  
+  if (uploadRoot) {
+    const root = createRoot(uploadRoot);
+    root.render(
+      BatchUpload({ onItemsLoaded: handleItemsLoaded })
+    );
+  }
+</script>
+
+<style>
+  .subtitle {
+    color: #6b7280;
+    margin-top: 0.5rem;
+  }
+  
+  .batch-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  @media (min-width: 1024px) {
+    .batch-layout {
+      flex-direction: row;
+    }
+    
+    .form-column {
+      flex: 0 0 400px;
+      position: sticky;
+      top: 2rem;
+      align-self: flex-start;
+    }
+    
+    .preview-column {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+</style>

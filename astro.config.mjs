@@ -22,7 +22,7 @@ export default defineConfig({
       enforce: 'pre',
       resolveId(source) {
         if (source === 'react-dom/server' || source === 'react-dom/server.browser') {
-          return this.resolve('react-dom/server.edge', undefined, { skipSelf: true });
+          return this.resolve('react-dom/server', undefined, { skipSelf: true });
         }
       },
     }],
