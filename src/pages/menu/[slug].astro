@@ -1,0 +1,8 @@
+---
+// Public menu view - no layout for full-screen experience
+import { MenuViewPage } from '../../components/menu-builder';
+
+const { slug } = Astro.params;
+---
+
+<MenuViewPage client:load slug={slug} />

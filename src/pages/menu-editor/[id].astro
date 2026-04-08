@@ -1,0 +1,10 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { EditorPage } from '../../components/menu-builder';
+
+const { id } = Astro.params;
+---
+
+<MainLayout title="Edit Menu - QuickQR" description="Edit your digital menu.">
+  <EditorPage client:load menuId={id} />
+</MainLayout>
