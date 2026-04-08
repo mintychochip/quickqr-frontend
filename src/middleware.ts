@@ -5,7 +5,7 @@ import { createClient } from './lib/supabase-ssr';
 const protectedRoutes = ['/dashboard', '/create', '/admin'];
 
 // Public routes that should never be protected
-const publicRoutes = ['/auth', '/r', '/privacy', '/terms', '/demo'];
+const publicRoutes = ['/auth', '/r', '/privacy', '/terms', '/demo', '/studio'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = context.url.pathname;
