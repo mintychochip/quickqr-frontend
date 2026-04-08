@@ -1,0 +1,10 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { PreviewPage } from '../../components/menu-builder';
+
+const { id } = Astro.params;
+---
+
+<MainLayout title="Preview Menu - QuickQR" description="Preview your digital menu.">
+  <PreviewPage client:load menuId={id} />
+</MainLayout>

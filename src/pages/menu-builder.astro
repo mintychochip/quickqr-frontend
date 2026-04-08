@@ -1,0 +1,10 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import { MenuBuilderPage } from '../components/menu-builder';
+---
+
+<MainLayout title="Menu OCR - QuickQR" description="Transform paper menus into beautiful digital experiences with AI-powered OCR.">
+  <div class="pt-16">
+    <MenuBuilderPage client:load />
+  </div>
+</MainLayout>
