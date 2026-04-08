@@ -26,6 +26,11 @@ export default defineConfig({
         }
       },
     }],
+    resolve: {
+      alias: {
+        'react-dom/server': 'react-dom/server.browser',
+      },
+    },
   },
   server: {
     port: 4321,
