@@ -413,7 +413,7 @@ export default function QRStudio() {
       </nav>
 
       {/* Main Content */}
-      <main className="pt-16">
+      <main className="pt-20">
         {activeTab === 'generate' && (
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="grid lg:grid-cols-2 gap-8">

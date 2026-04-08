@@ -33,6 +33,29 @@ interface MenuState {
   moveItem: (menuId: string, itemId: string, targetCategoryId: string) => void
 }
 
+const storage = {
+  getItem: (name: string) => {
+    if (typeof window === 'undefined') return null
+    try {
+      return localStorage.getItem(name)
+    } catch {
+      return null
+    }
+  },
+  setItem: (name: string, value: string) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem(name, value)
+    } catch {}
+  },
+  removeItem: (name: string) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.removeItem(name)
+    } catch {}
+  },
+}
+
 export const useMenuStore = create<MenuState>()(
   persist(
     (set, _get) => ({
