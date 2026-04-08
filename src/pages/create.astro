@@ -685,11 +685,9 @@ import '../styles/create.css';
       const { data: { session }, error: sessionError } = await Promise.race([authPromise, timeoutPromise]);
       user = session?.user;
 
-      if (!user || sessionError) {
-        // Not authenticated - redirect to homepage
-        window.location.href = '/';
-        return;
-      }
+      // Allow public access - no auth required
+      // Store user if logged in, but don't require it
+      user = session?.user || null;
 
       // Show form
       authCheck.style.display = 'none';
