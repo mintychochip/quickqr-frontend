@@ -28,3 +28,6 @@ supabase/.temp/
 
 # Local Netlify folder
 .netlify
+
+# Memory directory (agent logs)
+memory/
