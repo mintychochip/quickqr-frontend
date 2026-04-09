@@ -1,5 +1,5 @@
-import { ArrowLeft, Edit2, ExternalLink, QrCode } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft, Edit2, ExternalLink, QrCode, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { MenuRenderer, QRCodeDisplay } from './index'
 import { useMenuStore } from '../../stores/menuStore'
 
@@ -8,12 +8,41 @@ interface PreviewPageProps {
 }
 
 export default function PreviewPage({ menuId }: PreviewPageProps) {
-  const { menus } = useMenuStore()
+  const { menus, loadMenu } = useMenuStore()
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const menu = menus.find(m => m.id === menuId) || null
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      if (!menu) {
+        setLoading(true)
+        const loadedMenu = await loadMenu(menuId)
+        if (!loadedMenu) {
+          setLoadError('Menu not found')
+        }
+        setLoading(false)
+      } else {
+        setLoading(false)
+      }
+    }
+    fetchMenu()
+  }, [menuId, menu, loadMenu])
   
   const [showQR, setShowQR] = useState(false)
 
-  if (!menu) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading menu preview...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!menu || loadError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

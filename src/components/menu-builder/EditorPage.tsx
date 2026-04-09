@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowLeft, Eye, Save, QrCode } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ArrowLeft, Eye, Save, QrCode, Loader2 } from 'lucide-react'
 import { MenuEditor, TemplateSelector, QRCodeDisplay } from './index'
 import { useMenuStore } from '../../stores/menuStore'
 
@@ -8,13 +8,42 @@ interface EditorPageProps {
 }
 
 export default function EditorPage({ menuId }: EditorPageProps) {
-  const { menus, updateMenu, deleteMenu } = useMenuStore()
+  const { menus, updateMenu, deleteMenu, loadMenu } = useMenuStore()
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const menu = menus.find(m => m.id === menuId) || null
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      if (!menu) {
+        setLoading(true)
+        const loadedMenu = await loadMenu(menuId)
+        if (!loadedMenu) {
+          setLoadError('Menu not found')
+        }
+        setLoading(false)
+      } else {
+        setLoading(false)
+      }
+    }
+    fetchMenu()
+  }, [menuId, menu, loadMenu])
   
   const [showQR, setShowQR] = useState(false)
   const [activeTab, setActiveTab] = useState<'edit' | 'template'>('edit')
 
-  if (!menu) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading menu...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!menu || loadError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

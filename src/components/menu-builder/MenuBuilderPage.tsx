@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Upload, Sparkles, QrCode, Palette } from 'lucide-react'
 import { FileUpload, OCRProcessor } from './index'
+import ManualEntryModal from './ManualEntryModal'
 import { useMenuStore } from '../../stores/menuStore'
-import type { ParsedMenu } from '../../types/menu'
+import type { ParsedMenu, OCRQuality } from '../../types/menu'
 
 export default function MenuBuilderPage() {
   const [files, setFiles] = useState<File[]>([])
@@ -10,6 +11,7 @@ export default function MenuBuilderPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showOCR, setShowOCR] = useState(false)
   const [ocrError, setOcrError] = useState<string | null>(null)
+  const [showManualEntry, setShowManualEntry] = useState(false)
   const { addMenu } = useMenuStore()
 
   const handleFilesSelected = (selectedFiles: File[]) => {
@@ -19,8 +21,14 @@ export default function MenuBuilderPage() {
     }
   }
 
-  const handleOCRComplete = (text: string, parsedData: ParsedMenu) => {
+  const handleOCRComplete = (text: string, parsedData: ParsedMenu, quality: OCRQuality) => {
     setOcrText(text)
+    setIsProcessing(true)
+    setOcrError(null)
+    createMenuFromParsedData(parsedData)
+  }
+
+  const handleManualEntry = (parsedData: ParsedMenu) => {
     setIsProcessing(true)
     setOcrError(null)
     createMenuFromParsedData(parsedData)
@@ -31,7 +39,7 @@ export default function MenuBuilderPage() {
     setIsProcessing(false)
   }
 
-  const createMenuFromParsedData = (parsedData: ParsedMenu) => {
+  const createMenuFromParsedData = async (parsedData: ParsedMenu) => {
     try {
       const menuId = crypto.randomUUID()
       
@@ -56,7 +64,7 @@ export default function MenuBuilderPage() {
         })
       })
       
-      addMenu({
+      await addMenu({
         id: menuId,
         name: parsedData.name || 'Untitled Menu',
         slug: `menu-${menuId.slice(0, 8)}`,
@@ -65,7 +73,7 @@ export default function MenuBuilderPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         isPublished: false
-      })
+      }, true)
       
       // Navigate to editor
       window.location.href = `/menu-editor/${menuId}`
@@ -105,6 +113,7 @@ export default function MenuBuilderPage() {
               files={files} 
               onComplete={handleOCRComplete}
               onError={handleOCRError}
+              onManualEntry={() => setShowManualEntry(true)}
             />
           )}
           
@@ -157,6 +166,12 @@ export default function MenuBuilderPage() {
           </div>
         </div>
       </div>
+
+      <ManualEntryModal
+        isOpen={showManualEntry}
+        onClose={() => setShowManualEntry(false)}
+        onSubmit={handleManualEntry}
+      />
     </div>
   )
 }

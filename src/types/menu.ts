@@ -44,15 +44,22 @@ export interface ParsedMenu {
   categories?: string[];
 }
 
+export type OCRQuality = 'good' | 'uncertain' | 'poor'
+
 export interface OCRProgress {
   status: 'idle' | 'loading' | 'recognizing' | 'complete' | 'error';
   progress: number;
   message: string;
+  quality?: OCRQuality
+  qualityWarningShown?: boolean
 }
+
+export type OCRQuality = 'good' | 'poor' | 'uncertain';
 
 export interface GroqResponse {
   parsed: ParsedMenu;
   rawText: string;
+  quality?: OCRQuality;
 }
 
 export interface CreateMenuRequest {
