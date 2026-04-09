@@ -174,7 +174,7 @@ function getCountryFlag(code: string): string {
             </div>
           </div>
 
-          {/* OS Breakdown */}
+          {/* OS Section */}
           {osData.length > 0 && (
             <div class="analytics-card os-card">
               <h3>Devices</h3>
@@ -291,29 +291,14 @@ function getCountryFlag(code: string): string {
             Create QR Code
           </a>
         </div>
+      )}
 
-        <div class="dashboard-stats">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-total">-</div>
-            <div class="stat-label">Total QR Codes</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-scans">-</div>
-            <div class="stat-label">Total Scans</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-dynamic">-</div>
-            <div class="stat-label">Dynamic Codes</div>
-          </div>
+      <div class="qr-list-section">
+        <div class="section-header">
+          <h2>Your QR Codes</h2>
         </div>
-
-        <div class="qr-list-section">
-          <div class="section-header">
-            <h2>Your QR Codes</h2>
-          </div>
-          <div id="qr-list-container">
-            <DashboardQRList client:only="react" />
-          </div>
+        <div id="qr-list-container">
+          <DashboardQRList client:only="react" />
         </div>
       </div>
     </div>
