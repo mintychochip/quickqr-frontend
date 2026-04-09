@@ -8,7 +8,7 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.13",
+    "@astrojs/cloudflare": "^13.1.8",
     "@astrojs/react": "^5.0.3",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -43,7 +43,7 @@
     "@astrojs/tailwind": "^6.0.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "astro": "^5.2.3",
+    "astro": "^6.0.0",
     "autoprefixer": "^10.4.27",
     "playwright": "^1.59.1",
     "postcss": "^8.5.9",
