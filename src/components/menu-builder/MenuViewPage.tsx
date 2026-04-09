@@ -8,19 +8,32 @@ interface MenuViewPageProps {
 }
 
 export default function MenuViewPage({ slug }: MenuViewPageProps) {
-  const { menus } = useMenuStore()
+  const { menus, fetchMenuFromBackend } = useMenuStore()
   const [menu, setMenu] = useState<Menu | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Find menu by slug
-    const foundMenu = menus.find(m => m.slug === slug)
-    
-    if (foundMenu) {
-      setMenu(foundMenu)
+    const fetchMenu = async () => {
+      // Find menu by slug locally first
+      const foundMenu = menus.find(m => m.slug === slug)
+      
+      if (foundMenu) {
+        setMenu(foundMenu)
+        setLoading(false)
+        return
+      }
+
+      // Try to fetch from backend using slug as ID (or we could add a slug lookup endpoint)
+      // For now, we'll try to fetch as ID if the slug format matches
+      const backendMenu = await fetchMenuFromBackend(slug)
+      if (backendMenu) {
+        setMenu(backendMenu)
+      }
+      setLoading(false)
     }
-    setLoading(false)
-  }, [slug, menus])
+
+    fetchMenu()
+  }, [slug, menus, fetchMenuFromBackend])
 
   if (loading) {
     return (
