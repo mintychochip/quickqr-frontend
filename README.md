@@ -74,7 +74,7 @@ cp .env.example .env
 ### Development
 
 ```bash
-# Start development server
+# Start development server (accessible on LAN for mobile testing)
 npm run dev
 
 # Build for production
@@ -83,6 +83,8 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+The dev server is configured with `host: true`, making it accessible on your local network at `http://<your-ip>:4321`. Useful for testing QR scans from mobile devices.
 
 ---
 
