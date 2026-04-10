@@ -32,6 +32,13 @@ const { data: scans, error: scansError } = await supabase
   .gte('scanned_at', thirtyDaysAgo.toISOString())
   .order('scanned_at', { ascending: false });
 
+// Fetch browser data from scan_logs table
+const { data: scanLogs, error: scanLogsError } = await supabase
+  .from('scan_logs')
+  .select('browser, qr_id, qrcodes!inner(user_id)')
+  .eq('qrcodes.user_id', user.id)
+  .gte('scanned_at', thirtyDaysAgo.toISOString());
+
 // Calculate OS breakdown
 const osCounts: Record<string, number> = {};
 scans?.forEach(scan => {
@@ -40,6 +47,33 @@ scans?.forEach(scan => {
 });
 const osData = Object.entries(osCounts)
   .map(([os, count]) => ({ os, count, percentage: scans?.length ? (count / scans.length) * 100 : 0 }))
+  .sort((a, b) => b.count - a.count);
+
+// Browser brand colors (matching AnalyticsDashboard.tsx)
+const BROWSER_COLORS: Record<string, string> = {
+  Chrome: '#4285F4',
+  Safari: '#00D8FF',
+  Firefox: '#FF7139',
+  Edge: '#0078D7',
+  'Samsung Internet': '#1428A0',
+  Opera: '#FF1B2D',
+  Brave: '#FB542B',
+  Unknown: '#9CA3AF'
+};
+
+// Calculate browser breakdown from scan_logs
+const browserCounts: Record<string, number> = {};
+scanLogs?.forEach(log => {
+  const browser = log.browser || 'Unknown';
+  browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+});
+const browserData = Object.entries(browserCounts)
+  .map(([browser, count]) => ({ 
+    browser, 
+    count, 
+    percentage: scanLogs?.length ? (count / scanLogs.length) * 100 : 0,
+    color: BROWSER_COLORS[browser] || '#14b8a6'
+  }))
   .sort((a, b) => b.count - a.count);
 
 // Calculate country breakdown
@@ -187,6 +221,26 @@ function getCountryFlag(code: string): string {
                     </div>
                     <div class="os-bar-container">
                       <div class="os-bar" style={`width: ${item.percentage}%`}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Browser Breakdown */}
+          {browserData.length > 0 && (
+            <div class="analytics-card browser-card">
+              <h3>Browsers</h3>
+              <div class="browser-list">
+                {browserData.slice(0, 5).map((item) => (
+                  <div class="browser-item">
+                    <div class="browser-info">
+                      <span class="browser-name">{item.browser}</span>
+                      <span class="browser-count">{item.count}</span>
+                    </div>
+                    <div class="browser-bar-container">
+                      <div class="browser-bar" style={`width: ${item.percentage}%; background: ${item.color}`}></div>
                     </div>
                   </div>
                 ))}
@@ -493,6 +547,49 @@ function getCountryFlag(code: string): string {
   .location-bar {
     height: 100%;
     background: linear-gradient(to right, #f59e0b, #fbbf24);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+  }
+
+  /* Browser Card Styles */
+  .browser-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .browser-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .browser-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+  }
+
+  .browser-name {
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .browser-count {
+    color: #6b7280;
+    font-size: 0.75rem;
+  }
+
+  .browser-bar-container {
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .browser-bar {
+    height: 100%;
     border-radius: 9999px;
     transition: width 0.3s ease;
   }

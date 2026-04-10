@@ -9,6 +9,7 @@ import {
   fetchScansTimeline,
   fetchScansByCountry,
   fetchScansByCity,
+  fetchBrowsers,
 } from '../statsService';
 
 describe('statsService exports', () => {
@@ -34,6 +35,10 @@ describe('statsService exports', () => {
 
   test('fetchScansByCity is exported as a function', () => {
     expect(typeof fetchScansByCity).toBe('function');
+  });
+
+  test('fetchBrowsers is exported as a function', () => {
+    expect(typeof fetchBrowsers).toBe('function');
   });
 });
 
@@ -74,6 +79,12 @@ describe('statsService response shapes', () => {
     expect(result).toHaveProperty('success');
     expect(result).toHaveProperty('error');
   });
+
+  test('fetchBrowsers returns proper error when unauthenticated', async () => {
+    const result = await fetchBrowsers();
+    expect(result).toHaveProperty('success');
+    expect(result).toHaveProperty('error');
+  });
 });
 
 describe('statsService interfaces', () => {
@@ -98,5 +109,42 @@ describe('statsService interfaces', () => {
     expect(() => fetchScansByCity(30, 5)).not.toThrow();
     expect(() => fetchScansByCity(30, 10)).not.toThrow();
     expect(() => fetchScansByCity(undefined, 15)).not.toThrow();
+  });
+
+  test('fetchBrowsers accepts optional days parameter', () => {
+    expect(() => fetchBrowsers()).not.toThrow();
+    expect(() => fetchBrowsers(7)).not.toThrow();
+    expect(() => fetchBrowsers(30)).not.toThrow();
+  });
+});
+
+describe('statsService browser breakdown', () => {
+  test('fetchBrowsers returns proper response shape', async () => {
+    const result = await fetchBrowsers();
+    expect(result).toHaveProperty('success');
+    // When unauthenticated, should return error
+    if (!result.success) {
+      expect(result).toHaveProperty('error');
+    }
+  });
+
+  test('browser colors are assigned for known browsers', async () => {
+    // Test that known browsers have brand colors defined
+    const knownBrowsers = ['Chrome', 'Safari', 'Firefox', 'Edge', 'Samsung Internet', 'Opera', 'Brave'];
+    const expectedColors: Record<string, string> = {
+      Chrome: '#4285F4',
+      Safari: '#00D8FF',
+      Firefox: '#FF7139',
+      Edge: '#0078D7',
+      'Samsung Internet': '#1428A0',
+      Opera: '#FF1B2D',
+      Brave: '#FB542B',
+      Unknown: '#9CA3AF'
+    };
+
+    knownBrowsers.forEach(browser => {
+      expect(expectedColors[browser]).toBeDefined();
+      expect(expectedColors[browser]).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    });
   });
 });

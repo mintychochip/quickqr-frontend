@@ -54,6 +54,13 @@ export interface CityStat {
     percentage: number;
 }
 
+export interface BrowserStat {
+    browser: string;
+    scan_count: number;
+    percentage: number;
+    color: string;
+}
+
 export interface ListStatsResponse {
   success: boolean;
   data?: unknown[];
@@ -355,4 +362,87 @@ export async function fetchScansByCity(days: number = 30, limit: number = 10): P
       error: error instanceof Error ? error.message : 'Failed to fetch scans by city',
     };
   }
+}
+
+/**
+ * Fetches scans by browser (browser breakdown)
+ */
+export async function fetchBrowsers(days: number = 30): Promise<ListStatsResponse> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Query scan_logs table which has browser data
+    const { data: scans, error } = await supabase
+      .from('scan_logs')
+      .select('browser, qrcodes!inner(user_id)')
+      .eq('qrcodes.user_id', user.id)
+      .gte('scanned_at', startDate.toISOString());
+
+    if (error) {
+      // Fallback: try scans table if scan_logs doesn't exist or has error
+      const { data: scansFallback, error: fallbackError } = await supabase
+        .from('scans')
+        .select('browser, qrcodes!inner(user_id)')
+        .eq('qrcodes.user_id', user.id)
+        .gte('scanned_at', startDate.toISOString());
+      
+      if (fallbackError) return { success: false, error: fallbackError.message };
+      
+      const browserMap: Record<string, number> = {};
+      const total = scansFallback?.length || 0;
+
+      scansFallback?.forEach(scan => {
+        const browser = scan.browser || 'Unknown';
+        browserMap[browser] = (browserMap[browser] || 0) + 1;
+      });
+
+      const data = calculateBrowserStats(browserMap, total);
+      return { success: true, data };
+    }
+
+    // Aggregate by browser
+    const browserMap: Record<string, number> = {};
+    const total = scans?.length || 0;
+
+    scans?.forEach(scan => {
+      const browser = scan.browser || 'Unknown';
+      browserMap[browser] = (browserMap[browser] || 0) + 1;
+    });
+
+    const data = calculateBrowserStats(browserMap, total);
+
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch browsers',
+    };
+  }
+}
+
+// Browser brand colors (matching AnalyticsDashboard.tsx)
+const BROWSER_COLORS: Record<string, string> = {
+  Chrome: '#4285F4',
+  Safari: '#00D8FF',
+  Firefox: '#FF7139',
+  Edge: '#0078D7',
+  'Samsung Internet': '#1428A0',
+  Opera: '#FF1B2D',
+  Brave: '#FB542B',
+  Unknown: '#9CA3AF'
+};
+
+function calculateBrowserStats(browserMap: Record<string, number>, total: number): BrowserStat[] {
+  return Object.entries(browserMap)
+    .map(([browser, scan_count]) => ({
+      browser,
+      scan_count,
+      percentage: total ? (scan_count / total) * 100 : 0,
+      color: BROWSER_COLORS[browser] || '#14b8a6',
+    }))
+    .sort((a, b) => b.scan_count - a.scan_count);
 }
