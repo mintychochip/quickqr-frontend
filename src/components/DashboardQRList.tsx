@@ -12,6 +12,7 @@ interface QRCode {
   styling?: any;
   scan_count: number;
   created_at: string;
+  folder_id?: string;
 }
 
 interface ScanData {
@@ -29,6 +30,8 @@ interface DashboardQRListProps {
 const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps) => {
   const [allQrCodes, setAllQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [folderMap, setFolderMap] = useState<Record<string, string>>({});
+  const [tagMap, setTagMap] = useState<Record<string, string[]>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -83,13 +86,51 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
 
       const { data, error } = await supabase
         .from('qrcodes')
-        .select('*')
+        .select('*, folder_id')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
       
       console.log('[Dashboard] Query result:', data?.length, 'items, Error:', error);
 
       setAllQrCodes(data || []);
+      
+      // Load folder and tag mappings if QR codes exist
+      if (data && data.length > 0) {
+        const qrIds = data.map(qr => qr.id);
+        
+        // Load folder names for reference
+        try {
+          const { data: folderData } = await supabase
+            .from('qr_folders')
+            .select('id, name');
+          if (folderData) {
+            const folderMapping: Record<string, string> = {};
+            folderData.forEach((f: any) => {
+              folderMapping[f.id] = f.name;
+            });
+            setFolderMap(folderMapping);
+          }
+        } catch (e) {
+          console.log('qr_folders table may not exist yet');
+        }
+        
+        // Load tag mappings if qr_tags table exists
+        try {
+          const { data: tagData } = await supabase
+            .from('qr_tags')
+            .select('qr_id, tag_id');
+          if (tagData) {
+            const tagMapping: Record<string, string[]> = {};
+            tagData.forEach((t: any) => {
+              if (!tagMapping[t.qr_id]) tagMapping[t.qr_id] = [];
+              tagMapping[t.qr_id].push(t.tag_id);
+            });
+            setTagMap(tagMapping);
+          }
+        } catch (e) {
+          console.log('qr_tags table may not exist yet');
+        }
+      }
       
       // Update stats in parent dashboard
       const totalEl = document.getElementById('stat-total');
@@ -118,16 +159,17 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
       );
     }
     
-    // Folder filter (requires loading folder relationships)
+    // Folder filter - filter by folder_id on QR codes directly
     if (selectedFolder) {
-      // TODO: Filter by folder - need to load qr_folders relationship
-      // For now, this will show all until we implement the database query
+      filtered = filtered.filter(qr => qr.folder_id === selectedFolder);
     }
     
-    // Tag filter (requires loading tag relationships)
+    // Tag filter - filter by loaded tag relationships
     if (selectedTags && selectedTags.length > 0) {
-      // TODO: Filter by tags - need to load qr_tags relationship
-      // For now, this will show all until we implement the database query
+      filtered = filtered.filter(qr => {
+        const qrTagIds = tagMap[qr.id] || [];
+        return selectedTags.some(tagId => qrTagIds.includes(tagId));
+      });
     }
     
     // Sort
