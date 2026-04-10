@@ -112,6 +112,32 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
       }, {} as Record<string, number>)
     ).map(([name, value]) => ({ name, value: value as number }));
 
+    // Browser breakdown
+    const browserColors: Record<string, string> = {
+      Chrome: '#4285F4',
+      Safari: '#00D8FF',
+      Firefox: '#FF7139',
+      Edge: '#0078D7',
+      'Samsung Internet': '#1428A0',
+      Opera: '#FF1B2D',
+      Brave: '#FB542B',
+      Unknown: '#9CA3AF'
+    };
+
+    const browserCounts = logs.reduce((acc, log) => {
+      const browser = log.browser || 'Unknown';
+      acc[browser] = (acc[browser] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const browserData = Object.entries(browserCounts)
+      .map(([name, value]) => ({
+        name,
+        value: value as number,
+        color: browserColors[name] || COLORS[Object.keys(browserCounts).indexOf(name) % COLORS.length]
+      }))
+      .sort((a, b) => b.value - a.value);
+
     // Top countries
     const countryData = Object.entries(
       logs.reduce((acc, log) => {
@@ -165,7 +191,7 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
       scansByHour: hourData,
       deviceBreakdown: deviceData,
       osBreakdown: osData,
-      browserBreakdown: [], // TODO
+      browserBreakdown: browserData,
       topCountries: countryData,
       topCities,
       referrers: referrerData,
@@ -372,6 +398,30 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
                   </div>
                   <span style={{ width: '40px', textAlign: 'right', fontSize: '0.875rem', fontWeight: 600 }}>
                     {os.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Browsers</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {data.browserBreakdown.map((browser) => (
+                <div key={browser.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ width: '100px', fontSize: '0.875rem', fontWeight: 500 }}>{browser.name}</span>
+                  <div style={{ flex: 1, height: '8px', background: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${(browser.value / data.totalScans) * 100}%`,
+                        height: '100%',
+                        background: browser.color || '#14b8a6',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  </div>
+                  <span style={{ width: '40px', textAlign: 'right', fontSize: '0.875rem', fontWeight: 600 }}>
+                    {browser.value}
                   </span>
                 </div>
               ))}
