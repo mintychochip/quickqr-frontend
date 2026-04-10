@@ -485,6 +485,11 @@ import '../styles/create.css';
               </div>
             </div>
 
+            <!-- UTM Campaign Tracking (URL type only) -->
+            <div class="form-section" id="utm-section" style="display: none;">
+              <div id="utm-builder-root"></div>
+            </div>
+
             <!-- Mode Toggle -->
             <div class="form-section">
               <h2>QR Code Mode</h2>
@@ -962,6 +967,62 @@ import '../styles/create.css';
     if (selectedFields) {
       selectedFields.style.display = 'block';
     }
+    
+    // Show/hide UTM section for URL type
+    const utmSection = document.getElementById('utm-section');
+    if (utmSection) {
+      if (type === 'url') {
+        utmSection.style.display = 'block';
+        initUTMBuilder();
+      } else {
+        utmSection.style.display = 'none';
+      }
+    }
+  }
+  
+  let utmBuilderInitialized = false;
+  let utmURL = '';
+  
+  function initUTMBuilder() {
+    if (utmBuilderInitialized) return;
+    
+    const utmRoot = document.getElementById('utm-builder-root');
+    if (!utmRoot) return;
+    
+    import('react-dom/client').then(({ createRoot }) => {
+      import('../components/utm/UTMBuilder.tsx').then(({ default: UTMBuilder }) => {
+        const root = createRoot(utmRoot);
+        
+        const handleUTMChange = (url, params) => {
+          utmURL = url;
+          updateQRPreview();
+        };
+        
+        const getBaseUrl = () => {
+          const urlInput = document.getElementById('url');
+          return urlInput?.value || '';
+        };
+        
+        // Re-render with current URL value
+        const renderUTM = () => {
+          root.render(UTMBuilder({ 
+            baseUrl: getBaseUrl(), 
+            onUTMChange: handleUTMChange 
+          }));
+        };
+        
+        // Initial render
+        renderUTM();
+        
+        // Listen for URL changes to update UTM builder
+        const urlInput = document.getElementById('url');
+        urlInput?.addEventListener('input', () => {
+          renderUTM();
+        });
+        
+        utmBuilderInitialized = true;
+      });
+    });
   }
 
   function setupColorPicker(colorId, textId) {
@@ -1120,7 +1181,8 @@ import '../styles/create.css';
 
     switch (type) {
       case 'url':
-        return content.url;
+        // Use UTM URL if available, otherwise fall back to plain URL
+        return utmURL || content.url;
       
       case 'email':
         const body = content.body ? `&body=${encodeURIComponent(content.body)}` : '';
