@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../config/supabase';
 import toast, { Toaster } from 'react-hot-toast';
+import { logger } from '../utils/logger';
 
 interface QRCode {
   id: string;
@@ -47,16 +48,16 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
     loadQRCodes();
     
     // Subscribe to realtime updates for scan counts
-    console.log('[Dashboard] Setting up realtime subscription...');
+    logger.log('[Dashboard] Setting up realtime subscription...');
     const subscription = supabase
       .channel('qr-scans')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'qrcodes' },
         (payload) => {
-          console.log('[Dashboard] Realtime update received:', payload);
+          logger.log('[Dashboard] Realtime update received:', payload);
           if (payload.eventType === 'UPDATE') {
             const updated = payload.new as QRCode;
-            console.log('[Dashboard] QR updated:', updated.id, 'New count:', updated.scan_count);
+            logger.log('[Dashboard] QR updated:', updated.id, 'New count:', updated.scan_count);
             setAllQrCodes(prev => prev.map(qr => 
               qr.id === updated.id ? { ...qr, scan_count: updated.scan_count } : qr
             ));
@@ -65,7 +66,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
         }
       )
       .subscribe((status) => {
-        console.log('[Dashboard] Subscription status:', status);
+        logger.log('[Dashboard] Subscription status:', status);
       });
     
     return () => {
@@ -76,11 +77,11 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
   async function loadQRCodes() {
     try {
       setLoading(true);
-      console.log('[Dashboard] Loading QR codes...');
+      logger.log('[Dashboard] Loading QR codes...');
       const { data: { session }, error: authError } = await supabase.auth.getSession();
-      console.log('[Dashboard] Session:', session?.user?.id, 'Error:', authError);
+      logger.log('[Dashboard] Session:', session?.user?.id, 'Error:', authError);
       if (!session?.user) {
-        console.log('[Dashboard] No session, not loading');
+        logger.log('[Dashboard] No session, not loading');
         return;
       }
 
@@ -90,7 +91,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
       
-      console.log('[Dashboard] Query result:', data?.length, 'items, Error:', error);
+      logger.log('[Dashboard] Query result:', data?.length, 'items, Error:', error);
 
       setAllQrCodes(data || []);
       
@@ -111,7 +112,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
             setFolderMap(folderMapping);
           }
         } catch (e) {
-          console.log('qr_folders table may not exist yet');
+          logger.log('qr_folders table may not exist yet');
         }
         
         // Load tag mappings if qr_tags table exists
@@ -128,7 +129,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
             setTagMap(tagMapping);
           }
         } catch (e) {
-          console.log('qr_tags table may not exist yet');
+          logger.log('qr_tags table may not exist yet');
         }
       }
       
