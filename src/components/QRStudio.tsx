@@ -349,7 +349,7 @@ export default function QRStudio() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
       {/* Navigation - Matching QuickQR dark theme */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[rgba(10,10,15,0.9)] backdrop-blur-xl border-b border-white/[0.06]">
         <div className="flex items-center justify-between h-16 max-w-[1536px] mx-auto px-4 lg:px-8">
@@ -413,7 +413,7 @@ export default function QRStudio() {
       </nav>
 
       {/* Main Content */}
-      <main className="pt-16">
+      <main className="pt-20">
         {activeTab === 'generate' && (
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="grid lg:grid-cols-2 gap-8">

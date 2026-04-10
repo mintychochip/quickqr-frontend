@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
+import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
   output: 'server',
@@ -9,7 +10,7 @@ export default defineConfig({
     functionPerRoute: false
   }),
   outDir: './dist',
-  integrations: [react()],
+  integrations: [react(), tailwind()],
   vite: {
     optimizeDeps: {
       include: ['qr-code-styling', 'qrcode.react', 'chart.js', 'html5-qrcode'],

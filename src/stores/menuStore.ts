@@ -1,7 +1,32 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
 import type { Menu, MenuCategory, MenuItem, ParsedMenu } from '../types/menu'
+import type { StateStorage } from 'zustand/middleware'
+
+// SSR-safe storage that only accesses localStorage on client
+const createSSRSafeStorage = (): StateStorage => ({
+  getItem: (name: string): string | null => {
+    if (typeof window === 'undefined') return null
+    try {
+      return window.localStorage.getItem(name)
+    } catch {
+      return null
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(name, value)
+    } catch {}
+  },
+  removeItem: (name: string): void => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.removeItem(name)
+    } catch {}
+  },
+})
 
 interface MenuState {
   menus: Menu[]
@@ -41,6 +66,29 @@ interface MenuState {
   updateItem: (menuId: string, itemId: string, updates: Partial<MenuItem>) => void
   deleteItem: (menuId: string, itemId: string) => void
   moveItem: (menuId: string, itemId: string, targetCategoryId: string) => void
+}
+
+const storage = {
+  getItem: (name: string) => {
+    if (typeof window === 'undefined') return null
+    try {
+      return localStorage.getItem(name)
+    } catch {
+      return null
+    }
+  },
+  setItem: (name: string, value: string) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem(name, value)
+    } catch {}
+  },
+  removeItem: (name: string) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.removeItem(name)
+    } catch {}
+  },
 }
 
 export const useMenuStore = create<MenuState>()(
@@ -492,6 +540,7 @@ export const useMenuStore = create<MenuState>()(
     }),
     {
       name: 'menu-ocr-storage',
+      storage: createJSONStorage(createSSRSafeStorage),
       partialize: (state) => ({ menus: state.menus }),
     }
   )
