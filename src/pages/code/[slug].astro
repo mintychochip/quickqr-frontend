@@ -2,6 +2,7 @@
 import MainLayout from '../../layouts/MainLayout.astro';
 import { supabase } from '../../config/supabase';
 import { lookupGeolocation, extractClientIP } from '../../services/geolocationService';
+import { checkScheduleActive, fetchQRSchedule } from '../../services/scheduleService';
 
 // For static builds with dynamic routes, we need to export getStaticPaths
 // This route handles QR code redirects client-side, so we return empty paths
@@ -25,6 +26,14 @@ if (fetchError || !qrCode) {
 // Check if expired
 if (qrCode.expirytime && new Date(qrCode.expirytime) < new Date()) {
   return Astro.redirect('/?error=expired');
+}
+
+// Check schedule enforcement
+const schedule = await fetchQRSchedule(supabase, slug);
+const scheduleCheck = checkScheduleActive(schedule);
+
+if (!scheduleCheck.isActive) {
+  return Astro.redirect(`/?error=${scheduleCheck.error}`);
 }
 
 // Increment scan count (fire and forget)
@@ -169,6 +178,42 @@ return Astro.redirect(redirectUrl);
       errorText.style.display = 'block';
       homeLink.style.display = 'inline-block';
       return;
+    }
+
+    // Check schedule enforcement (client-side fallback)
+    const { data: scheduleData } = await supabase
+      .from('qr_schedules')
+      .select('*')
+      .eq('qr_id', slug)
+      .single();
+
+    if (scheduleData) {
+      const now = new Date();
+      const timezone = scheduleData.timezone || 'UTC';
+
+      // Check activation
+      if (scheduleData.activation_date) {
+        const activationDateTime = new Date(`${scheduleData.activation_date}T${scheduleData.activation_time || '00:00'}`);
+        if (now < activationDateTime) {
+          statusText.textContent = 'QR code not yet active';
+          errorText.textContent = 'This QR code is scheduled to activate later';
+          errorText.style.display = 'block';
+          homeLink.style.display = 'inline-block';
+          return;
+        }
+      }
+
+      // Check expiration
+      if (scheduleData.expiration_date) {
+        const expirationDateTime = new Date(`${scheduleData.expiration_date}T${scheduleData.expiration_time || '23:59'}`);
+        if (now > expirationDateTime) {
+          statusText.textContent = 'QR code schedule expired';
+          errorText.textContent = 'This QR code\'s schedule has expired';
+          errorText.style.display = 'block';
+          homeLink.style.display = 'inline-block';
+          return;
+        }
+      }
     }
 
     // Record scan
