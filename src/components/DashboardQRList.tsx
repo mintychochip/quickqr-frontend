@@ -8,6 +8,7 @@ import PasswordProtection from './password/PasswordProtection';
 import ABTestManager from './abtesting/ABTestManager';
 import ScanLimits from './scanlimits/ScanLimits';
 import WebhookManager from './webhooks/WebhookManager';
+import SocialShare from './social/SocialShare';
 
 interface QRCode {
   id: string;
@@ -45,6 +46,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
   const [activeTab, setActiveTab] = useState<'scheduling' | 'protection' | 'abtesting' | 'limits' | 'webhooks'>('scheduling');
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [previewQr, setPreviewQr] = useState<QRCode | null>(null);
+  const [shareQr, setShareQr] = useState<QRCode | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name' | 'scans'>('newest');
   
@@ -473,6 +475,15 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
                 </button>
+                <button onClick={() => setShareQr(qr)} className="action-btn share" title="Share QR Code" style={{ background: '#0ea5e9', color: 'white' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                </button>
                 <button onClick={() => setExpandedId(qr.id)} className="action-btn advanced" title="Advanced Settings">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -692,6 +703,54 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 {activeTab === 'webhooks' && <WebhookManager />}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {shareQr && (
+        <div className="share-modal" style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          background: 'rgba(0,0,0,0.5)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 1000 
+        }} onClick={() => setShareQr(null)}>
+          <div className="modal-content" style={{ 
+            background: 'white', 
+            padding: '2rem', 
+            borderRadius: '1rem', 
+            maxWidth: '500px', 
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Share {shareQr.name || 'QR Code'}</h3>
+              <button 
+                onClick={() => setShareQr(null)} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '1.5rem', 
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <SocialShare 
+              qrUrl={`${baseUrl}/r/${shareQr.id}`} 
+              qrName={shareQr.name || 'QR Code'} 
+            />
           </div>
         </div>
       )}
