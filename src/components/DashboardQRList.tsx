@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import QRScheduler from './scheduling/QRScheduler';
 import PasswordProtection from './password/PasswordProtection';
 import ABTestManager from './abtesting/ABTestManager';
+import ScanLimits from './scanlimits/ScanLimits';
 
 interface QRCode {
   id: string;
@@ -45,6 +46,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
   const [previewQr, setPreviewQr] = useState<QRCode | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name' | 'scans'>('newest');
+  const [activeTab, setActiveTab] = useState<'scheduling' | 'protection' | 'abtesting' | 'limits'>('scheduling');
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
@@ -482,6 +484,17 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                   </svg>
                 </button>
+                <button 
+                  onClick={() => { setExpandedId(qr.id); setActiveTab('scheduling'); }} 
+                  className="action-btn advanced" 
+                  title="Advanced Settings"
+                  style={{ background: '#f59e0b', color: 'white' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"></path>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -642,12 +655,26 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 >
                   A/B Testing
                 </button>
+                <button 
+                  onClick={() => setActiveTab('limits')}
+                  style={{ 
+                    padding: '1rem 1.5rem', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    borderBottom: `3px solid ${activeTab === 'limits' ? '#14b8a6' : 'transparent'}`
+                  }}
+                >
+                  Limits
+                </button>
               </div>
               
               <div className="tab-content" style={{ padding: '1.5rem' }}>
                 {activeTab === 'scheduling' && <QRScheduler qrId={expandedId} />}
                 {activeTab === 'protection' && <PasswordProtection qrId={expandedId} />}
                 {activeTab === 'abtesting' && <ABTestManager qrId={expandedId} />}
+                {activeTab === 'limits' && <ScanLimits qrId={expandedId} />}
               </div>
             </div>
           </div>

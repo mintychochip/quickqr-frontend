@@ -71,6 +71,23 @@ export function getStaticPaths() {
       return;
     }
 
+    // Check scan limits
+    const { data: scanLimits } = await supabase
+      .from('qr_scan_limits')
+      .select('*')
+      .eq('qr_id', slug)
+      .single();
+
+    if (scanLimits?.enabled) {
+      if (scanLimits.current_scans >= scanLimits.max_scans) {
+        statusText.textContent = 'QR code limit reached';
+        errorText.textContent = scanLimits.message || 'This QR code has reached its scan limit.';
+        errorText.style.display = 'block';
+        homeLink.style.display = 'inline-block';
+        return;
+      }
+    }
+
     // Only log scans for dynamic QR codes
     console.log('[QR Redirect] Code:', slug);
     console.log('[QR Redirect] Mode:', qrCode.mode, '| Type:', qrCode.type);
@@ -96,6 +113,15 @@ export function getStaticPaths() {
         const countResult = await supabase.rpc('increment_scan_count', { qr_id: slug });
         console.log('[QR Redirect] Count increment result:', countResult.error ? 'ERROR: ' + countResult.error.message : 'SUCCESS');
         console.log('[QR Redirect] New count data:', countResult.data);
+
+        // Increment scan limits counter if enabled
+        if (scanLimits?.enabled) {
+          const limitIncrementResult = await supabase
+            .from('qr_scan_limits')
+            .update({ current_scans: (scanLimits.current_scans || 0) + 1 })
+            .eq('qr_id', slug);
+          console.log('[QR Redirect] Scan limit increment result:', limitIncrementResult.error ? 'ERROR: ' + limitIncrementResult.error.message : 'SUCCESS');
+        }
       } catch (err) {
         console.error('[QR Redirect] Exception during scan recording:', err);
       }
