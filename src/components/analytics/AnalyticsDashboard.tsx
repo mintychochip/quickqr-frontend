@@ -23,8 +23,23 @@ interface AnalyticsDashboardProps {
 
 const COLORS = ['#14b8a6', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
 
+interface ScanLog {
+  id?: string;
+  qr_id: string;
+  ip_address: string;
+  scanned_at: string;
+  device_type?: string;
+  os?: string;
+  browser?: string;
+  country?: string;
+  city?: string;
+  referrer?: string;
+  user_agent?: string;
+}
+
 export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [logs, setLogs] = useState<ScanLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('7d');
   const [activeTab, setActiveTab] = useState<'overview' | 'devices' | 'geo' | 'referrers'>('overview');
@@ -52,6 +67,7 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
 
       // Process data
       const analytics = processAnalyticsData(logs || []);
+      setLogs(logs || []);
       setData(analytics);
     } catch (err) {
       toast.error('Failed to load analytics');
@@ -198,16 +214,41 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
     };
   }
 
+  const escapeCSV = (value: string | number | undefined): string => {
+    if (value === undefined || value === null) return '';
+    const str = String(value);
+    // Escape quotes by doubling them and wrap in quotes if contains comma, quote, or newline
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
   const exportCSV = () => {
-    if (!data) return;
-    const csv = data.scansByDay.map(d => `${d.date},${d.count},${d.unique}`).join('\n');
-    const blob = new Blob([`Date,Total Scans,Unique Visitors\n${csv}`], { type: 'text/csv' });
+    if (!logs || logs.length === 0) {
+      toast.error('No scan data to export');
+      return;
+    }
+
+    const headers = ['scanned_at', 'ip_address', 'device_type', 'os', 'browser', 'country', 'city', 'referrer', 'user_agent'];
+    const csvRows = [
+      headers.join(','),
+      ...logs.map(log =>
+        headers.map(header => escapeCSV(log[header as keyof ScanLog])).join(',')
+      )
+    ];
+
+    const csv = csvRows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `analytics-${qrId}-${dateRange}.csv`;
+    a.download = `scans-${qrId}-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
-    toast.success('Analytics exported!');
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`${logs.length} scans exported!`);
   };
 
   if (loading) {
