@@ -7,6 +7,7 @@ import QRScheduler from './scheduling/QRScheduler';
 import PasswordProtection from './password/PasswordProtection';
 import ABTestManager from './abtesting/ABTestManager';
 import ScanLimits from './scanlimits/ScanLimits';
+import WebhookManager from './webhooks/WebhookManager';
 
 interface QRCode {
   id: string;
@@ -41,12 +42,12 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('scheduling');
+  const [activeTab, setActiveTab] = useState<'scheduling' | 'protection' | 'abtesting' | 'limits' | 'webhooks'>('scheduling');
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [previewQr, setPreviewQr] = useState<QRCode | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name' | 'scans'>('newest');
-  const [activeTab, setActiveTab] = useState<'scheduling' | 'protection' | 'abtesting' | 'limits'>('scheduling');
+  
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
@@ -668,6 +669,19 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 >
                   Limits
                 </button>
+                <button 
+                  onClick={() => setActiveTab('webhooks')}
+                  style={{ 
+                    padding: '1rem 1.5rem', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    borderBottom: `3px solid ${activeTab === 'webhooks' ? '#14b8a6' : 'transparent'}`
+                  }}
+                >
+                  Webhooks
+                </button>
               </div>
               
               <div className="tab-content" style={{ padding: '1.5rem' }}>
@@ -675,6 +689,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 {activeTab === 'protection' && <PasswordProtection qrId={expandedId} />}
                 {activeTab === 'abtesting' && <ABTestManager qrId={expandedId} />}
                 {activeTab === 'limits' && <ScanLimits qrId={expandedId} />}
+                {activeTab === 'webhooks' && <WebhookManager />}
               </div>
             </div>
           </div>
