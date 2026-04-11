@@ -1,6 +1,6 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import DashboardQRList from '../components/DashboardQRList';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/dashboard.css';
 
 // Check auth using cookies
@@ -351,9 +351,7 @@ function getCountryFlag(code: string): string {
         <div class="section-header">
           <h2>Your QR Codes</h2>
         </div>
-        <div id="qr-list-container">
-          <DashboardQRList client:only="react" />
-        </div>
+        <DashboardLayout client:only="react" />
       </div>
     </div>
   </div>

@@ -54,26 +54,33 @@ export default function FolderSidebar({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Load folders with QR counts
+      // Load folders with QR counts via separate query
       const { data: folderData, error: folderError } = await supabase
-        .from('folders')
-        .select('*, qr_folders(count)')
+        .from('qr_folders')
+        .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: true });
 
       if (folderError) throw folderError;
 
-      // Load tags with QR counts  
-      const { data: tagData, error: tagError } = await supabase
-        .from('tags')
-        .select('*, qr_tags(count)')
+      // Load QR counts per folder
+      const { data: qrData } = await supabase
+        .from('qrcodes')
+        .select('folder_id')
         .eq('user_id', session.user.id)
-        .order('name', { ascending: true });
+        .not('folder_id', 'is', null);
 
-      if (tagError) throw tagError;
+      const countMap: Record<string, number> = {};
+      qrData?.forEach(qr => {
+        if (qr.folder_id) {
+          countMap[qr.folder_id] = (countMap[qr.folder_id] || 0) + 1;
+        }
+      });
 
-      setFolders(folderData?.map(f => ({ ...f, qr_count: f.qr_folders?.[0]?.count || 0 })) || []);
-      setTags(tagData?.map(t => ({ ...t, qr_count: t.qr_tags?.[0]?.count || 0 })) || []);
+      // Note: tags table doesn't exist yet - will be added in future migration
+      // For now, just set empty tags
+      setFolders(folderData?.map(f => ({ ...f, qr_count: countMap[f.id] || 0 })) || []);
+      setTags([]);
     } catch (err) {
       console.error('Error loading folders/tags:', err);
     } finally {
@@ -88,7 +95,7 @@ export default function FolderSidebar({
     if (!session) return;
 
     const { data, error } = await supabase
-      .from('folders')
+      .from('qr_folders')
       .insert({
         user_id: session.user.id,
         name: newFolderName.trim(),
@@ -112,7 +119,7 @@ export default function FolderSidebar({
     if (!confirm('Delete this folder? QR codes will be moved to root.')) return;
 
     const { error } = await supabase
-      .from('folders')
+      .from('qr_folders')
       .delete()
       .eq('id', folderId);
 
