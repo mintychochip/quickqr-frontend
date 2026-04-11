@@ -3,7 +3,7 @@ import { Split, Plus } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 import toast from 'react-hot-toast';
 
-export default function ABTestManager({ qrId }) {
+export default function ABTestManager({ qrId }: { qrId: string }) {
   const [variants, setVariants] = useState([{ name: 'A', url: '', weight: 50 }]);
 
   async function createTest() {

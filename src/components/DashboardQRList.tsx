@@ -3,6 +3,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../config/supabase';
 import toast, { Toaster } from 'react-hot-toast';
 import { logger } from '../utils/logger';
+import QRScheduler from './scheduling/QRScheduler';
+import PasswordProtection from './password/PasswordProtection';
+import ABTestManager from './abtesting/ABTestManager';
 
 interface QRCode {
   id: string;
@@ -37,6 +40,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('scheduling');
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [previewQr, setPreviewQr] = useState<QRCode | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -466,6 +470,12 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
                 </button>
+                <button onClick={() => setExpandedId(qr.id)} className="action-btn advanced" title="Advanced Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m18 9l-3-3m-3 3l3-3M6 15l-3 3m3-3l3 3"></path>
+                  </svg>
+                </button>
                 <button onClick={() => deleteQR(qr.id)} disabled={deletingId === qr.id} className="action-btn delete" title="Delete">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6"></polyline>
@@ -530,6 +540,115 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
               <button onClick={() => downloadQR(previewQr, 'png')} style={{ padding: '0.5rem 1rem', background: '#14b8a6', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Download PNG</button>
               <button onClick={() => downloadQR(previewQr, 'svg')} style={{ padding: '0.5rem 1rem', background: '#14b8a6', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Download SVG</button>
               <button onClick={() => setPreviewQr(null)} style={{ padding: '0.5rem 1rem', background: '#e5e7eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Advanced Settings Modal */}
+      {expandedId && (
+        <div className="advanced-modal" style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          background: 'rgba(0,0,0,0.5)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 1000 
+        }} onClick={() => setExpandedId(null)}>
+          <div className="modal-content" style={{ 
+            background: 'white', 
+            padding: '0', 
+            borderRadius: '1rem', 
+            maxWidth: '600px', 
+            width: '90%', 
+            maxHeight: '90vh', 
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ 
+              padding: '1rem 1.5rem', 
+              borderBottom: '1px solid #e5e7eb', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center' 
+            }}>
+              <h3 style={{ margin: 0 }}>Advanced Settings for {allQrCodes.find(qr => qr.id === expandedId)?.name || 'Unnamed QR'}</h3>
+              <button 
+                onClick={() => setExpandedId(null)} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '1.5rem', 
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-body" style={{ 
+              padding: '0',
+              overflow: 'hidden',
+              flex: 1
+            }}>
+              <div className="tabs" style={{ 
+                display: 'flex', 
+                borderBottom: '1px solid #e5e7eb' 
+              }}>
+                <button 
+                  onClick={() => setActiveTab('scheduling')}
+                  style={{ 
+                    padding: '1rem 1.5rem', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    borderBottom: `3px solid ${activeTab === 'scheduling' ? '#14b8a6' : 'transparent'}`
+                  }}
+                >
+                  Scheduling
+                </button>
+                <button 
+                  onClick={() => setActiveTab('protection')}
+                  style={{ 
+                    padding: '1rem 1.5rem', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    borderBottom: `3px solid ${activeTab === 'protection' ? '#14b8a6' : 'transparent'}`
+                  }}
+                >
+                  Protection
+                </button>
+                <button 
+                  onClick={() => setActiveTab('abtesting')}
+                  style={{ 
+                    padding: '1rem 1.5rem', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    borderBottom: `3px solid ${activeTab === 'abtesting' ? '#14b8a6' : 'transparent'}`
+                  }}
+                >
+                  A/B Testing
+                </button>
+              </div>
+              
+              <div className="tab-content" style={{ padding: '1.5rem' }}>
+                {activeTab === 'scheduling' && <QRScheduler qrId={expandedId} />}
+                {activeTab === 'protection' && <PasswordProtection qrId={expandedId} />}
+                {activeTab === 'abtesting' && <ABTestManager qrId={expandedId} />}
+              </div>
             </div>
           </div>
         </div>

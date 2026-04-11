@@ -31,3 +31,6 @@ supabase/.temp/
 
 # Memory directory (agent logs)
 memory/
+
+# Wrangler local state
+.wrangler/
