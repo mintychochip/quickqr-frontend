@@ -1,8 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
-import { Globe, Smartphone, Monitor, Clock, Calendar, Download, MapPin } from 'lucide-react';
+import { Globe, Smartphone, Monitor, Clock, Calendar, Download, MapPin, RefreshCw } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 import toast from 'react-hot-toast';
+
+// CSS for spin animation
+const spinKeyframes = `
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+`;
 
 interface AnalyticsData {
   totalScans: number;
@@ -43,14 +51,57 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('7d');
   const [activeTab, setActiveTab] = useState<'overview' | 'devices' | 'geo' | 'referrers'>('overview');
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [newScanCount, setNewScanCount] = useState(0);
 
   useEffect(() => {
     loadAnalytics();
   }, [qrId, dateRange]);
 
-  async function loadAnalytics() {
-    setLoading(true);
+  // Auto-refresh interval (every 30 seconds when enabled)
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      loadAnalytics(true);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, qrId, dateRange]);
+
+  // Supabase realtime subscription for live updates
+  useEffect(() => {
+    if (!qrId) return;
+
+    const channel = supabase
+      .channel(`scans:${qrId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'scan_logs',
+          filter: `qr_id=eq.${qrId}`
+        },
+        (payload) => {
+          setNewScanCount(prev => prev + 1);
+          if (autoRefresh) {
+            loadAnalytics(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qrId, autoRefresh]);
+
+  async function loadAnalytics(silent = false) {
+    if (!silent) setLoading(true);
     try {
+      const previousTotal = data?.totalScans || 0;
       const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
@@ -69,10 +120,21 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
       const analytics = processAnalyticsData(logs || []);
       setLogs(logs || []);
       setData(analytics);
+      setLastUpdated(new Date());
+
+      // Show toast if new scans detected during auto-refresh
+      if (silent && analytics.totalScans > previousTotal) {
+        const newScans = analytics.totalScans - previousTotal;
+        toast.success(`${newScans} new scan${newScans === 1 ? '' : 's'} detected!`, {
+          duration: 2000,
+          icon: '🔔'
+        });
+        setNewScanCount(0);
+      }
     } catch (err) {
-      toast.error('Failed to load analytics');
+      if (!silent) toast.error('Failed to load analytics');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -277,9 +339,27 @@ export default function AnalyticsDashboard({ qrId }: AnalyticsDashboardProps) {
           <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>Analytics</h2>
           <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
             {data.totalScans.toLocaleString()} total scans · {data.uniqueVisitors.toLocaleString()} unique visitors
+            {lastUpdated && (
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                (updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {newScanCount > 0 && (
+            <span style={{ background: '#ef4444', color: 'white', fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', fontWeight: 600 }}>
+              {newScanCount} new
+            </span>
+          )}
+          <button
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            title={autoRefresh ? 'Auto-refresh on (30s)' : 'Enable auto-refresh'}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: autoRefresh ? '#22c55e' : '#f3f4f6', color: autoRefresh ? 'white' : '#374151', borderRadius: '0.375rem', border: '1px solid #e5e7eb', cursor: 'pointer', transition: 'all 0.2s' }}
+          >
+            <RefreshCw size={16} style={{ animation: autoRefresh ? 'spin 2s linear infinite' : 'none' }} />
+            {autoRefresh ? 'Live' : 'Refresh'}
+          </button>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as any)}
