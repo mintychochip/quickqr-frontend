@@ -46,3 +46,6 @@ USER.md
 
 # Task files
 task-*.md
+
+# Embedded repositories
+menu-ocr/
