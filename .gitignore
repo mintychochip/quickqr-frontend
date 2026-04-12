@@ -34,3 +34,15 @@ memory/
 
 # Wrangler local state
 .wrangler/
+
+# OpenClaw agent config
+.openclaw/
+AGENTS.md
+HEARTBEAT.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+USER.md
+
+# Task files
+task-*.md
