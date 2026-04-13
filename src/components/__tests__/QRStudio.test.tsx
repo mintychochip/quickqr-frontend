@@ -16,7 +16,7 @@ vi.mock('html5-qrcode', () => ({
   })),
 }));
 
-describe('QRStudio Calendar/Event QR Support', () => {
+describe('QRStudio Calendar QR Support', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -38,7 +38,7 @@ describe('QRStudio Calendar/Event QR Support', () => {
           return `WIFI:T:${data.encryption || 'WPA'};S:${data.ssid || ''};P:${data.password || ''};${data.hidden === 'true' ? 'H:true;' : ''};`;
         case 'vcard':
           return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''};;;\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.phone ? `TEL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
-        case 'event':
+        case 'calendar':
           return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${data.title || ''}\nDTSTART:${data.startDate || ''}\nDTEND:${data.endDate || ''}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT\nEND:VCALENDAR`;
         default: return '';
       }
@@ -50,7 +50,7 @@ describe('QRStudio Calendar/Event QR Support', () => {
         startDate: '20250115T140000',
         endDate: '20250115T150000',
       };
-      const result = generateQRContent('event', data);
+      const result = generateQRContent('calendar', data);
       expect(result).toContain('BEGIN:VCALENDAR');
       expect(result).toContain('VERSION:2.0');
       expect(result).toContain('BEGIN:VEVENT');
@@ -68,7 +68,7 @@ describe('QRStudio Calendar/Event QR Support', () => {
         endDate: '20250610T170000',
         location: 'Convention Center Hall A',
       };
-      const result = generateQRContent('event', data);
+      const result = generateQRContent('calendar', data);
       expect(result).toContain('LOCATION:Convention Center Hall A');
     });
 
@@ -79,7 +79,7 @@ describe('QRStudio Calendar/Event QR Support', () => {
         endDate: '20250320T120000',
         description: 'Hands-on coding workshop',
       };
-      const result = generateQRContent('event', data);
+      const result = generateQRContent('calendar', data);
       expect(result).toContain('DESCRIPTION:Hands-on coding workshop');
     });
 
@@ -91,7 +91,7 @@ describe('QRStudio Calendar/Event QR Support', () => {
         location: 'Main Auditorium',
         description: 'Q3 product showcase',
       };
-      const result = generateQRContent('event', data);
+      const result = generateQRContent('calendar', data);
       expect(result).toContain('LOCATION:Main Auditorium');
       expect(result).toContain('DESCRIPTION:Q3 product showcase');
     });
@@ -104,14 +104,14 @@ describe('QRStudio Calendar/Event QR Support', () => {
         location: '',
         description: '',
       };
-      const result = generateQRContent('event', data);
+      const result = generateQRContent('calendar', data);
       expect(result).not.toContain('LOCATION');
       expect(result).not.toContain('DESCRIPTION');
     });
   });
 
   describe('QR Type Detection', () => {
-    test('detects BEGIN:VCALENDAR as event type', () => {
+    test('detects BEGIN:VCALENDAR as calendar type', () => {
       const result = 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Test\nEND:VEVENT\nEND:VCALENDAR';
       let type = 'text';
       if (result.startsWith('http://') || result.startsWith('https://')) type = 'url';
@@ -120,8 +120,8 @@ describe('QRStudio Calendar/Event QR Support', () => {
       else if (result.startsWith('sms:')) type = 'sms';
       else if (result.startsWith('WIFI:')) type = 'wifi';
       else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
-      else if (result.startsWith('BEGIN:VCALENDAR')) type = 'event';
-      expect(type).toBe('event');
+      else if (result.startsWith('BEGIN:VCALENDAR')) type = 'calendar';
+      expect(type).toBe('calendar');
     });
 
     test('preserves other type detections', () => {
@@ -143,13 +143,13 @@ describe('QRStudio Calendar/Event QR Support', () => {
         else if (input.startsWith('sms:')) type = 'sms';
         else if (input.startsWith('WIFI:')) type = 'wifi';
         else if (input.startsWith('BEGIN:VCARD')) type = 'vcard';
-        else if (input.startsWith('BEGIN:VCALENDAR')) type = 'event';
+        else if (input.startsWith('BEGIN:VCALENDAR')) type = 'calendar';
         expect(type).toBe(expected);
       });
     });
   });
 
-  describe('Event Form Fields', () => {
+  describe('Calendar Form Fields', () => {
     const getFields = (qrType: string) => {
       switch (qrType) {
         case 'url': return [{ key: 'url', label: 'URL / Website', placeholder: 'https://example.com' }];
@@ -177,7 +177,7 @@ describe('QRStudio Calendar/Event QR Support', () => {
           { key: 'email', label: 'Email (optional)', placeholder: 'john@example.com' },
           { key: 'organization', label: 'Company (optional)', placeholder: 'Acme Inc' }
         ];
-        case 'event': return [
+        case 'calendar': return [
           { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
           { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
           { key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' },
@@ -188,8 +188,8 @@ describe('QRStudio Calendar/Event QR Support', () => {
       }
     };
 
-    test('returns correct fields for event type', () => {
-      const fields = getFields('event');
+    test('returns correct fields for calendar type', () => {
+      const fields = getFields('calendar');
       expect(fields).toHaveLength(5);
       expect(fields[0]).toEqual({ key: 'title', label: 'Event Title', placeholder: 'Team Meeting' });
       expect(fields[1]).toEqual({ key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' });
@@ -198,8 +198,8 @@ describe('QRStudio Calendar/Event QR Support', () => {
       expect(fields[4]).toEqual({ key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' });
     });
 
-    test('event fields include required and optional fields', () => {
-      const fields = getFields('event');
+    test('calendar fields include required and optional fields', () => {
+      const fields = getFields('calendar');
       const requiredFields = fields.filter(f => !f.label.includes('optional'));
       const optionalFields = fields.filter(f => f.label.includes('optional'));
       expect(requiredFields).toHaveLength(3); // title, startDate, endDate
