@@ -89,7 +89,11 @@ export default function QRStudio() {
       }
     });
     
-    const dataUrl = await qrCode.getRawData('png') as string;
+    const rawData = await qrCode.getRawData('png');
+    if (!rawData) {
+      throw new Error('Failed to generate QR code');
+    }
+    const dataUrl = URL.createObjectURL(rawData as Blob);
     
     const qrData = {
       id: crypto.randomUUID(),
@@ -296,7 +300,11 @@ export default function QRStudio() {
           }
         });
         
-        const dataUrl = await qrCode.getRawData('png') as string;
+        const rawData = await qrCode.getRawData('png');
+        if (!rawData) {
+          throw new Error('Failed to generate QR code');
+        }
+        const dataUrl = URL.createObjectURL(rawData as Blob);
         
         updated[i] = { ...item, status: 'done', dataUrl };
         
