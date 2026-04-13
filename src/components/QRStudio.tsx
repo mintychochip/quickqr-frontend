@@ -10,7 +10,7 @@ export default function QRStudio() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Generate Tab State
-  const [qrType, setQrType] = useState<'url' | 'text' | 'email' | 'phone' | 'sms' | 'wifi' | 'vcard' | 'calendar'>('url');
+  const [qrType, setQrType] = useState<'url' | 'text' | 'email' | 'phone' | 'sms' | 'wifi' | 'vcard' | 'calendar' | 'event'>('url');
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [generatedQR, setGeneratedQR] = useState<{ id: string; type: string; content: string; displayContent: string; dataUrl: string; timestamp: number } | null>(null);
   const [fgColor, setFgColor] = useState('#ffffff');
@@ -69,6 +69,8 @@ export default function QRStudio() {
         const dtstart = formatDate(data.startDate, data.startTime);
         const dtend = formatDate(data.endDate, data.endTime);
         return `BEGIN:VEVENT\nVERSION:2.0\nSUMMARY:${data.summary || ''}\nDTSTART:${dtstart}\nDTEND:${dtend}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT`;
+      case 'event':
+        return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${data.title || ''}\nDTSTART:${data.startDate || ''}\nDTEND:${data.endDate || ''}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT\nEND:VCALENDAR`;
       default: return '';
     }
   };
@@ -157,6 +159,13 @@ export default function QRStudio() {
         { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
         { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
       ];
+      case 'event': return [
+        { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
+        { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
+        { key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' },
+        { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
+        { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
+      ];
       default: return [];
     }
   };
@@ -209,6 +218,7 @@ export default function QRStudio() {
       else if (result.startsWith('WIFI:')) type = 'wifi';
       else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
       else if (result.startsWith('BEGIN:VEVENT')) type = 'calendar';
+      else if (result.startsWith('BEGIN:VCALENDAR')) type = 'event';
       
       setScanResult({ data: result, type });
     } catch (err) {
@@ -471,6 +481,7 @@ export default function QRStudio() {
                       <option value="wifi" className="bg-[#111118]">📶 WiFi Network</option>
                       <option value="vcard" className="bg-[#111118]">👤 Contact Card</option>
                       <option value="calendar" className="bg-[#111118]">📅 Event / Calendar</option>
+                      <option value="event" className="bg-[#111118]">📅 Event</option>
                     </select>
                   </div>
 
