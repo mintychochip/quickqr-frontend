@@ -1,4 +1,4 @@
-import { QRCodeGenerator } from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import type { FC } from 'react';
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
 const QRGenerator: FC<Props> = ({ url = '' }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-      <QRCodeGenerator
+      <QRCodeSVG
         value={url}
         size={200}
         level="M"

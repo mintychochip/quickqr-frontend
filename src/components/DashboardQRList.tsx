@@ -238,7 +238,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
           return;
         }
         
-        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const blob = new Blob([svgData instanceof Blob ? svgData : new Uint8Array(Buffer.from(svgData))], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
