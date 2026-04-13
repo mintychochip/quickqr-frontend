@@ -10,7 +10,7 @@ export default function QRStudio() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Generate Tab State
-  const [qrType, setQrType] = useState<'url' | 'text' | 'email' | 'phone' | 'sms' | 'wifi' | 'vcard'>('url');
+  const [qrType, setQrType] = useState<'url' | 'text' | 'email' | 'phone' | 'sms' | 'wifi' | 'vcard' | 'event'>('url');
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [generatedQR, setGeneratedQR] = useState<{ id: string; type: string; content: string; displayContent: string; dataUrl: string; timestamp: number } | null>(null);
   const [fgColor, setFgColor] = useState('#ffffff');
@@ -56,6 +56,8 @@ export default function QRStudio() {
         return `WIFI:T:${data.encryption || 'WPA'};S:${data.ssid || ''};P:${data.password || ''};${data.hidden === 'true' ? 'H:true;' : ''};`;
       case 'vcard':
         return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''};;;\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.phone ? `TEL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
+      case 'event':
+        return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${data.title || ''}\nDTSTART:${data.startDate || ''}\nDTEND:${data.endDate || ''}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT\nEND:VCALENDAR`;
       default: return '';
     }
   };
@@ -135,6 +137,13 @@ export default function QRStudio() {
         { key: 'email', label: 'Email (optional)', placeholder: 'john@example.com' },
         { key: 'organization', label: 'Company (optional)', placeholder: 'Acme Inc' }
       ];
+      case 'event': return [
+        { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
+        { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
+        { key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' },
+        { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
+        { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
+      ];
       default: return [];
     }
   };
@@ -186,6 +195,7 @@ export default function QRStudio() {
       else if (result.startsWith('sms:')) type = 'sms';
       else if (result.startsWith('WIFI:')) type = 'wifi';
       else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
+      else if (result.startsWith('BEGIN:VCALENDAR')) type = 'event';
       
       setScanResult({ data: result, type });
     } catch (err) {
