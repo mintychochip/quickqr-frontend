@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-13T03:23:55.080Z",
+  "entries": {
+    "memory:memory/2026-04-10.md:21:48": {
+      "key": "memory:memory/2026-04-10.md:21:48",
+      "path": "memory/2026-04-10.md",
+      "startLine": 21,
+      "endLine": 48,
+      "source": "memory",
+      "snippet": "- No TODOs/FIXMEs in codebase - Recent features completed: browser analytics, menu OCR integration, geolocation tracking, QR Studio Current feature inventory: - QR Types: URL, Text, Email, Phone, SMS, Location, vCard, MeCard, WiFi, Event - Analytics: Timeline, OS breakdown, Browser breakdown (new), Country/City geo data, Referrers - Customization: Templates, colors, patterns (dot type, corner type) - Export: PDF generation, QR code download - Advanced: Batch generation, QR Studio, Menu OCR, folder/tag organization - Infrastructure: Supabase auth, cloud storage, abuse detection, geolocation tracking Potential enhancement areas identified: 1. QR code scanning mobile experience (currently lim",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.4948303759098053,
+      "maxScore": 0.4948303759098053,
+      "firstRecalledAt": "2026-04-12T09:25:04.014Z",
+      "lastRecalledAt": "2026-04-12T09:25:04.014Z",
+      "queryHashes": [
+        "63fa4c644cfb"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "todos/fixmes",
+        "country/city",
+        "folder/tag",
+        "todos",
+        "fixmes",
+        "codebase",
+        "recent",
+        "features"
+      ]
+    },
+    "memory:memory/2026-04-07.md:1:1": {
+      "key": "memory:memory/2026-04-07.md:1:1",
+      "path": "memory/2026-04-07.md",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "[proactive] Mode A — Enhanced quickqr dashboard with analytics visualization (scan timeline, OS breakdown, recent activity) — tests pass, committed ddd4f1a",
+      "recallCount": 8,
+      "dailyCount": 0,
+      "totalScore": 3.9482397317886346,
+      "maxScore": 0.539948084950447,
+      "firstRecalledAt": "2026-04-12T12:24:21.673Z",
+      "lastRecalledAt": "2026-04-13T03:23:55.080Z",
+      "queryHashes": [
+        "b07f12a6add5",
+        "fe5cb06d605f",
+        "bb123ea1ea13",
+        "8dd441ee806b",
+        "cb008b82fca9",
+        "337145283dc1",
+        "9f34b595f62a",
+        "5acaf49c25a3"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "proactive",
+        "mode",
+        "enhanced",
+        "quickqr",
+        "dashboard",
+        "analytics",
+        "visualization",
+        "scan"
+      ]
+    },
+    "memory:memory/2026-04-11.md:1:2": {
+      "key": "memory:memory/2026-04-11.md:1:2",
+      "path": "memory/2026-04-11.md",
+      "startLine": 1,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — Scanned QuickQR project for pending work — Found UTM Templates and Analytics CSV Export already implemented, pixel integration completed earlier today. Posted status to dev channel.",
+      "recallCount": 8,
+      "dailyCount": 0,
+      "totalScore": 3.99485025703907,
+      "maxScore": 0.5210640788078308,
+      "firstRecalledAt": "2026-04-12T12:24:21.673Z",
+      "lastRecalledAt": "2026-04-13T03:23:55.080Z",
+      "queryHashes": [
+        "b07f12a6add5",
+        "fe5cb06d605f",
+        "bb123ea1ea13",
+        "8dd441ee806b",
+        "cb008b82fca9",
+        "337145283dc1",
+        "9f34b595f62a",
+        "5acaf49c25a3"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "proactive",
+        "mode",
+        "scanned",
+        "quickqr",
+        "project",
+        "pending",
+        "found",
+        "utm"
+      ]
+    },
+    "memory:memory/2026-04-12.md:1:4": {
+      "key": "memory:memory/2026-04-12.md:1:4",
+      "path": "memory/2026-04-12.md",
+      "startLine": 1,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "--- [proactive] Mode A — Checked QuickQR project status. Found that CSV export feature in AnalyticsDashboard.tsx was already implemented. Attempted to add component tests but environment is Node (no DOM). Removed failing test file. Service tests pass (108 tests). Updated .gitignore to exclude .openclaw/ directory. Strike counter at 0.",
+      "recallCount": 8,
+      "dailyCount": 0,
+      "totalScore": 3.9011767804622646,
+      "maxScore": 0.5034172296524048,
+      "firstRecalledAt": "2026-04-12T12:24:21.673Z",
+      "lastRecalledAt": "2026-04-13T03:23:55.080Z",
+      "queryHashes": [
+        "b07f12a6add5",
+        "fe5cb06d605f",
+        "bb123ea1ea13",
+        "8dd441ee806b",
+        "cb008b82fca9",
+        "337145283dc1",
+        "9f34b595f62a",
+        "5acaf49c25a3"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "analyticsdashboard.tsx",
+        "proactive",
+        "mode",
+        "checked",
+        "quickqr",
+        "project",
+        "status",
+        "found"
+      ]
+    }
+  }
+}
