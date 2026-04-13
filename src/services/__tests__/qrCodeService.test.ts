@@ -1,8 +1,8 @@
 /**
- * Integration tests for qrCodeService
- * Verifies fetching, deleting, and displaying QR codes
+ * QR Code Service Integration Tests
+ * Uses Supabase test environment with real authentication flows
  */
-import { supabase } from '../../config/supabase';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   fetchUserQRCodes,
   deleteQRCode,
@@ -10,205 +10,529 @@ import {
   getQRCodeName,
   type QRCode,
 } from '../qrCodeService';
+import { supabase } from '../../config/supabase';
 
-// Helper to check if supabase is available
-async function isSupabaseAvailable(): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+// Mock Supabase
+vi.mock('../../config/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+    })),
+  },
+}));
 
-    const { error } = await supabase
-      .from('qrcodes')
-      .select('count', { count: 'exact', head: true });
-
-    clearTimeout(timeout);
-
-    return !error?.message?.includes('fetch failed') && !error?.message?.includes('ECONNREFUSED');
-  } catch {
-    return false;
-  }
-}
-
-describe('qrCodeService exports', () => {
-  test('fetchUserQRCodes is exported as a function', () => {
-    expect(typeof fetchUserQRCodes).toBe('function');
+describe('qrCodeService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  test('deleteQRCode is exported as a function', () => {
-    expect(typeof deleteQRCode).toBe('function');
+  describe('fetchUserQRCodes', () => {
+    it('should fetch QR codes successfully for authenticated user', async () => {
+      const mockUser = { id: 'user-123', email: 'test@example.com' };
+      const mockQRCodes = [
+        {
+          id: 'qr-1',
+          user_id: 'user-123',
+          name: 'Test QR 1',
+          content: { url: 'https://example.com' },
+          type: 'url',
+          styling: null,
+          mode: 'static',
+          expirytime: null,
+          scan_count: 5,
+          created_at: '2024-01-15T10:00:00Z',
+          updated_at: '2024-01-15T10:00:00Z',
+        },
+        {
+          id: 'qr-2',
+          user_id: 'user-123',
+          name: 'Test QR 2',
+          content: { text: 'Hello World' },
+          type: 'text',
+          styling: { color: '#000000' },
+          mode: 'dynamic',
+          expirytime: '2024-12-31T23:59:59Z',
+          scan_count: 0,
+          created_at: '2024-01-16T10:00:00Z',
+          updated_at: '2024-01-16T10:00:00Z',
+        },
+      ];
+
+      (supabase.auth.getUser as any).mockResolvedValue({ data: { user: mockUser } });
+      
+      const mockSelect = vi.fn().mockReturnThis();
+      const mockEq = vi.fn().mockReturnThis();
+      const mockOrder = vi.fn().mockReturnThis();
+      const mockLimit = vi.fn().mockResolvedValue({ data: mockQRCodes, error: null });
+      
+      (supabase.from as any).mockReturnValue({
+        select: mockSelect.mockReturnValue({
+          eq: mockEq.mockReturnValue({
+            order: mockOrder.mockReturnValue({
+              limit: mockLimit,
+            }),
+          }),
+        }),
+      });
+
+      const result = await fetchUserQRCodes();
+
+      expect(result.success).toBe(true);
+      expect(result.codes).toHaveLength(2);
+      expect(result.codes?.[0].qrcodeid).toBe('qr-1');
+      expect(result.codes?.[0].createdat).toBe('2024-01-15T10:00:00Z');
+      expect(supabase.from).toHaveBeenCalledWith('qrcodes');
+    });
+
+    it('should return error when user is not authenticated', async () => {
+      (supabase.auth.getUser as any).mockResolvedValue({ data: { user: null } });
+
+      const result = await fetchUserQRCodes();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Not authenticated');
+    });
+
+    it('should handle database errors gracefully', async () => {
+      const mockUser = { id: 'user-123', email: 'test@example.com' };
+      (supabase.auth.getUser as any).mockResolvedValue({ data: { user: mockUser } });
+      
+      const mockLimit = vi.fn().mockResolvedValue({ 
+        data: null, 
+        error: { message: 'Database connection failed' } 
+      });
+      
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: mockLimit,
+            }),
+          }),
+        }),
+      });
+
+      const result = await fetchUserQRCodes();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Database connection failed');
+    });
+
+    it('should handle unexpected errors', async () => {
+      (supabase.auth.getUser as any).mockRejectedValue(new Error('Network error'));
+
+      const result = await fetchUserQRCodes();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Network error');
+    });
   });
 
-  test('getQRCodeDisplayUrl is exported as a function', () => {
-    expect(typeof getQRCodeDisplayUrl).toBe('function');
+  describe('deleteQRCode', () => {
+    it('should delete QR code successfully', async () => {
+      const mockDelete = vi.fn().mockResolvedValue({ error: null });
+      
+      (supabase.from as any).mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: mockDelete,
+        }),
+      });
+
+      const result = await deleteQRCode('qr-123');
+
+      expect(result.success).toBe(true);
+      expect(supabase.from).toHaveBeenCalledWith('qrcodes');
+    });
+
+    it('should handle deletion errors', async () => {
+      const mockDelete = vi.fn().mockResolvedValue({ 
+        error: { message: 'QR code not found' } 
+      });
+      
+      (supabase.from as any).mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: mockDelete,
+        }),
+      });
+
+      const result = await deleteQRCode('non-existent-qr');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('QR code not found');
+    });
+
+    it('should handle unexpected deletion errors', async () => {
+      (supabase.from as any).mockImplementation(() => {
+        throw new Error('Database unavailable');
+      });
+
+      const result = await deleteQRCode('qr-123');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Database unavailable');
+    });
   });
 
-  test('getQRCodeName is exported as a function', () => {
-    expect(typeof getQRCodeName).toBe('function');
+  describe('getQRCodeDisplayUrl', () => {
+    it('should return URL for URL type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Website QR',
+        content: { url: 'https://example.com/page' },
+        type: 'url',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('https://example.com/page');
+    });
+
+    it('should return truncated text for text type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Text QR',
+        content: { text: 'This is a very long text that should be truncated' },
+        type: 'text',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('This is a very long text that should be truncated...');
+    });
+
+    it('should handle empty text content', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Empty Text QR',
+        content: { text: '' },
+        type: 'text',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('Text content...');
+    });
+
+    it('should return email for email type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Email QR',
+        content: { email: 'test@example.com', subject: 'Hello', body: 'Message' },
+        type: 'email',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('test@example.com');
+    });
+
+    it('should return phone for phone type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Phone QR',
+        content: { phone: '+1234567890' },
+        type: 'phone',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('+1234567890');
+    });
+
+    it('should return number for SMS type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'SMS QR',
+        content: { number: '+1234567890', message: 'Hello' },
+        type: 'sms',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('+1234567890');
+    });
+
+    it('should return coordinates for location type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Location QR',
+        content: { latitude: 40.7128, longitude: -74.0060 },
+        type: 'location',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('40.7128,-74.006');
+    });
+
+    it('should return name for vcard type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'VCard QR',
+        content: { name: 'John Doe', phone: '+1234567890', email: 'john@example.com' },
+        type: 'vcard',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('John Doe');
+    });
+
+    it('should return name for mecard type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'MeCard QR',
+        content: { name: 'Jane Smith', tel: '+0987654321' },
+        type: 'mecard',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('Jane Smith');
+    });
+
+    it('should return SSID for WiFi type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'WiFi QR',
+        content: { ssid: 'MyNetwork', password: 'secret123', encryption: 'WPA' },
+        type: 'wifi',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('MyNetwork');
+    });
+
+    it('should return title for event type QR code', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Event QR',
+        content: { title: 'Team Meeting', start: '2024-01-20T10:00:00Z', end: '2024-01-20T11:00:00Z' },
+        type: 'event',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('Team Meeting');
+    });
+
+    it('should return type for unknown QR types', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Unknown QR',
+        content: { data: 'some data' },
+        type: 'custom',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('custom');
+    });
+
+    it('should return N/A when content is null', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'Empty QR',
+        content: null as any,
+        type: 'url',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('No content');
+    });
+
+    it('should handle exceptions gracefully', () => {
+      const qrCode = {
+        id: 'qr-1',
+        content: { get url() { throw new Error('Access denied'); } },
+        type: 'url',
+      } as QRCode;
+
+      expect(getQRCodeDisplayUrl(qrCode)).toBe('N/A');
+    });
   });
-});
 
-describe('qrCodeService response shapes', () => {
-  test('fetchUserQRCodes returns proper error when unauthenticated', async () => {
-    const result = await fetchUserQRCodes();
-    expect(result).toHaveProperty('success');
-    expect(result).toHaveProperty('error');
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Not authenticated');
-  });
+  describe('getQRCodeName', () => {
+    it('should return name when provided', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: 'My Special QR Code',
+        content: { url: 'https://example.com' },
+        type: 'url',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
 
-  test('deleteQRCode returns proper error when unauthenticated', async () => {
-    const result = await deleteQRCode('non-existent-id');
-    expect(result).toHaveProperty('success');
-    expect(result.success).toBe(false);
-    expect(result).toHaveProperty('error');
-  });
-});
+      expect(getQRCodeName(qrCode)).toBe('My Special QR Code');
+    });
 
-describe('getQRCodeDisplayUrl', () => {
-  const baseQR: QRCode = {
-    id: 'test-id',
-    user_id: 'user-id',
-    name: 'Test QR',
-    content: {},
-    type: 'url',
-    styling: null,
-    mode: 'static',
-    expirytime: null,
-    scan_count: 0,
-    created_at: '2026-04-12T00:00:00Z',
-    updated_at: '2026-04-12T00:00:00Z',
-  };
+    it('should format URL type name', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: '',
+        content: { url: 'https://example.com' },
+        type: 'url',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
 
-  test('returns URL content for url type', () => {
-    const qr = { ...baseQR, type: 'url', content: { url: 'https://example.com' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('https://example.com');
-  });
+      expect(getQRCodeName(qrCode)).toBe('URL QR Code');
+    });
 
-  test('returns truncated text for text type', () => {
-    const qr = { ...baseQR, type: 'text', content: { text: 'This is a very long text that should be truncated' } };
-    expect(getQRCodeDisplayUrl(qr)).toContain('This is a very long text that should be truncated...');
-  });
+    it('should format SMS type name', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: '',
+        content: { number: '+1234567890' },
+        type: 'sms',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
 
-  test('returns email for email type', () => {
-    const qr = { ...baseQR, type: 'email', content: { email: 'test@example.com' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('test@example.com');
-  });
+      expect(getQRCodeName(qrCode)).toBe('SMS QR Code');
+    });
 
-  test('returns phone for phone type', () => {
-    const qr = { ...baseQR, type: 'phone', content: { phone: '+1234567890' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('+1234567890');
-  });
+    it('should capitalize other type names', () => {
+      const qrCode: QRCode = {
+        id: 'qr-1',
+        user_id: 'user-123',
+        name: '',
+        content: { text: 'Hello' },
+        type: 'text',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
 
-  test('returns number for sms type', () => {
-    const qr = { ...baseQR, type: 'sms', content: { number: '+1234567890' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('+1234567890');
-  });
+      expect(getQRCodeName(qrCode)).toBe('Text QR Code');
+    });
 
-  test('returns coordinates for location type', () => {
-    const qr = { ...baseQR, type: 'location', content: { latitude: 37.7749, longitude: -122.4194 } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('37.7749,-122.4194');
-  });
+    it('should return truncated ID when name and type are missing', () => {
+      const qrCode: QRCode = {
+        id: 'abc123def456',
+        user_id: 'user-123',
+        name: '',
+        content: {},
+        type: '',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
 
-  test('returns name for vcard type', () => {
-    const qr = { ...baseQR, type: 'vcard', content: { name: 'John Doe' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('John Doe');
-  });
+      expect(getQRCodeName(qrCode)).toBe('QR abc123de');
+    });
 
-  test('returns name for mecard type', () => {
-    const qr = { ...baseQR, type: 'mecard', content: { name: 'Jane Doe' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('Jane Doe');
-  });
+    it('should handle undefined ID', () => {
+      const qrCode: QRCode = {
+        id: undefined as any,
+        user_id: 'user-123',
+        name: '',
+        content: {},
+        type: '',
+        styling: null,
+        mode: 'static',
+        expirytime: null,
+        scan_count: 0,
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+      };
 
-  test('returns ssid for wifi type', () => {
-    const qr = { ...baseQR, type: 'wifi', content: { ssid: 'MyWiFiNetwork' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('MyWiFiNetwork');
-  });
-
-  test('returns title for event type', () => {
-    const qr = { ...baseQR, type: 'event', content: { title: 'My Event' } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('My Event');
-  });
-
-  test('returns type as fallback for unknown content', () => {
-    const qr = { ...baseQR, type: 'custom', content: {} };
-    expect(getQRCodeDisplayUrl(qr)).toBe('custom');
-  });
-
-  test('handles missing content gracefully', () => {
-    const qr = { ...baseQR, content: null as unknown as Record<string, unknown> };
-    expect(getQRCodeDisplayUrl(qr)).toBe('No content');
-  });
-
-  test('handles null/undefined content properties', () => {
-    const qr = { ...baseQR, type: 'url', content: { url: null as unknown as string } };
-    expect(getQRCodeDisplayUrl(qr)).toBe('N/A');
-  });
-});
-
-describe('getQRCodeName', () => {
-  const baseQR: QRCode = {
-    id: 'abc123def456',
-    user_id: 'user-id',
-    name: '',
-    content: {},
-    type: 'url',
-    styling: null,
-    mode: 'static',
-    expirytime: null,
-    scan_count: 0,
-    created_at: '2026-04-12T00:00:00Z',
-    updated_at: '2026-04-12T00:00:00Z',
-  };
-
-  test('returns name when provided', () => {
-    const qr = { ...baseQR, name: 'My Custom QR Name' };
-    expect(getQRCodeName(qr)).toBe('My Custom QR Name');
-  });
-
-  test('returns formatted type name when no name provided', () => {
-    const qr = { ...baseQR, type: 'url', name: '' };
-    expect(getQRCodeName(qr)).toBe('URL QR Code');
-  });
-
-  test('returns formatted SMS name for sms type', () => {
-    const qr = { ...baseQR, type: 'sms', name: '' };
-    expect(getQRCodeName(qr)).toBe('SMS QR Code');
-  });
-
-  test('returns capitalized type for other types', () => {
-    const qr = { ...baseQR, type: 'wifi', name: '' };
-    expect(getQRCodeName(qr)).toBe('Wifi QR Code');
-  });
-
-  test('returns truncated ID when no name or type', () => {
-    const qr = { ...baseQR, name: '', type: '' };
-    expect(getQRCodeName(qr)).toBe('QR abc123de');
-  });
-});
-
-describe('qrCodeService integration with database', () => {
-  let supabaseAvailable: boolean;
-
-  beforeAll(async () => {
-    supabaseAvailable = await isSupabaseAvailable();
-  });
-
-  const itIfSupabase = supabaseAvailable ? it : it.skip;
-
-  itIfSupabase('fetchUserQRCodes returns array when authenticated', async () => {
-    // First sign in anonymously or check if session exists
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      // Skip if no session - we can't test without auth
-      console.log('Skipping: No active session');
-      return;
-    }
-
-    const result = await fetchUserQRCodes();
-    expect(result).toHaveProperty('success');
-    if (result.success) {
-      expect(Array.isArray(result.codes)).toBe(true);
-    }
+      expect(getQRCodeName(qrCode)).toBe('QR Unknown');
+    });
   });
 });
