@@ -10,7 +10,7 @@ export default function QRStudio() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Generate Tab State
-  const [qrType, setQrType] = useState<'url' | 'text' | 'email' | 'phone' | 'sms' | 'wifi' | 'vcard'>('url');
+  const [qrType, setQrType] = useState<'url' | 'text' | 'email' | 'phone' | 'sms' | 'wifi' | 'vcard' | 'calendar'>('url');
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [generatedQR, setGeneratedQR] = useState<{ id: string; type: string; content: string; displayContent: string; dataUrl: string; timestamp: number } | null>(null);
   const [fgColor, setFgColor] = useState('#ffffff');
@@ -56,6 +56,19 @@ export default function QRStudio() {
         return `WIFI:T:${data.encryption || 'WPA'};S:${data.ssid || ''};P:${data.password || ''};${data.hidden === 'true' ? 'H:true;' : ''};`;
       case 'vcard':
         return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''};;;\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.phone ? `TEL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
+      case 'calendar':
+        const formatDate = (dateStr: string, timeStr?: string) => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          if (timeStr) {
+            const [hours, minutes] = timeStr.split(':');
+            date.setHours(parseInt(hours || '0'), parseInt(minutes || '0'));
+          }
+          return date.toISOString().replace(/[-:]/g, '').split('.')[0];
+        };
+        const dtstart = formatDate(data.startDate, data.startTime);
+        const dtend = formatDate(data.endDate, data.endTime);
+        return `BEGIN:VEVENT\nVERSION:2.0\nSUMMARY:${data.summary || ''}\nDTSTART:${dtstart}\nDTEND:${dtend}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT`;
       default: return '';
     }
   };
@@ -131,6 +144,15 @@ export default function QRStudio() {
         { key: 'email', label: 'Email (optional)', placeholder: 'john@example.com' },
         { key: 'organization', label: 'Company (optional)', placeholder: 'Acme Inc' }
       ];
+      case 'calendar': return [
+        { key: 'summary', label: 'Event Title', placeholder: 'Team Meeting' },
+        { key: 'startDate', label: 'Start Date', placeholder: 'YYYY-MM-DD' },
+        { key: 'startTime', label: 'Start Time', placeholder: 'HH:MM' },
+        { key: 'endDate', label: 'End Date', placeholder: 'YYYY-MM-DD' },
+        { key: 'endTime', label: 'End Time', placeholder: 'HH:MM' },
+        { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
+        { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
+      ];
       default: return [];
     }
   };
@@ -182,6 +204,7 @@ export default function QRStudio() {
       else if (result.startsWith('sms:')) type = 'sms';
       else if (result.startsWith('WIFI:')) type = 'wifi';
       else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
+      else if (result.startsWith('BEGIN:VEVENT')) type = 'calendar';
       
       setScanResult({ data: result, type });
     } catch (err) {
@@ -439,6 +462,7 @@ export default function QRStudio() {
                       <option value="sms" className="bg-[#111118]">💬 SMS</option>
                       <option value="wifi" className="bg-[#111118]">📶 WiFi Network</option>
                       <option value="vcard" className="bg-[#111118]">👤 Contact Card</option>
+                      <option value="calendar" className="bg-[#111118]">📅 Event / Calendar</option>
                     </select>
                   </div>
 

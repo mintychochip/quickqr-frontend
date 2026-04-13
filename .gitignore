@@ -30,7 +30,7 @@ supabase/.temp/
 .netlify
 
 # Memory directory (agent logs)
-# NOTE: memory/ is NOT ignored - agent logs are tracked
+memory/
 
 # Wrangler local state
 .wrangler/
