@@ -93,6 +93,31 @@ export async function onRequest(context) {
       }
     }
     
+    // Build redirect URL early (needed for pixel firing)
+    let redirectUrl = null;
+    
+    switch (qrCode.type) {
+      case 'url':
+        redirectUrl = content?.url;
+        break;
+      case 'email':
+        redirectUrl = content?.email ? `mailto:${content.email}` : null;
+        break;
+      case 'phone':
+        redirectUrl = content?.phone ? `tel:${content.phone}` : null;
+        break;
+      case 'sms':
+        redirectUrl = content?.number ? `sms:${content.number}` : null;
+        break;
+      case 'location':
+        redirectUrl = content?.latitude && content?.longitude 
+          ? `https://www.google.com/maps?q=${content.latitude},${content.longitude}` 
+          : null;
+        break;
+      default:
+        redirectUrl = null;
+    }
+    
     // Record scan with enhanced tracking
     if (qrCode.mode === 'dynamic') {
       const ua = request.headers.get('user-agent') || '';
@@ -171,31 +196,58 @@ export async function onRequest(context) {
           scan_data: scanData,
         })
       }).catch(() => {});
-    }
-    
-    // Build redirect URL
-    let redirectUrl = null;
-    
-    switch (qrCode.type) {
-      case 'url':
-        redirectUrl = content?.url;
-        break;
-      case 'email':
-        redirectUrl = content?.email ? `mailto:${content.email}` : null;
-        break;
-      case 'phone':
-        redirectUrl = content?.phone ? `tel:${content.phone}` : null;
-        break;
-      case 'sms':
-        redirectUrl = content?.number ? `sms:${content.number}` : null;
-        break;
-      case 'location':
-        redirectUrl = content?.latitude && content?.longitude 
-          ? `https://www.google.com/maps?q=${content.latitude},${content.longitude}` 
-          : null;
-        break;
-      default:
-        redirectUrl = null;
+      
+      // Fire marketing pixels server-side for accurate tracking
+      // This works even if the user has ad blockers enabled
+      fetch(`${supabaseUrl}/rest/v1/pixel_settings?qr_id=eq.${qrId}&select=*`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      })
+        .then(res => res.ok ? res.json() : [])
+        .then(pixelSettings => {
+          if (!pixelSettings || pixelSettings.length === 0) return;
+          const pixels = pixelSettings[0];
+          
+          // Fire Facebook Pixel events
+          if (pixels.facebook_enabled && pixels.facebook_pixel_id) {
+            const events = pixels.facebook_events || ['PageView'];
+            events.forEach(eventName => {
+              fetch('https://www.facebook.com/tr/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                  id: pixels.facebook_pixel_id,
+                  ev: eventName,
+                  dl: redirectUrl || '',
+                  rl: referrer,
+                  ts: Date.now().toString(),
+                })
+              }).catch(() => {});
+            });
+          }
+          
+          // Fire Google Ads conversion
+          if (pixels.google_enabled && pixels.google_conversion_id) {
+            const convData = {
+              send_to: `${pixels.google_conversion_id}${pixels.google_conversion_label ? '/' + pixels.google_conversion_label : ''}`,
+              event_callback: () => {},
+            };
+            fetch(`https://www.googleadservices.com/pagead/conversion/${pixels.google_conversion_id.replace('AW-', '')}/`, {
+              method: 'GET',
+            }).catch(() => {});
+          }
+          
+          // Fire LinkedIn Insight Tag
+          if (pixels.linkedin_enabled && pixels.linkedin_partner_id) {
+            fetch('https://px.ads.linkedin.com/collect/', {
+              method: 'GET',
+              headers: { 'Referer': redirectUrl || '' },
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
     }
     
     if (!redirectUrl) {
