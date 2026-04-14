@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-13T03:23:55.080Z",
+  "updatedAt": "2026-04-13T21:36:29.748Z",
   "entries": {
     "memory:memory/2026-04-10.md:21:48": {
       "key": "memory:memory/2026-04-10.md:21:48",
@@ -39,12 +39,12 @@
       "endLine": 1,
       "source": "memory",
       "snippet": "[proactive] Mode A — Enhanced quickqr dashboard with analytics visualization (scan timeline, OS breakdown, recent activity) — tests pass, committed ddd4f1a",
-      "recallCount": 8,
+      "recallCount": 11,
       "dailyCount": 0,
-      "totalScore": 3.9482397317886346,
+      "totalScore": 5.405938409268856,
       "maxScore": 0.539948084950447,
       "firstRecalledAt": "2026-04-12T12:24:21.673Z",
-      "lastRecalledAt": "2026-04-13T03:23:55.080Z",
+      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
       "queryHashes": [
         "b07f12a6add5",
         "fe5cb06d605f",
@@ -53,10 +53,14 @@
         "cb008b82fca9",
         "337145283dc1",
         "9f34b595f62a",
-        "5acaf49c25a3"
+        "5acaf49c25a3",
+        "2685bde948f3",
+        "e131e5c848e2",
+        "63448d2bed55"
       ],
       "recallDays": [
-        "2026-04-12"
+        "2026-04-12",
+        "2026-04-13"
       ],
       "conceptTags": [
         "proactive",
@@ -76,12 +80,12 @@
       "endLine": 2,
       "source": "memory",
       "snippet": "[proactive] Mode B — Scanned QuickQR project for pending work — Found UTM Templates and Analytics CSV Export already implemented, pixel integration completed earlier today. Posted status to dev channel.",
-      "recallCount": 8,
+      "recallCount": 11,
       "dailyCount": 0,
-      "totalScore": 3.99485025703907,
-      "maxScore": 0.5210640788078308,
+      "totalScore": 5.465520244836807,
+      "maxScore": 0.5254934400320053,
       "firstRecalledAt": "2026-04-12T12:24:21.673Z",
-      "lastRecalledAt": "2026-04-13T03:23:55.080Z",
+      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
       "queryHashes": [
         "b07f12a6add5",
         "fe5cb06d605f",
@@ -90,10 +94,14 @@
         "cb008b82fca9",
         "337145283dc1",
         "9f34b595f62a",
-        "5acaf49c25a3"
+        "5acaf49c25a3",
+        "2685bde948f3",
+        "e131e5c848e2",
+        "63448d2bed55"
       ],
       "recallDays": [
-        "2026-04-12"
+        "2026-04-12",
+        "2026-04-13"
       ],
       "conceptTags": [
         "proactive",
@@ -141,6 +149,70 @@
         "project",
         "status",
         "found"
+      ]
+    },
+    "memory:memory/2026-04-13.md:1:7": {
+      "key": "memory:memory/2026-04-13.md:1:7",
+      "path": "memory/2026-04-13.md",
+      "startLine": 1,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "[proactive] Mode A — Added folderService with 38 integration tests — commit from earlier run [proactive] Mode A — Added 14 unit tests for imageProxy utility functions (proxifyImageUrl, validateImageUrl, preloadImage) with comprehensive coverage for CORS proxy handling, image validation, and preloading. [proactive] Mode A — Added database migration for utm_templates table — enables UTM template feature with RLS policies, commit 23fdd7a [proactive] Mode A — Added PixelManager component with 8 integration tests for marketing pixel integration — supports Facebook Pixel, Google Ads, LinkedIn Insight Tag with form validation — commit a661cb8 [proactive] Mode A — Fixed TypeScript errors in 3 QR com",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "totalScore": 1.443034717440605,
+      "maxScore": 0.5063107579946518,
+      "firstRecalledAt": "2026-04-13T19:36:18.709Z",
+      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
+      "queryHashes": [
+        "2685bde948f3",
+        "e131e5c848e2",
+        "63448d2bed55"
+      ],
+      "recallDays": [
+        "2026-04-13"
+      ],
+      "conceptTags": [
+        "utm-templates",
+        "proactive",
+        "mode",
+        "added",
+        "folderservice",
+        "integration",
+        "tests",
+        "commit"
+      ]
+    },
+    "memory:memory/2026-04-12.md:1:2": {
+      "key": "memory:memory/2026-04-12.md:1:2",
+      "path": "memory/2026-04-12.md",
+      "startLine": 1,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "[proactive] Mode A — Added authService integration tests — 16 tests covering all 6 auth functions (register, login, loginWithGoogle, logout, getCurrentUser, getSession) plus comprehensive error handling — commit c44688b",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "totalScore": 1.310795897245407,
+      "maxScore": 0.4543923050165176,
+      "firstRecalledAt": "2026-04-13T19:36:18.709Z",
+      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
+      "queryHashes": [
+        "2685bde948f3",
+        "e131e5c848e2",
+        "63448d2bed55"
+      ],
+      "recallDays": [
+        "2026-04-13"
+      ],
+      "conceptTags": [
+        "proactive",
+        "mode",
+        "added",
+        "authservice",
+        "integration",
+        "tests",
+        "covering",
+        "all"
       ]
     }
   }
