@@ -9,6 +9,7 @@ import ABTestManager from './abtesting/ABTestManager';
 import ScanLimits from './scanlimits/ScanLimits';
 import WebhookManager from './webhooks/WebhookManager';
 import SocialShare from './social/SocialShare';
+import PixelManager from './pixels/PixelManager';
 
 interface QRCode {
   id: string;
@@ -43,7 +44,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'scheduling' | 'protection' | 'abtesting' | 'limits' | 'webhooks'>('scheduling');
+  const [activeTab, setActiveTab] = useState<'scheduling' | 'protection' | 'abtesting' | 'limits' | 'webhooks' | 'pixels'>('scheduling');
   const [scanData, setScanData] = useState<Record<string, ScanData[]>>({});
   const [previewQr, setPreviewQr] = useState<QRCode | null>(null);
   const [shareQr, setShareQr] = useState<QRCode | null>(null);
@@ -693,6 +694,19 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 >
                   Webhooks
                 </button>
+                <button 
+                  onClick={() => setActiveTab('pixels')}
+                  style={{ 
+                    padding: '1rem 1.5rem', 
+                    background: 'none', 
+                    border: 'none', 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    borderBottom: `3px solid ${activeTab === 'pixels' ? '#14b8a6' : 'transparent'}`
+                  }}
+                >
+                  Pixels
+                </button>
               </div>
               
               <div className="tab-content" style={{ padding: '1.5rem' }}>
@@ -701,6 +715,7 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 {activeTab === 'abtesting' && <ABTestManager qrId={expandedId} />}
                 {activeTab === 'limits' && <ScanLimits qrId={expandedId} />}
                 {activeTab === 'webhooks' && <WebhookManager />}
+                {activeTab === 'pixels' && <PixelManager />}
               </div>
             </div>
           </div>
