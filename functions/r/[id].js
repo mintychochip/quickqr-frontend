@@ -170,7 +170,7 @@ export async function onRequest(context) {
         body: JSON.stringify({ qr_id: qrId })
       }).catch(() => {});
       
-      // Trigger webhooks for this scan
+      // Trigger webhooks for this scan (fire and forget)
       const scanData = {
         os,
         browser: ua.includes('Chrome') ? 'Chrome' : ua.includes('Safari') ? 'Safari' : ua.includes('Firefox') ? 'Firefox' : 'Other',
@@ -182,11 +182,10 @@ export async function onRequest(context) {
         timestamp: new Date().toISOString(),
       };
       
-      // Fire and forget webhook delivery
-      fetch(`${env.APP_URL || 'https://quickqr.app'}/api/v1/webhooks/deliver`, {
+      // Deliver webhooks asynchronously (don't await)
+      fetch(`${url.origin}/api/v1/webhooks/deliver`, {
         method: 'POST',
         headers: {
-          'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json'
         },

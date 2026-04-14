@@ -1,5 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -76,8 +75,8 @@ async function deliverWebhook(
         error: `HTTP ${response.status}: ${responseBody.slice(0, 200)}`
       };
     }
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+  } catch (err: any) {
+    const errorMessage = err.message || 'Unknown error';
     
     // Log the failed delivery
     await supabaseClient
@@ -96,19 +95,28 @@ async function deliverWebhook(
   }
 }
 
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
+export async function onRequest(context: any) {
+  const { request, env } = context;
+  
+  if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      env.SUPABASE_URL ?? '',
+      env.SUPABASE_ANON_KEY ?? '',
     );
 
     // Parse request body
-    const body = await req.json();
+    const body = await request.json();
     const { qr_id, event_type = 'qr.scan', scan_data } = body;
 
     if (!qr_id) {
@@ -191,11 +199,11 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Webhook delivery error:', err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-});
+}
