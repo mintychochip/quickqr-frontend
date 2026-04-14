@@ -12,6 +12,8 @@ export interface PixelSettings {
   google_enabled: boolean;
   linkedin_partner_id: string | null;
   linkedin_enabled: boolean;
+  gtm_container_id: string | null;
+  gtm_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +28,8 @@ export interface CreatePixelInput {
   google_enabled?: boolean;
   linkedin_partner_id?: string;
   linkedin_enabled?: boolean;
+  gtm_container_id?: string;
+  gtm_enabled?: boolean;
 }
 
 export interface UpdatePixelInput {
@@ -37,10 +41,12 @@ export interface UpdatePixelInput {
   google_enabled?: boolean;
   linkedin_partner_id?: string;
   linkedin_enabled?: boolean;
+  gtm_container_id?: string;
+  gtm_enabled?: boolean;
 }
 
 export interface PixelEvent {
-  type: 'facebook' | 'google' | 'linkedin';
+  type: 'facebook' | 'google' | 'linkedin' | 'gtm';
   event_name: string;
   data?: Record<string, unknown>;
 }
@@ -74,6 +80,8 @@ export const pixelService = {
         google_enabled: input.google_enabled || false,
         linkedin_partner_id: input.linkedin_partner_id || null,
         linkedin_enabled: input.linkedin_enabled || false,
+        gtm_container_id: input.gtm_container_id || null,
+        gtm_enabled: input.gtm_enabled || false,
       })
       .select()
       .single();
@@ -106,7 +114,7 @@ export const pixelService = {
     if (error) throw error;
   },
 
-  async togglePixel(qr_id: string, pixelType: 'facebook' | 'google' | 'linkedin', enabled: boolean): Promise<PixelSettings> {
+  async togglePixel(qr_id: string, pixelType: 'facebook' | 'google' | 'linkedin' | 'gtm', enabled: boolean): Promise<PixelSettings> {
     const updateField = `${pixelType}_enabled`;
     const { data, error } = await supabase
       .from('pixel_settings')
@@ -127,7 +135,7 @@ export const pixelService = {
       .from('pixel_settings')
       .select('*')
       .eq('qr_id', qr_id)
-      .or('facebook_enabled.eq.true,google_enabled.eq.true,linkedin_enabled.eq.true')
+      .or('facebook_enabled.eq.true,google_enabled.eq.true,linkedin_enabled.eq.true,gtm_enabled.eq.true')
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
@@ -147,6 +155,11 @@ export const pixelService = {
   validateLinkedInPartnerId(partnerId: string): boolean {
     // LinkedIn partner IDs are numeric strings
     return /^\d+$/.test(partnerId);
+  },
+
+  validateGTMContainerId(containerId: string): boolean {
+    // GTM container IDs follow format: GTM-XXXXXX (alphanumeric)
+    return /^GTM-[A-Z0-9]{7,}$/i.test(containerId);
   },
 
   getDefaultFacebookEvents(): string[] {

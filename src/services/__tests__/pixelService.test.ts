@@ -51,6 +51,7 @@ describe('pixel service exports', () => {
     expect(typeof pixelService.validateFacebookPixelId).toBe('function');
     expect(typeof pixelService.validateGoogleConversionId).toBe('function');
     expect(typeof pixelService.validateLinkedInPartnerId).toBe('function');
+    expect(typeof pixelService.validateGTMContainerId).toBe('function');
   });
 });
 
@@ -89,6 +90,22 @@ describe('pixel validation functions', () => {
     expect(pixelService.validateLinkedInPartnerId('abc123')).toBe(false);
     expect(pixelService.validateLinkedInPartnerId('123-456')).toBe(false);
     expect(pixelService.validateLinkedInPartnerId('')).toBe(false);
+  });
+
+  test('validateGTMContainerId accepts valid GTM-XXXXXX format', () => {
+    expect(pixelService.validateGTMContainerId('GTM-1234567')).toBe(true);
+    expect(pixelService.validateGTMContainerId('GTM-ABCDEFG')).toBe(true);
+    expect(pixelService.validateGTMContainerId('gtm-1234567')).toBe(true); // case insensitive
+    expect(pixelService.validateGTMContainerId('GTM-ABC1234')).toBe(true);
+    expect(pixelService.validateGTMContainerId('GTM-1234567890123')).toBe(true); // longer ID
+  });
+
+  test('validateGTMContainerId rejects invalid formats', () => {
+    expect(pixelService.validateGTMContainerId('1234567')).toBe(false);
+    expect(pixelService.validateGTMContainerId('GTM-123')).toBe(false); // too short
+    expect(pixelService.validateGTMContainerId('GTM-')).toBe(false);
+    expect(pixelService.validateGTMContainerId('')).toBe(false);
+    expect(pixelService.validateGTMContainerId('GTM-12345!')).toBe(false); // invalid char
   });
 
   test('getDefaultFacebookEvents returns expected events', () => {
@@ -186,6 +203,8 @@ describe('pixel functionality', () => {
       google_enabled: true,
       linkedin_partner_id: '456789',
       linkedin_enabled: false,
+      gtm_container_id: 'GTM-TEST123',
+      gtm_enabled: true,
     });
 
     expect(newPixel).toBeDefined();
@@ -200,6 +219,8 @@ describe('pixel functionality', () => {
     expect(newPixel.google_enabled).toBe(true);
     expect(newPixel.linkedin_partner_id).toBe('456789');
     expect(newPixel.linkedin_enabled).toBe(false);
+    expect(newPixel.gtm_container_id).toBe('GTM-TEST123');
+    expect(newPixel.gtm_enabled).toBe(true);
 
     testPixelSettings = newPixel;
   });
@@ -258,6 +279,10 @@ describe('pixel functionality', () => {
     // Toggle LinkedIn
     const linkedinEnabled = await pixelService.togglePixel(testQRId, 'linkedin', true);
     expect(linkedinEnabled.linkedin_enabled).toBe(true);
+
+    // Toggle GTM
+    const gtmEnabled = await pixelService.togglePixel(testQRId, 'gtm', true);
+    expect(gtmEnabled.gtm_enabled).toBe(true);
   });
 
   test('can get active pixels for QR code', async () => {
@@ -271,12 +296,13 @@ describe('pixel functionality', () => {
       facebook_enabled: true,
       google_enabled: true,
       linkedin_enabled: true,
+      gtm_enabled: true,
     });
 
     const activePixels = await pixelService.getActivePixelsForQR(testQRId);
     expect(activePixels).toBeDefined();
     expect(activePixels?.qr_id).toBe(testQRId);
-    expect(activePixels?.facebook_enabled || activePixels?.google_enabled || activePixels?.linkedin_enabled).toBe(true);
+    expect(activePixels?.facebook_enabled || activePixels?.google_enabled || activePixels?.linkedin_enabled || activePixels?.gtm_enabled).toBe(true);
   });
 
   test('returns null for QR without pixel settings', async () => {
@@ -314,10 +340,12 @@ describe('pixel functionality', () => {
     expect(pixel.facebook_enabled).toBe(false);
     expect(pixel.google_enabled).toBe(false);
     expect(pixel.linkedin_enabled).toBe(false);
+    expect(pixel.gtm_enabled).toBe(false);
     expect(pixel.facebook_events).toContain('PageView'); // Default event
     expect(pixel.facebook_pixel_id).toBeNull();
     expect(pixel.google_conversion_id).toBeNull();
     expect(pixel.linkedin_partner_id).toBeNull();
+    expect(pixel.gtm_container_id).toBeNull();
 
     testPixelSettings = pixel;
   });

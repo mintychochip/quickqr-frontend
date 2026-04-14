@@ -245,6 +245,52 @@ export async function onRequest(context) {
               headers: { 'Referer': redirectUrl || '' },
             }).catch(() => {});
           }
+          
+          // Fire Google Tag Manager (server-side)
+          if (pixels.gtm_enabled && pixels.gtm_container_id) {
+            const gtmEvent = {
+              event: 'qr_scan',
+              qr_id: qrId,
+              qr_type: qrCode.type,
+              destination: redirectUrl || '',
+              os: os,
+              country: country,
+              city: city,
+              timestamp: new Date().toISOString(),
+              page_location: redirectUrl || '',
+              page_referrer: referrer,
+            };
+            
+            // Send to GTM server-side endpoint
+            fetch(`https://www.googletagmanager.com/gtag/js?id=${pixels.gtm_container_id}`, {
+              method: 'GET',
+            }).catch(() => {});
+            
+            // Fire the actual event via Google Analytics 4 endpoint (used by GTM)
+            const gtmParams = new URLSearchParams({
+              v: '2',
+              tid: pixels.gtm_container_id,
+              gtm: '45je45t0',
+              _p: Math.floor(Math.random() * 1000000000).toString(),
+              cid: ipHashHex,
+              ul: request.headers.get('accept-language')?.split(',')[0] || 'en-us',
+              sr: '1920x1080',
+              _s: '1',
+              dl: redirectUrl || '',
+              dr: referrer,
+              dt: 'QR Scan',
+              en: 'qr_scan',
+              'ep.qr_id': qrId,
+              'ep.qr_type': qrCode.type,
+              'ep.os': os,
+              'ep.country': country,
+              'ep.city': city,
+            });
+            
+            fetch(`https://www.google-analytics.com/g/collect?${gtmParams.toString()}`, {
+              method: 'GET',
+            }).catch(() => {});
+          }
         })
         .catch(() => {});
     }
