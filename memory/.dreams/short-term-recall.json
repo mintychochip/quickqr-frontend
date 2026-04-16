@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-13T21:36:29.748Z",
+  "updatedAt": "2026-04-16T11:41:27.083Z",
   "entries": {
     "memory:memory/2026-04-10.md:21:48": {
       "key": "memory:memory/2026-04-10.md:21:48",
@@ -39,12 +39,12 @@
       "endLine": 1,
       "source": "memory",
       "snippet": "[proactive] Mode A — Enhanced quickqr dashboard with analytics visualization (scan timeline, OS breakdown, recent activity) — tests pass, committed ddd4f1a",
-      "recallCount": 11,
+      "recallCount": 22,
       "dailyCount": 0,
-      "totalScore": 5.405938409268856,
+      "totalScore": 10.930739237368108,
       "maxScore": 0.539948084950447,
       "firstRecalledAt": "2026-04-12T12:24:21.673Z",
-      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
       "queryHashes": [
         "b07f12a6add5",
         "fe5cb06d605f",
@@ -56,11 +56,24 @@
         "5acaf49c25a3",
         "2685bde948f3",
         "e131e5c848e2",
-        "63448d2bed55"
+        "63448d2bed55",
+        "4e153c5e31b1",
+        "d5a468d982fa",
+        "cc2e8453130e",
+        "c13170240886",
+        "4645f3eef1b6",
+        "421b7975215e",
+        "e276cd567a1f",
+        "1689ffe056ff",
+        "de9168a0bed1",
+        "1c7b9440b353"
       ],
       "recallDays": [
         "2026-04-12",
-        "2026-04-13"
+        "2026-04-13",
+        "2026-04-14",
+        "2026-04-15",
+        "2026-04-16"
       ],
       "conceptTags": [
         "proactive",
@@ -80,12 +93,12 @@
       "endLine": 2,
       "source": "memory",
       "snippet": "[proactive] Mode B — Scanned QuickQR project for pending work — Found UTM Templates and Analytics CSV Export already implemented, pixel integration completed earlier today. Posted status to dev channel.",
-      "recallCount": 11,
+      "recallCount": 22,
       "dailyCount": 0,
-      "totalScore": 5.465520244836807,
-      "maxScore": 0.5254934400320053,
+      "totalScore": 11.126572063565254,
+      "maxScore": 0.5489347726106644,
       "firstRecalledAt": "2026-04-12T12:24:21.673Z",
-      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
       "queryHashes": [
         "b07f12a6add5",
         "fe5cb06d605f",
@@ -97,11 +110,24 @@
         "5acaf49c25a3",
         "2685bde948f3",
         "e131e5c848e2",
-        "63448d2bed55"
+        "63448d2bed55",
+        "4e153c5e31b1",
+        "d5a468d982fa",
+        "cc2e8453130e",
+        "c13170240886",
+        "4645f3eef1b6",
+        "421b7975215e",
+        "e276cd567a1f",
+        "1689ffe056ff",
+        "de9168a0bed1",
+        "1c7b9440b353"
       ],
       "recallDays": [
         "2026-04-12",
-        "2026-04-13"
+        "2026-04-13",
+        "2026-04-14",
+        "2026-04-15",
+        "2026-04-16"
       ],
       "conceptTags": [
         "proactive",
@@ -158,19 +184,23 @@
       "endLine": 7,
       "source": "memory",
       "snippet": "[proactive] Mode A — Added folderService with 38 integration tests — commit from earlier run [proactive] Mode A — Added 14 unit tests for imageProxy utility functions (proxifyImageUrl, validateImageUrl, preloadImage) with comprehensive coverage for CORS proxy handling, image validation, and preloading. [proactive] Mode A — Added database migration for utm_templates table — enables UTM template feature with RLS policies, commit 23fdd7a [proactive] Mode A — Added PixelManager component with 8 integration tests for marketing pixel integration — supports Facebook Pixel, Google Ads, LinkedIn Insight Tag with form validation — commit a661cb8 [proactive] Mode A — Fixed TypeScript errors in 3 QR com",
-      "recallCount": 3,
+      "recallCount": 6,
       "dailyCount": 0,
-      "totalScore": 1.443034717440605,
+      "totalScore": 2.882197767496109,
       "maxScore": 0.5063107579946518,
       "firstRecalledAt": "2026-04-13T19:36:18.709Z",
-      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
+      "lastRecalledAt": "2026-04-14T12:37:47.586Z",
       "queryHashes": [
         "2685bde948f3",
         "e131e5c848e2",
-        "63448d2bed55"
+        "63448d2bed55",
+        "4e153c5e31b1",
+        "d5a468d982fa",
+        "cc2e8453130e"
       ],
       "recallDays": [
-        "2026-04-13"
+        "2026-04-13",
+        "2026-04-14"
       ],
       "conceptTags": [
         "utm-templates",
@@ -190,19 +220,30 @@
       "endLine": 2,
       "source": "memory",
       "snippet": "[proactive] Mode A — Added authService integration tests — 16 tests covering all 6 auth functions (register, login, loginWithGoogle, logout, getCurrentUser, getSession) plus comprehensive error handling — commit c44688b",
-      "recallCount": 3,
+      "recallCount": 12,
       "dailyCount": 0,
-      "totalScore": 1.310795897245407,
-      "maxScore": 0.4543923050165176,
+      "totalScore": 5.264648094773292,
+      "maxScore": 0.456014546751976,
       "firstRecalledAt": "2026-04-13T19:36:18.709Z",
-      "lastRecalledAt": "2026-04-13T21:36:29.748Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
       "queryHashes": [
         "2685bde948f3",
         "e131e5c848e2",
-        "63448d2bed55"
+        "63448d2bed55",
+        "4e153c5e31b1",
+        "d5a468d982fa",
+        "cc2e8453130e",
+        "c13170240886",
+        "e276cd567a1f",
+        "1689ffe056ff",
+        "de9168a0bed1",
+        "1c7b9440b353"
       ],
       "recallDays": [
-        "2026-04-13"
+        "2026-04-13",
+        "2026-04-14",
+        "2026-04-15",
+        "2026-04-16"
       ],
       "conceptTags": [
         "proactive",
@@ -212,6 +253,237 @@
         "integration",
         "tests",
         "covering",
+        "all"
+      ]
+    },
+    "memory:memory/2026-04-14.md:1:3": {
+      "key": "memory:memory/2026-04-14.md:1:3",
+      "path": "memory/2026-04-14.md",
+      "startLine": 1,
+      "endLine": 3,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — 8:38 PM health check and research — All 305 tests pass. No open issues/PRs. Research shows 2025-2026 QR trends: AI personalization, A/B testing (implemented), scheduling (implemented), first-party data collection, geofencing, and AR/VR integration. Logo styling UI exists but needs backend storage integration. Strike counter at 0. [proactive] Mode B — 9:38 PM health check — All 305 tests pass. No open issues/PRs. Reviewed active threads (none in #proactive-dev). Research confirms QuickQR already has major 2025 features: dynamic QRs, A/B testing, marketing pixels, UTM templates, abuse detection with Safe Browsing API. Project is clean and up to date. Strike counter at 0.",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "totalScore": 1.5091067403554916,
+      "maxScore": 0.523083609342575,
+      "firstRecalledAt": "2026-04-14T16:37:23.431Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "queryHashes": [
+        "c13170240886",
+        "63448d2bed55",
+        "1c7b9440b353"
+      ],
+      "recallDays": [
+        "2026-04-14",
+        "2026-04-15",
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "issues/prs",
+        "2025-2026",
+        "a/b",
+        "first-party",
+        "ar/vr",
+        "proactive-dev",
+        "proactive",
+        "mode"
+      ]
+    },
+    "memory:memory/2026-04-13.md:1:5": {
+      "key": "memory:memory/2026-04-13.md:1:5",
+      "path": "memory/2026-04-13.md",
+      "startLine": 1,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "[proactive] Mode A — Integrated PixelManager into DashboardQRList — commit f7f8dbd [proactive] Mode A — Fixed vitest config and userEvent setup ordering — Fixed root vitest.config.ts to exclude menu-ocr tests (uses jsdom), fixed userEvent.setup() ordering in OCRProcessor.test.tsx and MenuEditor.test.tsx. Root tests now pass (20 files, 296 tests). Committed e3e769e. [proactive] Mode A — Added server-side marketing pixel firing to redirect handler — Implemented Facebook Pixel, Google Ads, and LinkedIn Insight Tag firing in functions/r/[id].js. Pixels fire server-side when QR codes are scanned, bypassing ad blockers. All 296 tests pass. Committed f97f3c9 and pushed. [proactive] Mode B — Scanned",
+      "recallCount": 8,
+      "dailyCount": 0,
+      "totalScore": 3.998654395341873,
+      "maxScore": 0.5208996891975403,
+      "firstRecalledAt": "2026-04-14T16:37:23.431Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "queryHashes": [
+        "c13170240886",
+        "4645f3eef1b6",
+        "421b7975215e",
+        "e276cd567a1f",
+        "1689ffe056ff",
+        "de9168a0bed1",
+        "63448d2bed55",
+        "1c7b9440b353"
+      ],
+      "recallDays": [
+        "2026-04-14",
+        "2026-04-15",
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "vitest.config.ts",
+        "menu-ocr",
+        "userevent.setup",
+        "ocrprocessor.test.tsx",
+        "menueditor.test.tsx",
+        "server-side",
+        "functions/r",
+        "proactive"
+      ]
+    },
+    "memory:memory/2026-04-14.md:3:6": {
+      "key": "memory:memory/2026-04-14.md:3:6",
+      "path": "memory/2026-04-14.md",
+      "startLine": 3,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — Scanned for open work — All tests pass (quickqr: 61, quickqr-frontend: 307), no open issues/PRs, repos clean. All task files verified complete: marketing pixels ✅, UTM templates ✅, analytics export ✅, webhook delivery ✅, GTM integration ✅, abuse detection ✅, auth sidebar ✅. No work needed at this time. Dependency updates available but skipped (breaking change risk). [proactive] Mode B — Scanned for open work — All 305 tests pass, no open issues/PRs. Noticed feature/qr-studio-enhanced branch is 2 commits ahead but significantly behind master (missing pixel APIs, webhooks, tests). Posted summary to Discord. No action needed — repo clean. [proactive] Mode B — Scanned for op",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "totalScore": 2.621648924052715,
+      "maxScore": 0.5418807581067084,
+      "firstRecalledAt": "2026-04-15T12:39:18.166Z",
+      "lastRecalledAt": "2026-04-15T17:38:24.720Z",
+      "queryHashes": [
+        "4645f3eef1b6",
+        "421b7975215e",
+        "e276cd567a1f",
+        "1689ffe056ff",
+        "de9168a0bed1"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "quickqr-frontend",
+        "issues/prs",
+        "feature/qr-studio-enhanced",
+        "proactive",
+        "mode",
+        "scanned",
+        "open",
+        "all"
+      ]
+    },
+    "memory:memory/2026-04-14.md:1:4": {
+      "key": "memory:memory/2026-04-14.md:1:4",
+      "path": "memory/2026-04-14.md",
+      "startLine": 1,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — Scanned for open work — All tests pass (quickqr: 61, quickqr-frontend: 305), no open issues/PRs, repos clean. All task files verified complete: marketing pixels ✅, UTM templates ✅, analytics export ✅, webhook delivery ✅. No work needed at this time. [proactive] Mode B — Added Google Tag Manager (GTM) server-side tracking support — Researched competitor features and implemented GTM integration alongside existing Facebook, Google Ads, and LinkedIn pixels. Updated PixelSettings interface with gtm_container_id and gtm_enabled fields, added validation, and implemented server-side GTM event firing in the redirect handler. All 307 tests pass. Committed bfcd006 and pushed. [proa",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "totalScore": 2.5949513420462607,
+      "maxScore": 0.5297989144921302,
+      "firstRecalledAt": "2026-04-15T12:39:18.166Z",
+      "lastRecalledAt": "2026-04-15T17:38:24.720Z",
+      "queryHashes": [
+        "4645f3eef1b6",
+        "421b7975215e",
+        "e276cd567a1f",
+        "1689ffe056ff",
+        "de9168a0bed1"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "quickqr-frontend",
+        "issues/prs",
+        "server-side",
+        "gtm-container-id",
+        "gtm-enabled",
+        "proactive",
+        "mode",
+        "scanned"
+      ]
+    },
+    "memory:memory/2026-04-15.md:4:7": {
+      "key": "memory:memory/2026-04-15.md:4:7",
+      "path": "memory/2026-04-15.md",
+      "startLine": 4,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — 3:40 PM health check — All 307 quickqr-frontend tests pass, all 177 quickqr tests pass. Working trees clean. No open issues/PRs. No active threads requiring attention. Project healthy, strike counter at 0. [proactive] Mode B — 4:40 PM health check — quickqr backend: 61 tests pass. quickqr-frontend: tests running (multiple suites passed, Supabase tests skip as expected without local instance). Working trees clean. No open issues/PRs. No active threads. Strike counter remains at 0. [proactive] Mode B — 5:40 PM health check — All 305 quickqr-frontend tests pass, all 61 quickqr tests pass. Working trees clean (memory file changes are just tracking indices). No open issues/PR",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.5185164362192154,
+      "maxScore": 0.5185164362192154,
+      "firstRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "queryHashes": [
+        "1c7b9440b353"
+      ],
+      "recallDays": [
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "quickqr-frontend",
+        "issues/prs",
+        "issues/pr",
+        "proactive",
+        "mode",
+        "health",
+        "check",
+        "all"
+      ]
+    },
+    "memory:memory/2026-04-15.md:1:5": {
+      "key": "memory:memory/2026-04-15.md:1:5",
+      "path": "memory/2026-04-15.md",
+      "startLine": 1,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — 12:40 PM health check — quickqr (177 tests) and quickqr-frontend (307 tests) both pass. Working trees clean. No open issues/PRs. Strike counter remains at 0. [proactive] Mode B — 1:40 PM health check and research — All 307 quickqr-frontend tests pass, all 61 quickqr tests pass. No open issues/PRs. Research on 2025-2026 QR trends shows QuickQR already has most key features: dynamic QRs, A/B testing, marketing pixels, webhooks, UTM templates, scan limits, geolocation, abuse detection. Potential future enhancements: AI personalization, AR/VR gateway support, Digital Product Passports. Strike counter at 0. [proactive] Mode B — 2:40 PM health check — All 307 quickqr-frontend",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.5158983647823333,
+      "maxScore": 0.5158983647823333,
+      "firstRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "queryHashes": [
+        "1c7b9440b353"
+      ],
+      "recallDays": [
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "gateway",
+        "quickqr-frontend",
+        "issues/prs",
+        "2025-2026",
+        "a/b",
+        "ar/vr",
+        "proactive",
+        "mode"
+      ]
+    },
+    "memory:memory/2026-04-16.md:1:2": {
+      "key": "memory:memory/2026-04-16.md:1:2",
+      "path": "memory/2026-04-16.md",
+      "startLine": 1,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — 12:40 AM health check — All 305 tests pass. Working tree clean. No open issues/PRs. No active threads in #proactive-dev. Memory files show dream/short-term-recall activity from IDE plugin. Strike counter stays at 0.",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.4677187532186508,
+      "maxScore": 0.4677187532186508,
+      "firstRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "queryHashes": [
+        "1c7b9440b353"
+      ],
+      "recallDays": [
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "issues/prs",
+        "proactive-dev",
+        "dream/short-term-recall",
+        "proactive",
+        "mode",
+        "health",
+        "check",
         "all"
       ]
     }
