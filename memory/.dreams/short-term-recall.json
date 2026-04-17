@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-16T11:41:27.083Z",
+  "updatedAt": "2026-04-17T00:41:20.640Z",
   "entries": {
     "memory:memory/2026-04-10.md:21:48": {
       "key": "memory:memory/2026-04-10.md:21:48",
@@ -39,12 +39,12 @@
       "endLine": 1,
       "source": "memory",
       "snippet": "[proactive] Mode A — Enhanced quickqr dashboard with analytics visualization (scan timeline, OS breakdown, recent activity) — tests pass, committed ddd4f1a",
-      "recallCount": 22,
+      "recallCount": 25,
       "dailyCount": 0,
-      "totalScore": 10.930739237368108,
+      "totalScore": 12.322775854170324,
       "maxScore": 0.539948084950447,
       "firstRecalledAt": "2026-04-12T12:24:21.673Z",
-      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-17T00:41:20.640Z",
       "queryHashes": [
         "b07f12a6add5",
         "fe5cb06d605f",
@@ -66,7 +66,10 @@
         "e276cd567a1f",
         "1689ffe056ff",
         "de9168a0bed1",
-        "1c7b9440b353"
+        "1c7b9440b353",
+        "d99260ed444d",
+        "d335f5e58199",
+        "0dd182b4f984"
       ],
       "recallDays": [
         "2026-04-12",
@@ -93,12 +96,12 @@
       "endLine": 2,
       "source": "memory",
       "snippet": "[proactive] Mode B — Scanned QuickQR project for pending work — Found UTM Templates and Analytics CSV Export already implemented, pixel integration completed earlier today. Posted status to dev channel.",
-      "recallCount": 22,
+      "recallCount": 27,
       "dailyCount": 0,
-      "totalScore": 11.126572063565254,
+      "totalScore": 13.560592266917228,
       "maxScore": 0.5489347726106644,
       "firstRecalledAt": "2026-04-12T12:24:21.673Z",
-      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-17T00:41:20.640Z",
       "queryHashes": [
         "b07f12a6add5",
         "fe5cb06d605f",
@@ -120,7 +123,12 @@
         "e276cd567a1f",
         "1689ffe056ff",
         "de9168a0bed1",
-        "1c7b9440b353"
+        "1c7b9440b353",
+        "dc8eb7a1f7ef",
+        "d99260ed444d",
+        "d335f5e58199",
+        "b81f52568b46",
+        "0dd182b4f984"
       ],
       "recallDays": [
         "2026-04-12",
@@ -220,12 +228,12 @@
       "endLine": 2,
       "source": "memory",
       "snippet": "[proactive] Mode A — Added authService integration tests — 16 tests covering all 6 auth functions (register, login, loginWithGoogle, logout, getCurrentUser, getSession) plus comprehensive error handling — commit c44688b",
-      "recallCount": 12,
+      "recallCount": 14,
       "dailyCount": 0,
-      "totalScore": 5.264648094773292,
+      "totalScore": 6.116789865493773,
       "maxScore": 0.456014546751976,
       "firstRecalledAt": "2026-04-13T19:36:18.709Z",
-      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-16T19:40:48.708Z",
       "queryHashes": [
         "2685bde948f3",
         "e131e5c848e2",
@@ -237,7 +245,9 @@
         "e276cd567a1f",
         "1689ffe056ff",
         "de9168a0bed1",
-        "1c7b9440b353"
+        "1c7b9440b353",
+        "d99260ed444d",
+        "d335f5e58199"
       ],
       "recallDays": [
         "2026-04-13",
@@ -263,16 +273,21 @@
       "endLine": 3,
       "source": "memory",
       "snippet": "[proactive] Mode B — 8:38 PM health check and research — All 305 tests pass. No open issues/PRs. Research shows 2025-2026 QR trends: AI personalization, A/B testing (implemented), scheduling (implemented), first-party data collection, geofencing, and AR/VR integration. Logo styling UI exists but needs backend storage integration. Strike counter at 0. [proactive] Mode B — 9:38 PM health check — All 305 tests pass. No open issues/PRs. Reviewed active threads (none in #proactive-dev). Research confirms QuickQR already has major 2025 features: dynamic QRs, A/B testing, marketing pixels, UTM templates, abuse detection with Safe Browsing API. Project is clean and up to date. Strike counter at 0.",
-      "recallCount": 3,
+      "recallCount": 8,
       "dailyCount": 0,
-      "totalScore": 1.5091067403554916,
+      "totalScore": 3.8719669997692105,
       "maxScore": 0.523083609342575,
       "firstRecalledAt": "2026-04-14T16:37:23.431Z",
-      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-17T00:41:20.640Z",
       "queryHashes": [
         "c13170240886",
         "63448d2bed55",
-        "1c7b9440b353"
+        "1c7b9440b353",
+        "dc8eb7a1f7ef",
+        "d99260ed444d",
+        "d335f5e58199",
+        "b81f52568b46",
+        "0dd182b4f984"
       ],
       "recallDays": [
         "2026-04-14",
@@ -297,12 +312,12 @@
       "endLine": 5,
       "source": "memory",
       "snippet": "[proactive] Mode A — Integrated PixelManager into DashboardQRList — commit f7f8dbd [proactive] Mode A — Fixed vitest config and userEvent setup ordering — Fixed root vitest.config.ts to exclude menu-ocr tests (uses jsdom), fixed userEvent.setup() ordering in OCRProcessor.test.tsx and MenuEditor.test.tsx. Root tests now pass (20 files, 296 tests). Committed e3e769e. [proactive] Mode A — Added server-side marketing pixel firing to redirect handler — Implemented Facebook Pixel, Google Ads, and LinkedIn Insight Tag firing in functions/r/[id].js. Pixels fire server-side when QR codes are scanned, bypassing ad blockers. All 296 tests pass. Committed f97f3c9 and pushed. [proactive] Mode B — Scanned",
-      "recallCount": 8,
+      "recallCount": 12,
       "dailyCount": 0,
-      "totalScore": 3.998654395341873,
+      "totalScore": 5.922642794251442,
       "maxScore": 0.5208996891975403,
       "firstRecalledAt": "2026-04-14T16:37:23.431Z",
-      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-16T23:40:48.681Z",
       "queryHashes": [
         "c13170240886",
         "4645f3eef1b6",
@@ -311,7 +326,11 @@
         "1689ffe056ff",
         "de9168a0bed1",
         "63448d2bed55",
-        "1c7b9440b353"
+        "1c7b9440b353",
+        "dc8eb7a1f7ef",
+        "d99260ed444d",
+        "d335f5e58199",
+        "b81f52568b46"
       ],
       "recallDays": [
         "2026-04-14",
@@ -463,28 +482,67 @@
       "startLine": 1,
       "endLine": 2,
       "source": "memory",
-      "snippet": "[proactive] Mode B — 12:40 AM health check — All 305 tests pass. Working tree clean. No open issues/PRs. No active threads in #proactive-dev. Memory files show dream/short-term-recall activity from IDE plugin. Strike counter stays at 0.",
-      "recallCount": 1,
+      "snippet": "[proactive] Mode B — 9:40 AM health check — Both repos clean. quickqr: 61 tests pass, 0 vulnerabilities, patch updates available (tailwindcss, vite, vue). quickqr-frontend: tests pass, 0 vulnerabilities, major bumps available (React 18→19, TailwindCSS 3→4, TypeScript 5→6, recharts 2→3) requiring migration testing. No open PRs/issues. Strike counter: 0.",
+      "recallCount": 6,
       "dailyCount": 0,
-      "totalScore": 0.4677187532186508,
-      "maxScore": 0.4677187532186508,
+      "totalScore": 2.838469776511192,
+      "maxScore": 0.4939390212297439,
       "firstRecalledAt": "2026-04-16T11:41:27.083Z",
-      "lastRecalledAt": "2026-04-16T11:41:27.083Z",
+      "lastRecalledAt": "2026-04-17T00:41:20.640Z",
       "queryHashes": [
-        "1c7b9440b353"
+        "1c7b9440b353",
+        "dc8eb7a1f7ef",
+        "d99260ed444d",
+        "d335f5e58199",
+        "b81f52568b46",
+        "0dd182b4f984"
       ],
       "recallDays": [
         "2026-04-16"
       ],
       "conceptTags": [
-        "issues/prs",
-        "proactive-dev",
-        "dream/short-term-recall",
+        "quickqr-frontend",
+        "prs/issues",
         "proactive",
         "mode",
         "health",
         "check",
-        "all"
+        "both",
+        "repos"
+      ]
+    },
+    "memory:memory/2026-04-15.md:1:2": {
+      "key": "memory:memory/2026-04-15.md:1:2",
+      "path": "memory/2026-04-15.md",
+      "startLine": 1,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "[proactive] Mode B — 11:40 PM health check and research — All 177 (quickqr) + 305 (quickqr-frontend) tests pass. Working trees clean. No open issues/PRs. Research confirms 2026 trends: dynamic QRs now standard (not premium), AI-driven personalization expanding, WebAR integration emerging for 3D product previews, context-aware experiences based on scan metadata, digital product passports for sustainability tracking. QuickQR has strong coverage: dynamic codes, A/B testing, scheduling, analytics, marketing pixels. Potential future features: WebAR integration, AI-powered content adaptation, product passport support. Strike counter stays at 0.",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "totalScore": 2.3595498740673064,
+      "maxScore": 0.5056113511323929,
+      "firstRecalledAt": "2026-04-16T15:40:48.453Z",
+      "lastRecalledAt": "2026-04-17T00:41:20.640Z",
+      "queryHashes": [
+        "dc8eb7a1f7ef",
+        "d99260ed444d",
+        "d335f5e58199",
+        "b81f52568b46",
+        "0dd182b4f984"
+      ],
+      "recallDays": [
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "quickqr-frontend",
+        "issues/prs",
+        "ai-driven",
+        "context-aware",
+        "a/b",
+        "ai-powered",
+        "proactive",
+        "mode"
       ]
     }
   }
