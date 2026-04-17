@@ -170,7 +170,7 @@ export async function onRequest(context) {
         body: JSON.stringify({ qr_id: qrId })
       }).catch(() => {});
       
-      // Trigger webhooks for this scan
+      // Trigger webhooks for this scan (fire and forget)
       const scanData = {
         os,
         browser: ua.includes('Chrome') ? 'Chrome' : ua.includes('Safari') ? 'Safari' : ua.includes('Firefox') ? 'Firefox' : 'Other',
@@ -182,11 +182,10 @@ export async function onRequest(context) {
         timestamp: new Date().toISOString(),
       };
       
-      // Fire and forget webhook delivery
-      fetch(`${env.APP_URL || 'https://quickqr.app'}/api/v1/webhooks/deliver`, {
+      // Deliver webhooks asynchronously (don't await)
+      fetch(`${url.origin}/api/v1/webhooks/deliver`, {
         method: 'POST',
         headers: {
-          'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json'
         },
@@ -244,6 +243,52 @@ export async function onRequest(context) {
             fetch('https://px.ads.linkedin.com/collect/', {
               method: 'GET',
               headers: { 'Referer': redirectUrl || '' },
+            }).catch(() => {});
+          }
+          
+          // Fire Google Tag Manager (server-side)
+          if (pixels.gtm_enabled && pixels.gtm_container_id) {
+            const gtmEvent = {
+              event: 'qr_scan',
+              qr_id: qrId,
+              qr_type: qrCode.type,
+              destination: redirectUrl || '',
+              os: os,
+              country: country,
+              city: city,
+              timestamp: new Date().toISOString(),
+              page_location: redirectUrl || '',
+              page_referrer: referrer,
+            };
+            
+            // Send to GTM server-side endpoint
+            fetch(`https://www.googletagmanager.com/gtag/js?id=${pixels.gtm_container_id}`, {
+              method: 'GET',
+            }).catch(() => {});
+            
+            // Fire the actual event via Google Analytics 4 endpoint (used by GTM)
+            const gtmParams = new URLSearchParams({
+              v: '2',
+              tid: pixels.gtm_container_id,
+              gtm: '45je45t0',
+              _p: Math.floor(Math.random() * 1000000000).toString(),
+              cid: ipHashHex,
+              ul: request.headers.get('accept-language')?.split(',')[0] || 'en-us',
+              sr: '1920x1080',
+              _s: '1',
+              dl: redirectUrl || '',
+              dr: referrer,
+              dt: 'QR Scan',
+              en: 'qr_scan',
+              'ep.qr_id': qrId,
+              'ep.qr_type': qrCode.type,
+              'ep.os': os,
+              'ep.country': country,
+              'ep.city': city,
+            });
+            
+            fetch(`https://www.google-analytics.com/g/collect?${gtmParams.toString()}`, {
+              method: 'GET',
             }).catch(() => {});
           }
         })
