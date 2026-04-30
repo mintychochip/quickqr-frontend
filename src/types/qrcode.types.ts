@@ -55,6 +55,19 @@ export interface QRCodeStylingProps {
   logoUrl?: string;
 }
 
+// Re-export as QRCodeStylingOptions for compatibility with qr-code-styling library
+export interface QRCodeStylingOptions {
+  dotsOptions?: DotsOptions;
+  cornersSquareOptions?: CornersSquareOptions;
+  cornersDotOptions?: CornersDotOptions;
+  backgroundOptions?: BackgroundOptions;
+  imageOptions?: ImageOptions;
+  image?: string;
+  width?: number;
+  height?: number;
+  data?: string;
+}
+
 export interface QRCodeData {
   id: number;
   qrcodeid?: string;
