@@ -93,6 +93,49 @@ export async function onRequest(context) {
       }
     }
     
+    // Check scan limits before allowing redirect
+    const scanLimitsResponse = await fetch(`${supabaseUrl}/rest/v1/qr_scan_limits?qr_id=eq.${qrId}&select=*`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      }
+    });
+    
+    if (scanLimitsResponse.ok) {
+      const scanLimits = await scanLimitsResponse.json();
+      if (scanLimits && scanLimits.length > 0) {
+        const limit = scanLimits[0];
+        if (limit.enabled && limit.current_scans >= limit.max_scans) {
+          const limitMessage = limit.message || 'This QR code has reached its scan limit.';
+          return new Response(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Scan Limit Reached</title>
+              <style>
+                body { font-family: system-ui; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #fef3c7; }
+                .container { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+                h2 { margin: 0 0 1rem; color: #92400e; }
+                p { color: #a16207; margin-bottom: 1.5rem; }
+                .icon { font-size: 3rem; margin-bottom: 1rem; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="icon">📊</div>
+                <h2>Scan Limit Reached</h2>
+                <p>${limitMessage}</p>
+              </div>
+            </body>
+            </html>
+          `, { 
+            status: 403, 
+            headers: { 'Content-Type': 'text/html' } 
+          });
+        }
+      }
+    }
+    
     // Build redirect URL early (needed for pixel firing)
     let redirectUrl = null;
     
@@ -168,6 +211,17 @@ export async function onRequest(context) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ qr_id: qrId })
+      }).catch(() => {});
+      
+      // Increment scan limit counter if limits are enabled
+      fetch(`${supabaseUrl}/rest/v1/rpc/increment_scan_limit_count`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_qr_id: qrId })
       }).catch(() => {});
       
       // Trigger webhooks for this scan (fire and forget)
