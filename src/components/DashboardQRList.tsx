@@ -10,6 +10,7 @@ import ScanLimits from './scanlimits/ScanLimits';
 import WebhookManager from './webhooks/WebhookManager';
 import SocialShare from './social/SocialShare';
 import PixelManager from './pixels/PixelManager';
+import { QRHealthBadge } from './health';
 
 interface QRCode {
   id: string;
@@ -446,7 +447,10 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
               </div>
               
               <div className="qr-info-enhanced">
-                <h3 className="qr-name">{qr.name || 'Unnamed QR'}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h3 className="qr-name">{qr.name || 'Unnamed QR'}</h3>
+                  {qr.mode === 'dynamic' && <QRHealthBadge qrId={qr.id} compact={true} />}
+                </div>
                 <p className="qr-type">{(qr.type || 'QR').toUpperCase()}</p>
                 {qr.mode === 'dynamic' ? (
                   <p className="qr-scans">{qr.scan_count || 0} scans (ID: {qr.id.slice(0,8)})</p>

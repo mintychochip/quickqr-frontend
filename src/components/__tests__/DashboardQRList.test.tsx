@@ -227,3 +227,23 @@ describe('Duplicate QR Feature Integration Tests', () => {
  * into the dashboard QR card actions, allowing users to share their QR codes
  * via Twitter, Facebook, LinkedIn, or copy the link.
  */
+
+/**
+ * Health Badge Integration Tests
+ * 
+ * The QRHealthBadge component from ../health/QRHealthBadge is integrated into
+ * the DashboardQRList to show health status for each QR code. The badge:
+ * - Displays next to the QR code name in the qr-info-enhanced section
+ * - Shows compact mode (20px circle icon) in the list view
+ * - Fetches health status lazily when QR codes are loaded
+ * - Supports tooltip on hover showing detailed check information
+ * - Uses color coding: green (healthy), yellow (warning), red (critical), gray (unknown)
+ * 
+ * Health status is fetched via the healthService which calls:
+ * - GET /api/v1/qr/health-check/:qrId for individual QR health data
+ * 
+ * The component gracefully handles:
+ * - Loading states (shows pulsing placeholder)
+ * - Error states (shows unknown status)
+ * - Missing health data (shows unknown status with tooltip)
+ */

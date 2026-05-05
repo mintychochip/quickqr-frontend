@@ -1,0 +1,1 @@
+export { QRHealthBadge } from './QRHealthBadge';
