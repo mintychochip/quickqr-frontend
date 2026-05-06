@@ -150,15 +150,15 @@ export default function QRStudio() {
         { key: 'email', label: 'Email (optional)', placeholder: 'john@example.com' },
         { key: 'organization', label: 'Company (optional)', placeholder: 'Acme Inc' }
       ];
-      case 'calendar': return [
-        { key: 'summary', label: 'Event Title', placeholder: 'Team Meeting' },
-        { key: 'startDate', label: 'Start Date', placeholder: 'YYYY-MM-DD' },
-        { key: 'startTime', label: 'Start Time', placeholder: 'HH:MM' },
-        { key: 'endDate', label: 'End Date', placeholder: 'YYYY-MM-DD' },
-        { key: 'endTime', label: 'End Time', placeholder: 'HH:MM' },
-        { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
-        { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
-      ];
+case 'calendar': return [
+          { key: 'summary', label: 'Event Title', placeholder: 'Team Meeting' },
+          { key: 'startDate', label: 'Start Date', placeholder: 'YYYY-MM-DD' },
+          { key: 'startTime', label: 'Start Time', placeholder: 'HH:MM' },
+          { key: 'endDate', label: 'End Date', placeholder: 'YYYY-MM-DD' },
+          { key: 'endTime', label: 'End Time', placeholder: 'HH:MM' },
+          { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
+          { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
+        ];
       case 'event': return [
         { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
         { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
@@ -166,6 +166,13 @@ export default function QRStudio() {
         { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
         { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
       ];
+case 'calendar': return [
+          { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
+          { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
+          { key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' },
+          { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A', required: false },
+          { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync', required: false }
+        ];
       default: return [];
     }
   };
