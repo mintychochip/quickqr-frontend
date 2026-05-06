@@ -1,0 +1,24 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import { HealthDashboard } from '../components/health/HealthDashboard';
+
+// Check auth using cookies
+const user = await getUser(Astro.cookies);
+
+if (!user) {
+  return Astro.redirect('/auth/signin');
+}
+---
+
+<MainLayout title="Health Dashboard - QuickQR">
+  <div class="page-container">
+    <HealthDashboard client:only="react" />
+  </div>
+</MainLayout>
+
+<style>
+  .page-container {
+    min-height: calc(100vh - 64px);
+    background: #f9fafb;
+  }
+</style>
