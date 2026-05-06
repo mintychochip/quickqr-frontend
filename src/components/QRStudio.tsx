@@ -482,6 +482,7 @@ export default function QRStudio() {
                       <option value="vcard" className="bg-[#111118]">👤 Contact Card</option>
                       <option value="calendar" className="bg-[#111118]">📅 Event / Calendar</option>
                       <option value="event" className="bg-[#111118]">📅 Event</option>
+                      <option value="event" className="bg-[#111118]">📅 Event</option>
                     </select>
                   </div>
 
