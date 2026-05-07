@@ -165,9 +165,17 @@ const unmatchedCount = await supabase
             rules.map((rule, index) => (
               <div 
                 class="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition rule-item" 
+                draggable="true"
                 data-rule-id={rule.id}
                 data-priority={rule.priority}
               >
+                {/* Drag Handle */}
+                <div class="drag-handle cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 12h16M4 16h16"/>
+                  </svg>
+                </div>
+                
                 {/* Priority Controls */}
                 <div class="flex flex-col gap-1">
                   <button 
@@ -915,6 +923,78 @@ const unmatchedCount = await supabase
       }
     }
     
+    // Drag and drop reordering
+    let draggedItem = null;
+    
+    document.querySelectorAll('.rule-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        draggedItem = item;
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.dataset.ruleId);
+      });
+      
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        draggedItem = null;
+        document.querySelectorAll('.rule-item').forEach(i => i.classList.remove('drag-over'));
+      });
+      
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        if (draggedItem && draggedItem !== item) {
+          item.classList.add('drag-over');
+        }
+      });
+      
+      item.addEventListener('dragleave', () => {
+        item.classList.remove('drag-over');
+      });
+      
+      item.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        
+        if (!draggedItem || draggedItem === item) return;
+        
+        const items = Array.from(document.querySelectorAll('.rule-item'));
+        const draggedIndex = items.indexOf(draggedItem);
+        const dropIndex = items.indexOf(item);
+        
+        // Reorder the array
+        items.splice(draggedIndex, 1);
+        items.splice(dropIndex, 0, draggedItem);
+        
+        // Get new order of rule IDs
+        const ruleIds = items.map(i => i.dataset.ruleId);
+        
+        // Update visual order immediately for feedback
+        const rulesList = document.getElementById('rules-list');
+        items.forEach(i => rulesList.appendChild(i));
+        
+        // Send to server
+        try {
+          const response = await fetch(`/api/v1/qr-routing/${qrId}/reorder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rule_ids: ruleIds })
+          });
+          
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to reorder rules');
+            window.location.reload();
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+          window.location.reload();
+        }
+      });
+    });
+    
     // Save default URL
     document.getElementById('save-default-btn')?.addEventListener('click', async () => {
       const url = document.getElementById('default-url').value;
@@ -984,4 +1064,27 @@ const unmatchedCount = await supabase
       }
     });
   </script>
+  
+  <style>
+    .rule-item {
+      cursor: move;
+    }
+    .rule-item.dragging {
+      opacity: 0.5;
+      background-color: #f3f4f6;
+      border: 2px dashed #3b82f6;
+    }
+    .rule-item.drag-over {
+      border-top: 3px solid #3b82f6;
+    }
+    .drag-handle {
+      cursor: grab;
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    #rules-list.drag-over {
+      background-color: #f9fafb;
+    }
+  </style>
 </MainLayout>
