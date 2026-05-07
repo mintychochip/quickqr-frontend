@@ -242,6 +242,11 @@ export async function POST({ request, params, locals }: APIContext) {
     return reorderRules(route[0], request, locals);
   }
   
+  // Handle /api/v1/qr-routing/:qrId/test - Test routing (POST with simulation)
+  if (route?.[1] === 'test' && route[0]) {
+    return testRouting(route[0], request, locals);
+  }
+  
   return new Response(JSON.stringify({ error: 'Not found' }), {
     status: 404,
     headers: { 'Content-Type': 'application/json' }

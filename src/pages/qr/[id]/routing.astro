@@ -1,0 +1,987 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import { createServerClient } from '../../../config/supabase';
+
+// Check auth
+const user = await (async () => {
+  const cookieHeader = Astro.request.headers.get('cookie');
+  if (!cookieHeader) return null;
+  
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map(c => {
+      const [k, v] = c.trim().split('=');
+      return [k, v];
+    })
+  );
+  
+  const supabase = createServerClient(cookies);
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+})();
+
+if (!user) {
+  return Astro.redirect('/auth/signin');
+}
+
+const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect('/dashboard');
+}
+
+// Create server client
+const cookieHeader = Astro.request.headers.get('cookie') || '';
+const cookies = Object.fromEntries(
+  cookieHeader.split(';').map(c => {
+    const [k, v] = c.trim().split('=');
+    return [k, v];
+  })
+);
+const supabase = createServerClient(cookies);
+
+// Fetch QR code details
+const { data: qrCode, error: qrError } = await supabase
+  .from('qrcodes')
+  .select('id, name, destination_url, type, user_id')
+  .eq('id', id)
+  .eq('user_id', user.id)
+  .single();
+
+if (qrError || !qrCode) {
+  return Astro.redirect('/dashboard?error=qr_not_found');
+}
+
+// Fetch routing rules
+const { data: rules, error: rulesError } = await supabase
+  .from('qr_routing_rules')
+  .select('*')
+  .eq('qr_id', id)
+  .order('priority', { ascending: false });
+
+// Fetch default config
+const { data: defaultConfig } = await supabase
+  .from('qr_routing_defaults')
+  .select('*')
+  .eq('qr_id', id)
+  .single();
+
+// Fetch routing stats
+const { data: stats } = await supabase
+  .rpc('get_qr_routing_stats', { qr_uuid: id })
+  .catch(() => ({ data: null }));
+
+const unmatchedCount = await supabase
+  .from('qr_routing_logs')
+  .select('id', { count: 'exact', head: true })
+  .eq('qr_id', id)
+  .eq('matched', false)
+  .then(({ count }) => count || 0)
+  .catch(() => 0);
+---
+
+<MainLayout title={`Routing Rules - ${qrCode.name}`}>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div class="mb-8">
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+          <a href="/dashboard" class="hover:text-gray-700">Dashboard</a>
+          <span>/</span>
+          <a href={`/code/${qrCode.id}`} class="hover:text-gray-700">{qrCode.name}</a>
+          <span>/</span>
+          <span class="text-gray-900">Routing</span>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900">Dynamic Routing Rules</h1>
+        <p class="mt-2 text-gray-600">Manage where your QR code sends visitors based on time, location, device, and more.</p>
+      </div>
+
+      {/* Stats Overview */}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-sm font-medium text-gray-500">Total Rules</div>
+          <div class="mt-2 text-3xl font-bold text-gray-900">{rules?.length || 0}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-sm font-medium text-gray-500">Active Rules</div>
+          <div class="mt-2 text-3xl font-bold text-green-600">
+            {rules?.filter(r => r.enabled).length || 0}
+          </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="text-sm font-medium text-gray-500">Unmatched Scans (24h)</div>
+          <div class="mt-2 text-3xl font-bold text-yellow-600">{unmatchedCount}</div>
+        </div>
+      </div>
+
+      {/* Default Destination */}
+      <div class="bg-white rounded-lg shadow mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Default Destination</h2>
+          <p class="text-sm text-gray-500">Where visitors go when no rules match</p>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Fallback URL</label>
+              <input 
+                type="url" 
+                id="default-url"
+                value={defaultConfig?.default_url || qrCode.destination_url || ''}
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://example.com"
+              />
+            </div>
+            <div class="flex items-center gap-2 mt-6">
+              <button 
+                id="save-default-btn"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rules List */}
+      <div class="bg-white rounded-lg shadow mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">Routing Rules</h2>
+            <p class="text-sm text-gray-500">Rules are evaluated in priority order (highest first)</p>
+          </div>
+          <button 
+            id="create-rule-btn"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create Rule
+          </button>
+        </div>
+
+        <div class="divide-y divide-gray-200" id="rules-list">
+          {rules && rules.length > 0 ? (
+            rules.map((rule, index) => (
+              <div 
+                class="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition rule-item" 
+                data-rule-id={rule.id}
+                data-priority={rule.priority}
+              >
+                {/* Priority Controls */}
+                <div class="flex flex-col gap-1">
+                  <button 
+                    class="priority-up p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    disabled={index === 0}
+                    data-rule-id={rule.id}
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                    </svg>
+                  </button>
+                  <span class="text-xs font-medium text-gray-500 text-center">{rule.priority}</span>
+                  <button 
+                    class="priority-down p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    disabled={index === (rules?.length || 0) - 1}
+                    data-rule-id={rule.id}
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Rule Info */}
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      rule.enabled 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {rule.enabled ? 'Active' : 'Disabled'}
+                    </span>
+                    <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      rule.rule_type === 'time' ? 'bg-blue-100 text-blue-800' :
+                      rule.rule_type === 'geo' ? 'bg-purple-100 text-purple-800' :
+                      rule.rule_type === 'device' ? 'bg-orange-100 text-orange-800' :
+                      rule.rule_type === 'scan_count' ? 'bg-pink-100 text-pink-800' :
+                      rule.rule_type === 'utm_inject' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {rule.rule_type.replace('_', ' ')}
+                    </span>
+                    {rule.track_as_conversion && (
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        Conversion
+                      </span>
+                    )}
+                  </div>
+                  <h3 class="mt-1 text-sm font-medium text-gray-900 truncate">{rule.name}</h3>
+                  {rule.description && (
+                    <p class="text-sm text-gray-500 truncate">{rule.description}</p>
+                  )}
+                  <p class="text-xs text-gray-400 mt-1">→ {rule.destination_url}</p>
+                </div>
+
+                {/* Actions */}
+                <div class="flex items-center gap-2">
+                  <button 
+                    class="edit-rule-btn p-2 text-gray-400 hover:text-gray-600 transition"
+                    data-rule={JSON.stringify(rule)}
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button 
+                    class="delete-rule-btn p-2 text-gray-400 hover:text-red-600 transition"
+                    data-rule-id={rule.id}
+                    data-rule-name={rule.name}
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div class="px-6 py-12 text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7"/>
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No rules yet</h3>
+              <p class="mt-1 text-sm text-gray-500">Get started by creating your first routing rule.</p>
+              <button 
+                id="create-rule-btn-empty"
+                class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              >
+                Create Rule
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Test Simulator */}
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Test Routing Simulator</h2>
+          <p class="text-sm text-gray-500">Preview where visitors will be sent based on different conditions</p>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <input 
+                  type="text" 
+                  id="test-country"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="US"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Region/State</label>
+                <input 
+                  type="text" 
+                  id="test-region"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="California"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <input 
+                  type="text" 
+                  id="test-city"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Los Angeles"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">User Agent</label>
+                <select 
+                  id="test-user-agent"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Custom...</option>
+                  <option value="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)">iPhone (iOS)</option>
+                  <option value="Mozilla/5.0 (Linux; Android 13; SM-G991B)">Android Phone</option>
+                  <option value="Mozilla/5.0 (Windows NT 10.0; Win64; x64)">Windows Desktop</option>
+                  <option value="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)">macOS Desktop</option>
+                  <option value="Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X)">iPad</option>
+                </select>
+                <textarea 
+                  id="test-user-agent-custom"
+                  class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={2}
+                  placeholder="Enter custom user agent..."
+                />
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Timestamp</label>
+                <input 
+                  type="datetime-local" 
+                  id="test-timestamp"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Scan Count</label>
+                <input 
+                  type="number" 
+                  id="test-scan-count"
+                  min="0"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                <input 
+                  type="text" 
+                  id="test-timezone"
+                  value="UTC"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end">
+            <button 
+              id="test-routing-btn"
+              class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Test Routing
+            </button>
+          </div>
+          <div id="test-result" class="mt-6 hidden">
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-medium text-gray-900 mb-2">Test Result</h3>
+              <div id="test-result-content" class="space-y-2 text-sm"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Rule Modal */}
+  <div id="rule-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="modal-title" class="text-lg font-semibold text-gray-900">Create Rule</h3>
+        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form id="rule-form" class="p-6 space-y-4">
+        <input type="hidden" id="rule-id" />
+        <input type="hidden" id="qr-id" value={id} />
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rule Name *</label>
+          <input 
+            type="text" 
+            id="rule-name"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., US Mobile Users"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea 
+            id="rule-description"
+            rows={2}
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Optional description of what this rule does"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rule Type *</label>
+          <select 
+            id="rule-type"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select type...</option>
+            <option value="time">Time-based (schedule)</option>
+            <option value="geo">Geographic (country/region/city)</option>
+            <option value="device">Device (OS/browser/type)</option>
+            <option value="scan_count">Scan Count threshold</option>
+            <option value="utm_inject">UTM Parameter Injection</option>
+          </select>
+        </div>
+
+        {/* Dynamic config sections */}
+        <div id="time-config" class="config-section hidden space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input type="time" id="time-start" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <input type="time" id="time-end" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Days of Week</label>
+            <div class="flex flex-wrap gap-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                <label class="inline-flex items-center">
+                  <input type="checkbox" name="days" value={i} class="rounded border-gray-300" />
+                  <span class="ml-1 text-sm">{day}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <input type="date" id="date-start" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <input type="date" id="date-end" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            </div>
+          </div>
+        </div>
+
+        <div id="geo-config" class="config-section hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Countries (comma-separated)</label>
+            <input 
+              type="text" 
+              id="geo-countries"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="US, CA, MX"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Regions (comma-separated)</label>
+            <input 
+              type="text" 
+              id="geo-regions"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="California, Texas"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cities (comma-separated)</label>
+            <input 
+              type="text" 
+              id="geo-cities"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Los Angeles, San Francisco"
+            />
+          </div>
+          <label class="inline-flex items-center">
+            <input type="checkbox" id="geo-exclude" class="rounded border-gray-300" />
+            <span class="ml-2 text-sm text-gray-700">Exclude mode (match if NOT in these locations)</span>
+          </label>
+        </div>
+
+        <div id="device-config" class="config-section hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Operating Systems</label>
+            <div class="flex flex-wrap gap-2">
+              {['iOS', 'Android', 'Windows', 'macOS', 'Linux'].map(os => (
+                <label class="inline-flex items-center">
+                  <input type="checkbox" name="os" value={os} class="rounded border-gray-300" />
+                  <span class="ml-1 text-sm">{os}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Browsers</label>
+            <div class="flex flex-wrap gap-2">
+              {['Chrome', 'Safari', 'Firefox', 'Edge'].map(browser => (
+                <label class="inline-flex items-center">
+                  <input type="checkbox" name="browser" value={browser} class="rounded border-gray-300" />
+                  <span class="ml-1 text-sm">{browser}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Device Types</label>
+            <div class="flex flex-wrap gap-2">
+              {['mobile', 'tablet', 'desktop'].map(type => (
+                <label class="inline-flex items-center">
+                  <input type="checkbox" name="device-type" value={type} class="rounded border-gray-300" />
+                  <span class="ml-1 text-sm capitalize">{type}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <label class="inline-flex items-center">
+            <input type="checkbox" id="device-exclude" class="rounded border-gray-300" />
+            <span class="ml-2 text-sm text-gray-700">Exclude mode (match if NOT these devices)</span>
+          </label>
+        </div>
+
+        <div id="scan-count-config" class="config-section hidden space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Threshold</label>
+              <input 
+                type="number" 
+                id="scan-threshold"
+                min="0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="100"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Operator</label>
+              <select id="scan-operator" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <option value="lt">Less than (&lt;)</option>
+                <option value="lte">Less than or equal (≤)</option>
+                <option value="gt">Greater than (&gt;)</option>
+                <option value="gte">Greater than or equal (≥)</option>
+                <option value="eq">Equal (=)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="utm-config" class="config-section hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">UTM Source</label>
+            <input type="text" id="utm-source" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="qr_code" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">UTM Medium</label>
+            <input type="text" id="utm-medium" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="scan" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">UTM Campaign</label>
+            <input type="text" id="utm-campaign" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">UTM Content</label>
+            <input type="text" id="utm-content" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <label class="inline-flex items-center">
+            <input type="checkbox" id="utm-preserve" checked class="rounded border-gray-300" />
+            <span class="ml-2 text-sm text-gray-700">Preserve existing UTM parameters</span>
+          </label>
+        </div>
+
+        <div class="border-t border-gray-200 pt-4 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Destination URL *</label>
+            <input 
+              type="url" 
+              id="rule-destination"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://example.com"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Match Behavior</label>
+              <select id="rule-behavior" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <option value="redirect">Redirect</option>
+                <option value="block">Block</option>
+                <option value="allow">Allow (no redirect)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+              <input 
+                type="number" 
+                id="rule-priority"
+                min="0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="10"
+              />
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="rule-enabled" checked class="rounded border-gray-300" />
+              <span class="ml-2 text-sm text-gray-700">Enabled</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="rule-conversion" class="rounded border-gray-300" />
+              <span class="ml-2 text-sm text-gray-700">Track as conversion</span>
+            </label>
+          </div>
+          <div id="conversion-value-container" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Conversion Value</label>
+            <input 
+              type="number" 
+              id="rule-conversion-value"
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button 
+            type="button"
+            id="cancel-rule"
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit"
+            id="save-rule"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            Save Rule
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script define:vars={{ qrId: id }}>
+    // Modal handling
+    const modal = document.getElementById('rule-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const ruleForm = document.getElementById('rule-form');
+    const ruleIdInput = document.getElementById('rule-id');
+    
+    // Open modal for create
+    document.querySelectorAll('#create-rule-btn, #create-rule-btn-empty').forEach(btn => {
+      btn?.addEventListener('click', () => {
+        modalTitle.textContent = 'Create Rule';
+        ruleIdInput.value = '';
+        ruleForm.reset();
+        showConfigSection('');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+    });
+    
+    // Open modal for edit
+    document.querySelectorAll('.edit-rule-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rule = JSON.parse(btn.dataset.rule);
+        modalTitle.textContent = 'Edit Rule';
+        ruleIdInput.value = rule.id;
+        document.getElementById('rule-name').value = rule.name;
+        document.getElementById('rule-description').value = rule.description || '';
+        document.getElementById('rule-type').value = rule.rule_type;
+        document.getElementById('rule-destination').value = rule.destination_url;
+        document.getElementById('rule-behavior').value = rule.match_behavior;
+        document.getElementById('rule-priority').value = rule.priority;
+        document.getElementById('rule-enabled').checked = rule.enabled;
+        document.getElementById('rule-conversion').checked = rule.track_as_conversion;
+        document.getElementById('rule-conversion-value').value = rule.conversion_value || '';
+        
+        showConfigSection(rule.rule_type);
+        populateConfig(rule.rule_type, rule.config);
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+    });
+    
+    // Close modal
+    document.getElementById('close-modal')?.addEventListener('click', closeModal);
+    document.getElementById('cancel-rule')?.addEventListener('click', closeModal);
+    
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    
+    // Type selector change
+    document.getElementById('rule-type')?.addEventListener('change', (e) => {
+      showConfigSection(e.target.value);
+    });
+    
+    function showConfigSection(type) {
+      document.querySelectorAll('.config-section').forEach(s => s.classList.add('hidden'));
+      if (type) {
+        document.getElementById(`${type}-config`)?.classList.remove('hidden');
+      }
+    }
+    
+    function populateConfig(type, config) {
+      if (!config) return;
+      
+      switch (type) {
+        case 'time':
+          document.getElementById('time-start').value = config.start_time || '';
+          document.getElementById('time-end').value = config.end_time || '';
+          document.getElementById('date-start').value = config.start_date || '';
+          document.getElementById('date-end').value = config.end_date || '';
+          document.querySelectorAll('input[name="days"]').forEach((cb, i) => {
+            cb.checked = config.days_of_week?.includes(i);
+          });
+          break;
+        case 'geo':
+          document.getElementById('geo-countries').value = config.countries?.join(', ') || '';
+          document.getElementById('geo-regions').value = config.regions?.join(', ') || '';
+          document.getElementById('geo-cities').value = config.cities?.join(', ') || '';
+          document.getElementById('geo-exclude').checked = config.exclude_mode || false;
+          break;
+        case 'device':
+          document.querySelectorAll('input[name="os"]').forEach(cb => {
+            cb.checked = config.os?.includes(cb.value);
+          });
+          document.querySelectorAll('input[name="browser"]').forEach(cb => {
+            cb.checked = config.browsers?.includes(cb.value);
+          });
+          document.querySelectorAll('input[name="device-type"]').forEach(cb => {
+            cb.checked = config.device_types?.includes(cb.value);
+          });
+          document.getElementById('device-exclude').checked = config.exclude_mode || false;
+          break;
+        case 'scan_count':
+          document.getElementById('scan-threshold').value = config.threshold || '';
+          document.getElementById('scan-operator').value = config.operator || 'lt';
+          break;
+        case 'utm_inject':
+          document.getElementById('utm-source').value = config.utm_source || '';
+          document.getElementById('utm-medium').value = config.utm_medium || '';
+          document.getElementById('utm-campaign').value = config.utm_campaign || '';
+          document.getElementById('utm-content').value = config.utm_content || '';
+          document.getElementById('utm-preserve').checked = config.preserve_existing ?? true;
+          break;
+      }
+    }
+    
+    // Form submission
+    ruleForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const ruleId = ruleIdInput.value;
+      const type = document.getElementById('rule-type').value;
+      const config = buildConfig(type);
+      
+      const body = {
+        name: document.getElementById('rule-name').value,
+        description: document.getElementById('rule-description').value,
+        rule_type: type,
+        config,
+        destination_url: document.getElementById('rule-destination').value,
+        priority: parseInt(document.getElementById('rule-priority').value) || 0,
+        enabled: document.getElementById('rule-enabled').checked,
+        match_behavior: document.getElementById('rule-behavior').value,
+        track_as_conversion: document.getElementById('rule-conversion').checked,
+        conversion_value: document.getElementById('rule-conversion-value').value 
+          ? parseFloat(document.getElementById('rule-conversion-value').value) 
+          : null
+      };
+      
+      try {
+        const url = ruleId 
+          ? `/api/v1/qr-routing/${qrId}/rules/${ruleId}`
+          : `/api/v1/qr-routing/${qrId}/rules`;
+        
+        const response = await fetch(url, {
+          method: ruleId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          const error = await response.json();
+          alert('Error: ' + (error.error || 'Failed to save rule'));
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    });
+    
+    function buildConfig(type) {
+      switch (type) {
+        case 'time':
+          return {
+            start_time: document.getElementById('time-start').value || undefined,
+            end_time: document.getElementById('time-end').value || undefined,
+            days_of_week: Array.from(document.querySelectorAll('input[name="days"]:checked')).map(cb => parseInt(cb.value)),
+            start_date: document.getElementById('date-start').value || undefined,
+            end_date: document.getElementById('date-end').value || undefined
+          };
+        case 'geo':
+          return {
+            countries: document.getElementById('geo-countries').value.split(',').map(s => s.trim()).filter(Boolean),
+            regions: document.getElementById('geo-regions').value.split(',').map(s => s.trim()).filter(Boolean),
+            cities: document.getElementById('geo-cities').value.split(',').map(s => s.trim()).filter(Boolean),
+            exclude_mode: document.getElementById('geo-exclude').checked
+          };
+        case 'device':
+          return {
+            os: Array.from(document.querySelectorAll('input[name="os"]:checked')).map(cb => cb.value),
+            browsers: Array.from(document.querySelectorAll('input[name="browser"]:checked')).map(cb => cb.value),
+            device_types: Array.from(document.querySelectorAll('input[name="device-type"]:checked')).map(cb => cb.value),
+            exclude_mode: document.getElementById('device-exclude').checked
+          };
+        case 'scan_count':
+          return {
+            threshold: parseInt(document.getElementById('scan-threshold').value) || 0,
+            operator: document.getElementById('scan-operator').value
+          };
+        case 'utm_inject':
+          return {
+            utm_source: document.getElementById('utm-source').value || undefined,
+            utm_medium: document.getElementById('utm-medium').value || undefined,
+            utm_campaign: document.getElementById('utm-campaign').value || undefined,
+            utm_content: document.getElementById('utm-content').value || undefined,
+            preserve_existing: document.getElementById('utm-preserve').checked
+          };
+        default:
+          return {};
+      }
+    }
+    
+    // Delete rule
+    document.querySelectorAll('.delete-rule-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const ruleId = btn.dataset.ruleId;
+        const ruleName = btn.dataset.ruleName;
+        
+        if (!confirm(`Delete rule "${ruleName}"?`)) return;
+        
+        try {
+          const response = await fetch(`/api/v1/qr-routing/${qrId}/rules/${ruleId}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to delete rule');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    });
+    
+    // Priority reordering
+    document.querySelectorAll('.priority-up').forEach(btn => {
+      btn.addEventListener('click', () => reorderRules(btn.dataset.ruleId, 'up'));
+    });
+    
+    document.querySelectorAll('.priority-down').forEach(btn => {
+      btn.addEventListener('click', () => reorderRules(btn.dataset.ruleId, 'down'));
+    });
+    
+    async function reorderRules(ruleId, direction) {
+      const items = Array.from(document.querySelectorAll('.rule-item'));
+      const currentIndex = items.findIndex(item => item.dataset.ruleId === ruleId);
+      
+      if (direction === 'up' && currentIndex > 0) {
+        items.splice(currentIndex - 1, 0, items.splice(currentIndex, 1)[0]);
+      } else if (direction === 'down' && currentIndex < items.length - 1) {
+        items.splice(currentIndex + 1, 0, items.splice(currentIndex, 1)[0]);
+      }
+      
+      const ruleIds = items.map(item => item.dataset.ruleId);
+      
+      try {
+        const response = await fetch(`/api/v1/qr-routing/${qrId}/reorder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rule_ids: ruleIds })
+        });
+        
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to reorder rules');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+    
+    // Save default URL
+    document.getElementById('save-default-btn')?.addEventListener('click', async () => {
+      const url = document.getElementById('default-url').value;
+      
+      try {
+        const response = await fetch(`/api/v1/qr-routing/${qrId}/defaults`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ default_url: url })
+        });
+        
+        if (response.ok) {
+          alert('Default URL saved');
+        } else {
+          alert('Failed to save default URL');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    });
+    
+    // Conversion toggle
+    document.getElementById('rule-conversion')?.addEventListener('change', (e) => {
+      document.getElementById('conversion-value-container').classList.toggle('hidden', !e.target.checked);
+    });
+    
+    // Test routing
+    document.getElementById('test-routing-btn')?.addEventListener('click', async () => {
+      const userAgentSelect = document.getElementById('test-user-agent');
+      const userAgent = userAgentSelect.value || document.getElementById('test-user-agent-custom').value;
+      
+      const body = {
+        simulate_context: {
+          country: document.getElementById('test-country').value || null,
+          region: document.getElementById('test-region').value || null,
+          city: document.getElementById('test-city').value || null,
+          user_agent: userAgent || null,
+          timestamp: document.getElementById('test-timestamp').value || new Date().toISOString(),
+          scan_count: parseInt(document.getElementById('test-scan-count').value) || 0,
+          timezone: document.getElementById('test-timezone').value || 'UTC'
+        }
+      };
+      
+      try {
+        const response = await fetch(`/api/v1/qr-routing/${qrId}/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        const result = await response.json();
+        
+        const resultDiv = document.getElementById('test-result');
+        const contentDiv = document.getElementById('test-result-content');
+        
+        contentDiv.innerHTML = `
+          <p><strong>Destination:</strong> <a href="${result.destination_url}" target="_blank" class="text-blue-600 hover:underline">${result.destination_url}</a></p>
+          <p><strong>Matched Rule:</strong> ${result.matched_rule ? result.matched_rule.name : 'None (using default)'}</p>
+          <p><strong>Rule Type:</strong> ${result.matched_rule ? result.matched_rule.rule_type : 'N/A'}</p>
+          <p><strong>Evaluation Time:</strong> ${result.evaluation_time_ms}ms</p>
+          ${result.match_reason ? `<p><strong>Match Reason:</strong> ${JSON.stringify(result.match_reason)}</p>` : ''}
+        `;
+        
+        resultDiv.classList.remove('hidden');
+      } catch (err) {
+        alert('Error testing routing: ' + err.message);
+      }
+    });
+  </script>
+</MainLayout>
