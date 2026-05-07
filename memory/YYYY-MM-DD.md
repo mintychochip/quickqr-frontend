@@ -1,0 +1,1 @@
+[proactive] Mode A — Added QRStudio Calendar QR tests — 9 comprehensive tests for VEVENT iCal format, type detection, form fields — merged with existing calendar feature from fc1a2ba — all 305 tests passing — commit d9598d8

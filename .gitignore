@@ -29,23 +29,20 @@ supabase/.temp/
 # Local Netlify folder
 .netlify
 
-# Memory directory (agent logs)
-memory/
-
 # Wrangler local state
 .wrangler/
 
 # OpenClaw agent config
 .openclaw/
-AGENTS.md
-HEARTBEAT.md
-IDENTITY.md
-SOUL.md
-TOOLS.md
-USER.md
 
 # Task files
 task-*.md
 
 # Embedded repositories
 menu-ocr/
+
+# Agent working files (do not commit)
+agent.json
+opencode-task.md
+knn_shear.py
+knn_with_shear.py

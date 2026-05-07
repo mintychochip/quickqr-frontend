@@ -457,7 +457,10 @@ const DashboardQRList = ({ selectedFolder, selectedTags }: DashboardQRListProps)
                 ) : (
                   <p className="qr-scans static">Static — scans not tracked</p>
                 )}
-                {qr.mode === 'dynamic' && <span className="qr-badge dynamic">Dynamic</span>}
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', alignItems: 'center' }}>
+                  {qr.mode === 'dynamic' && <span className="qr-badge dynamic">Dynamic</span>}
+                  {qr.mode === 'dynamic' && <QRHealthBadge qrId={qr.id} compact />}
+                </div>
               </div>
               
               <div className="qr-actions-enhanced">

@@ -149,7 +149,7 @@ describe('QRStudio Calendar QR Support', () => {
     });
   });
 
-describe('QRStudio Calendar Form Fields', () => {
+  describe('Calendar Form Fields', () => {
     const getFields = (qrType: string) => {
       switch (qrType) {
         case 'url': return [{ key: 'url', label: 'URL / Website', placeholder: 'https://example.com' }];
@@ -178,15 +178,6 @@ describe('QRStudio Calendar Form Fields', () => {
           { key: 'organization', label: 'Company (optional)', placeholder: 'Acme Inc' }
         ];
         case 'calendar': return [
-          { key: 'summary', label: 'Event Title', placeholder: 'Team Meeting' },
-          { key: 'startDate', label: 'Start Date', placeholder: 'YYYY-MM-DD' },
-          { key: 'startTime', label: 'Start Time', placeholder: 'HH:MM' },
-          { key: 'endDate', label: 'End Date', placeholder: 'YYYY-MM-DD' },
-          { key: 'endTime', label: 'End Time', placeholder: 'HH:MM' },
-          { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
-          { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
-        ];
-        case 'event': return [
           { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
           { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
           { key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' },
@@ -199,143 +190,20 @@ describe('QRStudio Calendar Form Fields', () => {
 
     test('returns correct fields for calendar type', () => {
       const fields = getFields('calendar');
-      expect(fields).toHaveLength(7);
-      expect(fields[0]).toEqual({ key: 'summary', label: 'Event Title', placeholder: 'Team Meeting' });
-      expect(fields[1]).toEqual({ key: 'startDate', label: 'Start Date', placeholder: 'YYYY-MM-DD' });
-      expect(fields[2]).toEqual({ key: 'startTime', label: 'Start Time', placeholder: 'HH:MM' });
-      expect(fields[3]).toEqual({ key: 'endDate', label: 'End Date', placeholder: 'YYYY-MM-DD' });
-      expect(fields[4]).toEqual({ key: 'endTime', label: 'End Time', placeholder: 'HH:MM' });
-      expect(fields[5]).toEqual({ key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' });
-      expect(fields[6]).toEqual({ key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' });
+      expect(fields).toHaveLength(5);
+      expect(fields[0]).toEqual({ key: 'title', label: 'Event Title', placeholder: 'Team Meeting' });
+      expect(fields[1]).toEqual({ key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' });
+      expect(fields[2]).toEqual({ key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' });
+      expect(fields[3]).toEqual({ key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' });
+      expect(fields[4]).toEqual({ key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' });
     });
 
     test('calendar fields include required and optional fields', () => {
       const fields = getFields('calendar');
       const requiredFields = fields.filter(f => !f.label.includes('optional'));
       const optionalFields = fields.filter(f => f.label.includes('optional'));
-      expect(requiredFields).toHaveLength(5); // summary, startDate, startTime, endDate, endTime
+      expect(requiredFields).toHaveLength(3); // title, startDate, endDate
       expect(optionalFields).toHaveLength(2); // location, description
-    });
-  });
-  
-  describe('QRStudio Event QR Code Tests', () => {
-    const generateQRContent = (type: string, data: Record<string, string>): string => {
-      switch (type) {
-        case 'url': return data.url || '';
-        case 'text': return data.text || '';
-        case 'email':
-          const subject = data.subject ? `?subject=${encodeURIComponent(data.subject)}` : '';
-          const body = data.body ? `${subject ? '&' : '?'}body=${encodeURIComponent(data.body)}` : '';
-          return `mailto:${data.email || ''}${subject}${body}`;
-        case 'phone': return `tel:${data.phone || ''}`;
-        case 'sms':
-          const smsBody = data.message ? `?body=${encodeURIComponent(data.message)}` : '';
-          return `sms:${data.phone || ''}${smsBody}`;
-        case 'wifi':
-          return `WIFI:T:${data.encryption || 'WPA'};S:${data.ssid || ''};P:${data.password || ''};${data.hidden === 'true' ? 'H:true;' : ''};`;
-        case 'vcard':
-          return `BEGIN:VCARD
-VERSION:3.0
-N:${data.lastName || ''};${data.firstName || ''};;;
-FN:${data.firstName || ''} ${data.lastName || ''}
-${data.phone ? `TEL:${data.phone}
-` : ''}${data.email ? `EMAIL:${data.email}
-` : ''}END:VCARD`;
-        case 'calendar':
-          return `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:${data.title || ''}
-DTSTART:${data.startDate || ''}
-DTEND:${data.endDate || ''}${data.location ? `
-LOCATION:${data.location}` : ''}${data.description ? `
-DESCRIPTION:${data.description}` : ''}
-END:VEVENT
-END:VCALENDAR`;
-        case 'event':
-          return `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:${data.title || ''}
-DTSTART:${data.startDate || ''}
-DTEND:${data.endDate || ''}${data.location ? `
-LOCATION:${data.location}` : ''}${data.description ? `
-DESCRIPTION:${data.description}` : ''}
-END:VEVENT
-END:VCALENDAR`;
-        default: return '';
-      }
-    };
-
-    test('should generate correct VEVENT iCal format', () => {
-      // Test that the VEVENT format is correctly generated
-      const testData = {
-        title: 'Team Meeting',
-        startDate: '20250115T140000',
-        endDate: '20250115T150000',
-        location: 'Conference Room A',
-        description: 'Weekly team sync'
-      };
-      
-      const expected = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:Team Meeting
-DTSTART:20250115T140000
-DTEND:20250115T150000
-LOCATION:Conference Room A
-DESCRIPTION:Weekly team sync
-END:VEVENT
-END:VCALENDAR`;
-      
-      // Expect the generated content to match the expected format
-      expect(generateQRContent('event', testData)).toBe(`BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:Team Meeting
-DTSTART:20250115T140000
-DTEND:20250115T150000
-LOCATION:Conference Room A
-DESCRIPTION:Weekly team sync
-END:VEVENT
-END:VCALENDAR`);
-    });
-    
-    test('should render event form fields correctly', () => {
-      // Test that the event form fields are correctly rendered
-      const getFields = (qrType: string) => {
-        switch (qrType) {
-          case 'event': return [
-            { key: 'title', label: 'Event Title', placeholder: 'Team Meeting' },
-            { key: 'startDate', label: 'Start Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T140000' },
-            { key: 'endDate', label: 'End Date (YYYYMMDDTHHMMSS)', placeholder: '20250115T150000' },
-            { key: 'location', label: 'Location (optional)', placeholder: 'Conference Room A' },
-            { key: 'description', label: 'Description (optional)', placeholder: 'Weekly team sync' }
-          ];
-          default: return [];
-        }
-      };
-      
-      const fields = getFields('event');
-      expect(fields).toHaveLength(5);
-      expect(fields[0].key).toBe('title');
-      expect(fields[1].key).toBe('startDate');
-      expect(fields[2].key).toBe('endDate');
-      expect(fields[3].key).toBe('location');
-      expect(fields[4].key).toBe('description');
-    });
-    
-    test('should detect BEGIN:VCALENDAR in scanner', () => {
-      const result = 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Test\nEND:VEVENT\nEND:VCALENDAR';
-      let type = 'text';
-      if (result.startsWith('http://') || result.startsWith('https://')) type = 'url';
-      else if (result.startsWith('mailto:')) type = 'email';
-      else if (result.startsWith('tel:')) type = 'phone';
-      else if (result.startsWith('sms:')) type = 'sms';
-      else if (result.startsWith('WIFI:')) type = 'wifi';
-      else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
-      else if (result.startsWith('BEGIN:VCALENDAR')) type = 'event';
-      expect(type).toBe('event');
     });
   });
 });
