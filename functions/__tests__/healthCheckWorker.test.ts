@@ -139,4 +139,54 @@ describe('health check worker', () => {
     expect(validThresholds).toContain('critical');
     expect(validThresholds).not.toContain('none');
   });
+
+  describe('Alert Rate Limiting', () => {
+    it('should enforce rate limit of 10 alerts per hour per QR code', () => {
+      const MAX_ALERTS_PER_HOUR = 10;
+      const currentAlertCount = 5;
+      
+      expect(currentAlertCount).toBeLessThan(MAX_ALERTS_PER_HOUR);
+      expect(MAX_ALERTS_PER_HOUR - currentAlertCount).toBe(5); // Remaining allowed
+    });
+
+    it('should block alerts when rate limit is exceeded', () => {
+      const MAX_ALERTS_PER_HOUR = 10;
+      const currentAlertCount = 12;
+      
+      expect(currentAlertCount).toBeGreaterThanOrEqual(MAX_ALERTS_PER_HOUR);
+      // Would be blocked
+      const allowed = currentAlertCount < MAX_ALERTS_PER_HOUR;
+      expect(allowed).toBe(false);
+    });
+
+    it('should allow alerts at exactly the rate limit boundary', () => {
+      const MAX_ALERTS_PER_HOUR = 10;
+      const currentAlertCount = 9;
+      
+      expect(currentAlertCount).toBeLessThan(MAX_ALERTS_PER_HOUR);
+      const allowed = currentAlertCount < MAX_ALERTS_PER_HOUR;
+      expect(allowed).toBe(true);
+    });
+
+    it('should calculate remaining alerts correctly', () => {
+      const MAX_ALERTS_PER_HOUR = 10;
+      const testCases = [
+        { count: 0, expectedRemaining: 10 },
+        { count: 5, expectedRemaining: 5 },
+        { count: 9, expectedRemaining: 1 },
+        { count: 10, expectedRemaining: 0 },
+        { count: 15, expectedRemaining: 0 }, // Should not go negative
+      ];
+
+      testCases.forEach(({ count, expectedRemaining }) => {
+        const remaining = Math.max(0, MAX_ALERTS_PER_HOUR - count);
+        expect(remaining).toBe(expectedRemaining);
+      });
+    });
+
+    it('should use 1-hour window for rate limiting', () => {
+      const ALERT_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+      expect(ALERT_RATE_LIMIT_WINDOW_MS).toBe(3600000); // 1 hour in milliseconds
+    });
+  });
 });

@@ -6,6 +6,8 @@ const HEALTH_CHECK_TIMEOUT_MS = 10000; // 10 second timeout
 const WARNING_RESPONSE_TIME_MS = 5000; // 5 seconds
 const MAX_REDIRECTS = 10;
 const BATCH_SIZE = 50; // Process QR codes in batches
+const ALERT_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour window
+const MAX_ALERTS_PER_HOUR = 10; // Max 10 alerts per hour per QR code
 
 interface HealthCheckResult {
   status: 'healthy' | 'warning' | 'critical' | 'unknown';
@@ -409,6 +411,28 @@ async function sendWebhookAlert(
   }
 }
 
+// Check rate limit for alerts on a QR code
+async function checkAlertRateLimit(
+  supabaseClient: any,
+  qrId: string
+): Promise<{ allowed: boolean; remaining: number }> {
+  const windowStart = new Date(Date.now() - ALERT_RATE_LIMIT_WINDOW_MS).toISOString();
+  
+  const { count, error } = await supabaseClient
+    .from('qr_health_alerts')
+    .select('*', { count: 'exact', head: true })
+    .eq('qr_code_id', qrId)
+    .gte('created_at', windowStart);
+
+  if (error) {
+    console.error('Rate limit check failed:', error);
+    return { allowed: false, remaining: 0 };
+  }
+
+  const remaining = Math.max(0, MAX_ALERTS_PER_HOUR - (count || 0));
+  return { allowed: remaining > 0, remaining };
+}
+
 async function maybeCreateAlert(
   supabaseClient: any,
   qrId: string,
@@ -417,6 +441,13 @@ async function maybeCreateAlert(
 ): Promise<void> {
   // Only alert on status change to warning or critical
   if (result.status === 'healthy' || result.status === previousStatus) {
+    return;
+  }
+  
+  // Check rate limit before creating alert
+  const { allowed, remaining } = await checkAlertRateLimit(supabaseClient, qrId);
+  if (!allowed) {
+    console.log(`Rate limit exceeded for QR ${qrId}, skipping alert. Remaining: ${remaining}`);
     return;
   }
   
