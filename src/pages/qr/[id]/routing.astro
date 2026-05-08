@@ -1,23 +1,9 @@
 ---
 import MainLayout from '../../../layouts/MainLayout.astro';
-import { createServerClient } from '../../../config/supabase';
+import { createServerClient, getUser } from '../../../lib/supabase';
 
-// Check auth
-const user = await (async () => {
-  const cookieHeader = Astro.request.headers.get('cookie');
-  if (!cookieHeader) return null;
-  
-  const cookies = Object.fromEntries(
-    cookieHeader.split(';').map(c => {
-      const [k, v] = c.trim().split('=');
-      return [k, v];
-    })
-  );
-  
-  const supabase = createServerClient(cookies);
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-})();
+// Check auth using cookies
+const user = await getUser(Astro.cookies);
 
 if (!user) {
   return Astro.redirect('/auth/signin');
@@ -28,15 +14,8 @@ if (!id) {
   return Astro.redirect('/dashboard');
 }
 
-// Create server client
-const cookieHeader = Astro.request.headers.get('cookie') || '';
-const cookies = Object.fromEntries(
-  cookieHeader.split(';').map(c => {
-    const [k, v] = c.trim().split('=');
-    return [k, v];
-  })
-);
-const supabase = createServerClient(cookies);
+// Create server client with cookies for data fetching
+const supabase = createServerClient(Astro.cookies);
 
 // Fetch QR code details
 const { data: qrCode, error: qrError } = await supabase
