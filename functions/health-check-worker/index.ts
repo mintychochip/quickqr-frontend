@@ -252,6 +252,163 @@ async function saveHealthCheck(
   }
 }
 
+async function getQRCodeDetails(supabaseClient: any, qrId: string): Promise<{name: string, destination_url: string, user_id: string} | null> {
+  const { data: qr } = await supabaseClient
+    .from('qr_codes')
+    .select('name, destination_url, user_id')
+    .eq('id', qrId)
+    .single();
+  return qr;
+}
+
+async function getUserEmail(supabaseClient: any, userId: string): Promise<string | null> {
+  const { data: prefs } = await supabaseClient
+    .from('user_health_notification_prefs')
+    .select('email_address, email_enabled')
+    .eq('user_id', userId)
+    .single();
+  
+  if (prefs?.email_enabled === false) return null;
+  return prefs?.email_address || null;
+}
+
+async function sendEmailAlert(
+  qrName: string,
+  qrUrl: string,
+  status: string,
+  errorMessage: string | undefined,
+  userEmail: string
+): Promise<boolean> {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) {
+    console.log('RESEND_API_KEY not configured, skipping email alert');
+    return false;
+  }
+
+  const statusEmoji = status === 'critical' ? '🔴' : '🟡';
+  const statusText = status === 'critical' ? 'Critical' : 'Warning';
+  
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'QuickQR Health Alerts <health@quickqr.app>',
+        to: userEmail,
+        subject: `${statusEmoji} QR Code Health Alert: ${qrName} is ${statusText}`,
+        html: `
+          <h2>QR Code Health Alert</h2>
+          <p>Your QR code <strong>${qrName}</strong> is experiencing issues.</p>
+          <ul>
+            <li><strong>Status:</strong> ${statusText}</li>
+            <li><strong>Destination URL:</strong> ${qrUrl}</li>
+            ${errorMessage ? `<li><strong>Error:</strong> ${errorMessage}</li>` : ''}
+          </ul>
+          <p><a href="https://quickqr.app/dashboard">View your dashboard</a> for more details.</p>
+        `,
+      }),
+    });
+
+    return response.ok;
+  } catch (err) {
+    console.error('Failed to send email alert:', err);
+    return false;
+  }
+}
+
+async function sendSlackAlert(
+  qrName: string,
+  qrUrl: string,
+  status: string,
+  errorMessage: string | undefined,
+  slackWebhookUrl: string
+): Promise<boolean> {
+  const statusEmoji = status === 'critical' ? '🔴' : '🟡';
+  const statusText = status === 'critical' ? 'Critical' : 'Warning';
+  
+  try {
+    const response = await fetch(slackWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `${statusEmoji} QR Code Health Alert`,
+        blocks: [
+          {
+            type: 'header',
+            text: {
+              type: 'plain_text',
+              text: `${statusEmoji} QR Code Health Alert`,
+            },
+          },
+          {
+            type: 'section',
+            fields: [
+              { type: 'mrkdwn', text: `*QR Code:*\n${qrName}` },
+              { type: 'mrkdwn', text: `*Status:*\n${statusText}` },
+              { type: 'mrkdwn', text: `*URL:*\n${qrUrl}` },
+              ...(errorMessage ? [{ type: 'mrkdwn', text: `*Error:*\n${errorMessage}` }] : []),
+            ],
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: 'View Dashboard' },
+                url: 'https://quickqr.app/dashboard',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    return response.ok;
+  } catch (err) {
+    console.error('Failed to send Slack alert:', err);
+    return false;
+  }
+}
+
+async function sendWebhookAlert(
+  qrName: string,
+  qrUrl: string,
+  status: string,
+  errorMessage: string | undefined,
+  webhookUrl: string,
+  customHeaders: Record<string, string> | null
+): Promise<boolean> {
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...customHeaders,
+    };
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        event: 'qr_health_alert',
+        timestamp: new Date().toISOString(),
+        data: {
+          qr_name: qrName,
+          qr_url: qrUrl,
+          status,
+          error_message: errorMessage,
+        },
+      }),
+    });
+
+    return response.ok;
+  } catch (err) {
+    console.error('Failed to send webhook alert:', err);
+    return false;
+  }
+}
+
 async function maybeCreateAlert(
   supabaseClient: any,
   qrId: string,
@@ -287,19 +444,95 @@ async function maybeCreateAlert(
     .single();
     
   if (!latestCheck) return;
-  
-  // Create in-app alert
-  const { error } = await supabaseClient
-    .from('qr_health_alerts')
-    .insert({
+
+  // Get QR code details for notifications
+  const qrDetails = await getQRCodeDetails(supabaseClient, qrId);
+  if (!qrDetails) return;
+
+  // Get user's notification preferences
+  const { data: notifPrefs } = await supabaseClient
+    .from('user_health_notification_prefs')
+    .select('*')
+    .eq('user_id', qrDetails.user_id)
+    .single();
+
+  // Create in-app alert (always)
+  const alertsToInsert: Array<{
+    qr_code_id: string;
+    health_check_id: string;
+    alert_type: 'email' | 'slack' | 'webhook' | 'in_app';
+    status: 'pending' | 'sent' | 'failed';
+  }> = [
+    {
       qr_code_id: qrId,
       health_check_id: latestCheck.id,
       alert_type: 'in_app',
-      status: 'pending',
+      status: 'sent', // In-app is immediate
+    },
+  ];
+  
+  // Send email alert if enabled
+  if (notifPrefs?.email_enabled !== false) {
+    const userEmail = notifPrefs?.email_address || await getUserEmail(supabaseClient, qrDetails.user_id);
+    if (userEmail) {
+      const sent = await sendEmailAlert(
+        qrDetails.name || 'Unnamed QR',
+        qrDetails.destination_url,
+        result.status,
+        result.error_message,
+        userEmail
+      );
+      alertsToInsert.push({
+        qr_code_id: qrId,
+        health_check_id: latestCheck.id,
+        alert_type: 'email',
+        status: sent ? 'sent' : 'failed',
+      });
+    }
+  }
+  
+  // Send Slack alert if enabled
+  if (notifPrefs?.slack_enabled && notifPrefs?.slack_webhook_url) {
+    const sent = await sendSlackAlert(
+      qrDetails.name || 'Unnamed QR',
+      qrDetails.destination_url,
+      result.status,
+      result.error_message,
+      notifPrefs.slack_webhook_url
+    );
+    alertsToInsert.push({
+      qr_code_id: qrId,
+      health_check_id: latestCheck.id,
+      alert_type: 'slack',
+      status: sent ? 'sent' : 'failed',
     });
+  }
+  
+  // Send webhook alert if enabled
+  if (notifPrefs?.webhook_enabled && notifPrefs?.webhook_url) {
+    const sent = await sendWebhookAlert(
+      qrDetails.name || 'Unnamed QR',
+      qrDetails.destination_url,
+      result.status,
+      result.error_message,
+      notifPrefs.webhook_url,
+      notifPrefs.webhook_headers
+    );
+    alertsToInsert.push({
+      qr_code_id: qrId,
+      health_check_id: latestCheck.id,
+      alert_type: 'webhook',
+      status: sent ? 'sent' : 'failed',
+    });
+  }
+  
+  // Insert all alert records
+  const { error } = await supabaseClient
+    .from('qr_health_alerts')
+    .insert(alertsToInsert);
     
   if (error) {
-    console.error(`Error creating alert for QR ${qrId}:`, error);
+    console.error(`Error creating alerts for QR ${qrId}:`, error);
   }
 }
 
