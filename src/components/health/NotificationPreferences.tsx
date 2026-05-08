@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Mail, Slack, Webhook, Clock, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Bell, Mail, MessageSquare, Webhook, Clock, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../config/supabase';
 
@@ -266,7 +266,7 @@ export function NotificationPreferences({ className = '' }: NotificationPreferen
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <Slack className="w-5 h-5 text-purple-600" />
+                <MessageSquare className="w-5 h-5 text-purple-600" />
               </div>
               <div>
                 <h3 className="font-medium text-gray-900">Slack Notifications</h3>
