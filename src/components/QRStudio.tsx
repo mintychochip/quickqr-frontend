@@ -219,6 +219,7 @@ export default function QRStudio() {
       else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
       else if (result.startsWith('BEGIN:VEVENT')) type = 'calendar';
       else if (result.startsWith('BEGIN:VCALENDAR')) type = 'event';
+      else if (result.startsWith('BEGIN:VEVENT')) type = 'calendar';
       
       setScanResult({ data: result, type });
     } catch (err) {

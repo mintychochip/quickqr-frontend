@@ -40,6 +40,8 @@ describe('QRStudio Calendar QR Support', () => {
           return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''};;;\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.phone ? `TEL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
         case 'calendar':
           return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${data.title || ''}\nDTSTART:${data.startDate || ''}\nDTEND:${data.endDate || ''}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT\nEND:VCALENDAR`;
+        case 'event':
+          return `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${data.title || ''}\nDTSTART:${data.startDate || ''}\nDTEND:${data.endDate || ''}${data.location ? `\nLOCATION:${data.location}` : ''}${data.description ? `\nDESCRIPTION:${data.description}` : ''}\nEND:VEVENT\nEND:VCALENDAR`;
         default: return '';
       }
     };
@@ -108,6 +110,40 @@ describe('QRStudio Calendar QR Support', () => {
       expect(result).not.toContain('LOCATION');
       expect(result).not.toContain('DESCRIPTION');
     });
+
+    test('event type generates full VCALENDAR wrapper', () => {
+      const data = {
+        title: 'Conference',
+        startDate: '20250610T090000',
+        endDate: '20250610T170000',
+        location: 'Convention Center',
+        description: 'Annual conference',
+      };
+      const result = generateQRContent('event', data);
+      expect(result).toContain('BEGIN:VCALENDAR');
+      expect(result).toContain('VERSION:2.0');
+      expect(result).toContain('BEGIN:VEVENT');
+      expect(result).toContain('SUMMARY:Conference');
+      expect(result).toContain('DTSTART:20250610T090000');
+      expect(result).toContain('DTEND:20250610T170000');
+      expect(result).toContain('LOCATION:Convention Center');
+      expect(result).toContain('DESCRIPTION:Annual conference');
+      expect(result).toContain('END:VEVENT');
+      expect(result).toContain('END:VCALENDAR');
+    });
+
+    test('event type handles missing optional fields', () => {
+      const data = {
+        title: 'Meeting',
+        startDate: '20250115T140000',
+        endDate: '20250115T150000',
+      };
+      const result = generateQRContent('event', data);
+      expect(result).toContain('BEGIN:VCALENDAR');
+      expect(result).toContain('SUMMARY:Meeting');
+      expect(result).not.toContain('LOCATION');
+      expect(result).not.toContain('DESCRIPTION');
+    });
   });
 
   describe('QR Type Detection', () => {
@@ -121,6 +157,21 @@ describe('QRStudio Calendar QR Support', () => {
       else if (result.startsWith('WIFI:')) type = 'wifi';
       else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
       else if (result.startsWith('BEGIN:VCALENDAR')) type = 'calendar';
+      else if (result.startsWith('BEGIN:VEVENT')) type = 'calendar';
+      expect(type).toBe('calendar');
+    });
+
+    test('detects BEGIN:VEVENT (no wrapper) as calendar type', () => {
+      const result = 'BEGIN:VEVENT\nVERSION:2.0\nSUMMARY:Test\nEND:VEVENT';
+      let type = 'text';
+      if (result.startsWith('http://') || result.startsWith('https://')) type = 'url';
+      else if (result.startsWith('mailto:')) type = 'email';
+      else if (result.startsWith('tel:')) type = 'phone';
+      else if (result.startsWith('sms:')) type = 'sms';
+      else if (result.startsWith('WIFI:')) type = 'wifi';
+      else if (result.startsWith('BEGIN:VCARD')) type = 'vcard';
+      else if (result.startsWith('BEGIN:VCALENDAR')) type = 'calendar';
+      else if (result.startsWith('BEGIN:VEVENT')) type = 'calendar';
       expect(type).toBe('calendar');
     });
 
@@ -144,6 +195,7 @@ describe('QRStudio Calendar QR Support', () => {
         else if (input.startsWith('WIFI:')) type = 'wifi';
         else if (input.startsWith('BEGIN:VCARD')) type = 'vcard';
         else if (input.startsWith('BEGIN:VCALENDAR')) type = 'calendar';
+        else if (input.startsWith('BEGIN:VEVENT')) type = 'calendar';
         expect(type).toBe(expected);
       });
     });

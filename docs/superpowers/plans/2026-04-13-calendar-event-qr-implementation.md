@@ -1,8 +1,16 @@
 # Calendar/Event QR Code Type Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **STATUS: COMPLETED** ✅ — Implemented and verified on 2026-05-08
 
 **Goal:** Add a new Calendar/Event QR code type to the QRStudio component with full functionality including generation, form fields, and scanner detection
+
+**Completion Summary:**
+- Both 'calendar' and 'event' types are fully implemented in QRStudio.tsx
+- 'calendar' type: Generates single VEVENT with date formatting from user-friendly inputs
+- 'event' type: Generates full VCALENDAR wrapper with pre-formatted date inputs
+- Scanner detection handles both BEGIN:VCALENDAR and BEGIN:VEVENT patterns
+- UI dropdown includes both options for user choice
+- 12 comprehensive tests covering both types and all scenarios (all passing)
 
 **Architecture:** The implementation will extend the existing QRStudio component to include a new 'event' type in the qrType union, add VEVENT iCal format generation in the generateQRContent function, implement form fields for event data input, and add scanner detection for calendar events.
 
