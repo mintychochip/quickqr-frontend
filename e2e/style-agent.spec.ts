@@ -17,5 +17,5 @@ test('attached photo is sent to the style agent', async ({ page }) => {
   await expect(gen.getByTestId('style-context-list')).toContainText('swatch.png');
 
   await gen.getByRole('button', { name: 'Apply' }).click();
-  await expect(gen.getByText(/Applied \(agent\)/)).toBeVisible({ timeout: 20_000 });
+  await expect(gen.getByText(/Applied \(decision model\)/)).toBeVisible({ timeout: 20_000 });
 });

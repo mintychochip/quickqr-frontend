@@ -2,6 +2,7 @@
   import Download from '@lucide/svelte/icons/download';
   import Copy from '@lucide/svelte/icons/copy';
   import Check from '@lucide/svelte/icons/check';
+  import Code2 from '@lucide/svelte/icons/code-2';
   import ExternalLink from '@lucide/svelte/icons/external-link';
   import Button from '@/lib/components/ui/button.svelte';
   import { cn } from '@/lib/utils';
@@ -75,6 +76,7 @@
 
   let canvasEl = $state<HTMLCanvasElement | null>(null);
   let copiedLink = $state(false);
+  let copiedShare = $state(false);
 
   $effect(() => {
     if (!canvasEl || !value) return;
@@ -113,12 +115,27 @@
   }
 
   const linkText = $derived(shownValue.startsWith('http') ? shownValue : value);
+  const sharePageUrl = $derived.by(() => {
+    if (!linkText) return '';
+    const url = new URL('/qr', window.location.origin);
+    url.searchParams.set('url', linkText);
+    return url.toString();
+  });
 
   function copyLink() {
     navigator.clipboard.writeText(linkText);
     copiedLink = true;
     setTimeout(() => {
       copiedLink = false;
+    }, 2000);
+  }
+
+  function copySharePage() {
+    if (!sharePageUrl) return;
+    navigator.clipboard.writeText(sharePageUrl);
+    copiedShare = true;
+    setTimeout(() => {
+      copiedShare = false;
     }, 2000);
   }
 </script>
@@ -189,6 +206,21 @@
           <Check class="size-3.5 text-green-600" />
         {:else}
           <Copy class="size-3.5" />
+        {/if}
+      </Button>
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="outline"
+        class="bg-white text-ink hover:bg-white/90"
+        onclick={copySharePage}
+        title="Copy QR share link for Discord"
+        data-testid="copy-qr-share"
+      >
+        {#if copiedShare}
+          <Check class="size-3.5 text-green-600" />
+        {:else}
+          <Code2 class="size-3.5" />
         {/if}
       </Button>
     {/if}

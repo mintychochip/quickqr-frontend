@@ -14,4 +14,10 @@ test('sign in and create dynamic link', async ({ page }) => {
   await expect(gen.getByTestId('dynamic-link-success')).toBeVisible({ timeout: 15_000 });
 
   await expect(gen.getByTestId('qr-encoded-value')).toContainText('/r/', { ignoreCase: true });
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await gen.getByTestId('copy-qr-share').click();
+  const shareLink = await page.evaluate(() => navigator.clipboard.readText());
+  expect(shareLink).toContain('/qr?url=');
+  expect(decodeURIComponent(shareLink)).toContain('/r/');
 });

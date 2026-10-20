@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { generator } from './helpers';
 
@@ -23,4 +24,16 @@ test('style prompt apply shows engine label', async ({ page }) => {
   await gen.getByRole('textbox', { name: 'QR style prompt' }).fill('print safe');
   await gen.getByRole('button', { name: 'Apply' }).click();
   await expect(gen.getByText(/Applied \(.*\):/)).toBeVisible({ timeout: 8_000 });
+});
+
+test('PDF context is read on-device and applied', async ({ page }) => {
+  await page.goto('/');
+  const gen = generator(page);
+  await gen
+    .getByTestId('style-context-file')
+    .setInputFiles(path.join(process.cwd(), 'e2e/fixtures/menu.pdf'));
+
+  await expect(gen.getByTestId('style-context-list')).toContainText('menu.pdf', { timeout: 10_000 });
+  await gen.getByRole('button', { name: 'Apply' }).click();
+  await expect(gen.getByText(/Applied \(.*\):/)).toBeVisible({ timeout: 10_000 });
 });

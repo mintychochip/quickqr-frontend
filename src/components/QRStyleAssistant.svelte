@@ -5,7 +5,9 @@
   import X from '@lucide/svelte/icons/x';
   import Button from '@/lib/components/ui/button.svelte';
   import Input from '@/lib/components/ui/input.svelte';
+  import { extractPdfText } from '@/lib/pdfContext';
   import {
+    decideQrStyle,
     parseQrStylePrompt,
     resolveQrStyleContext,
     resolveQrStylePrompt,
@@ -25,6 +27,7 @@
 
   const maxMaterials = 4;
   const maxImageBytes = 1_200_000;
+  const maxPdfBytes = 8 * 1024 * 1024;
 
   type SpeechRecognitionCtor = new () => {
     continuous: boolean;
@@ -79,7 +82,7 @@
     const next = [...materials];
     for (const file of list) {
       if (next.length >= maxMaterials) {
-        voiceError = 'Attach up to 4 photos or notes';
+        voiceError = 'Attach up to 4 photos, notes, or PDFs';
         break;
       }
       const lower = file.name.toLowerCase();
@@ -90,8 +93,21 @@
         next.push({ id: crypto.randomUUID(), name: file.name, kind: 'note', text });
         continue;
       }
+      if (file.type === 'application/pdf' || lower.endsWith('.pdf')) {
+        if (file.size > maxPdfBytes) {
+          voiceError = `${file.name} is larger than 8MB`;
+          continue;
+        }
+        try {
+          const text = await extractPdfText(file);
+          next.push({ id: crypto.randomUUID(), name: file.name, kind: 'note', text });
+        } catch (err) {
+          voiceError = err instanceof Error ? err.message : 'Could not read that PDF';
+        }
+        continue;
+      }
       if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
-        voiceError = 'Use a PNG, JPEG, GIF, or text note';
+        voiceError = 'Use a PNG, JPEG, GIF, PDF, or text note';
         continue;
       }
       if (file.size > maxImageBytes) {
@@ -119,16 +135,44 @@
         ? [{ name: item.name, mediaType: item.mediaType, dataBase64: item.dataBase64 }]
         : [],
     );
-    const notes = materials.flatMap((item) =>
+    const contextNotes = materials.flatMap((item) =>
       item.kind === 'note' && item.text ? [{ name: item.name, text: item.text }] : [],
     );
-    if (!trimmed && images.length === 0 && notes.length === 0) return;
+    if (!trimmed && images.length === 0 && contextNotes.length === 0) return;
     parsing = true;
     voiceError = '';
     try {
-      if (images.length > 0 || notes.length > 0) {
-        const { result, meta } = await resolveQrStyleContext(trimmed, images, notes, currentStyle);
+      const urlMatch = trimmed.match(/https?:\/\/[^\s]+/i);
+      if (urlMatch) {
+        const siteUrl = urlMatch[0].replace(/[),.;]+$/, '');
+        try {
+          const res = await fetch('/api/qr/context', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: siteUrl }),
+          });
+          if (res.ok) {
+            const site = (await res.json()) as { name?: string; text?: string };
+            if (site.text) {
+              contextNotes.push({ name: site.name || siteUrl, text: site.text });
+            }
+          } else {
+            const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+            voiceError = payload?.error || 'Could not read that site';
+          }
+        } catch {
+          voiceError = 'Could not read that site';
+        }
+      }
+
+      if (images.length > 0) {
+        const { result, meta } = await resolveQrStyleContext(trimmed, images, contextNotes, currentStyle);
         engineLabel = meta.engine;
+        onApplyStyle(result);
+      } else if (contextNotes.length > 0) {
+        const contextText = [trimmed, ...contextNotes.map((note) => note.text)].join('\n');
+        const { result } = decideQrStyle(contextText, currentStyle);
+        engineLabel = 'decision';
         onApplyStyle(result);
       } else {
         const { result, meta } = await resolveQrStylePrompt(trimmed, currentStyle);
@@ -137,7 +181,7 @@
       }
       prompted = true;
     } catch (err) {
-      if (images.length > 0 || notes.length > 0) {
+      if (images.length > 0 || contextNotes.length > 0) {
         voiceError = err instanceof Error ? err.message : 'Could not read that context';
       } else {
         onApplyStyle(parseQrStylePrompt(trimmed, currentStyle));
@@ -236,7 +280,7 @@
       bind:this={fileInput}
       type="file"
       class="sr-only"
-      accept="image/png,image/jpeg,image/gif,.txt,.md,text/plain"
+      accept="image/png,image/jpeg,image/gif,application/pdf,.pdf,.txt,.md,text/plain"
       multiple
       data-testid="style-context-file"
       onchange={(event) => addContextFiles(event.currentTarget.files)}
@@ -246,14 +290,14 @@
       variant="outline"
       size="icon"
       class={dock ? 'size-9 shrink-0 bg-white text-ink hover:bg-white/85' : ''}
-      aria-label="Attach photo or note"
+      aria-label="Attach photo, note, or PDF"
       onclick={() => fileInput?.click()}
     >
       <Paperclip class="size-4" />
     </Button>
     <Input
       bind:value={prompt}
-      placeholder="Describe a look"
+      placeholder="Describe a look or paste a public URL"
       class={dock ? 'h-9 flex-1 bg-white text-ink placeholder:text-muted-foreground md:text-sm' : 'flex-1'}
       aria-label="QR style prompt"
       onfocus={() => (promptFocused = true)}

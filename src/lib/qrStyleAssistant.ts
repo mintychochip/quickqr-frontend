@@ -415,15 +415,23 @@ export async function resolveQrStyleContext(
         data: image.dataBase64,
       })),
       current,
+      decision_only: true,
     }),
   });
   if (!res.ok) {
     const payload = (await res.json().catch(() => null)) as { error?: string } | null;
     throw new Error(payload?.error || 'Could not read that context');
   }
-  const data = (await res.json()) as { result?: QrStyleResult; style?: QrStyleResult };
+  const data = (await res.json()) as {
+    result?: QrStyleResult;
+    style?: QrStyleResult;
+    engine?: string;
+  };
   const result = data.style ?? data.result;
   if (!result) throw new Error('Style agent returned no style');
-  return { result: finalizeQrStyle(result), meta: { engine: 'agent' } };
+  return {
+    result: finalizeQrStyle(result),
+    meta: { engine: data.engine === 'xai' ? 'agent' : 'decision' },
+  };
 }
 

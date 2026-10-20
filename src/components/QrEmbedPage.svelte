@@ -26,7 +26,7 @@
   let renderError = $state('');
   let rendering = $state(false);
   let svg = $state('');
-  let copiedKey = $state<'share' | 'iframe' | 'image' | null>(null);
+  let copiedKey = $state<'share' | 'iframe' | 'image' | 'svg' | null>(null);
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
   let qrCardEl = $state<HTMLElement | null>(null);
 
@@ -34,6 +34,9 @@
   const embedUrl = $derived(target ? pageURL(target, true) : '');
   const imageUrl = $derived(
     target ? `${window.location.origin}/qr.png?url=${encodeURIComponent(target)}` : '',
+  );
+  const svgUrl = $derived(
+    target ? `${window.location.origin}/qr.svg?url=${encodeURIComponent(target)}` : '',
   );
   const iframeSnippet = $derived(
     embedUrl
@@ -160,7 +163,7 @@
     }
   }
 
-  async function copyText(value: string, key: 'share' | 'iframe' | 'image') {
+  async function copyText(value: string, key: 'share' | 'iframe' | 'image' | 'svg') {
     if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
@@ -314,7 +317,7 @@
               </div>
             </div>
 
-            <div class="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
+            <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <button
                 type="button"
                 class="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
@@ -331,6 +334,20 @@
               >
                 <Download class="size-3.5" />
                 Download PNG
+              </button>
+              <span aria-hidden="true">·</span>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+                onclick={() => copyText(svgUrl, 'svg')}
+              >
+                {#if copiedKey === 'svg'}
+                  <Check class="size-3.5" />
+                  Copied SVG URL
+                {:else}
+                  <Code2 class="size-3.5" />
+                  Copy SVG URL
+                {/if}
               </button>
             </div>
             <p class="mt-3 max-w-[42ch] text-[11px] leading-relaxed text-muted-foreground">

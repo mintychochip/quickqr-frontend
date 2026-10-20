@@ -58,6 +58,10 @@ test('copy actions provide embed snippets', async ({ page, context }) => {
   expect(image).toContain('<img');
   expect(image).toContain('/qr.png?url=');
   expect(image).toContain('width="320"');
+
+  await page.getByRole('button', { name: 'Copy SVG URL' }).click();
+  const svg = await page.evaluate(() => navigator.clipboard.readText());
+  expect(svg).toContain('/qr.svg?url=');
 });
 
 test('image endpoints are proxied', async ({ request }) => {
