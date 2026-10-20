@@ -8,6 +8,7 @@
   import HomeCards from './components/HomeCards.svelte';
   import Logo from './components/Logo.svelte';
   import NotFound from './components/NotFound.svelte';
+  import QrEmbedPage from './components/QrEmbedPage.svelte';
   import AuthModal from './components/AuthModal.svelte';
   import Button from './lib/components/ui/button.svelte';
   import { fetchActiveSponsor } from './lib/api';
@@ -24,9 +25,10 @@
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
   const isHome = path === '/';
   const isDashboard = path === '/dashboard' || path.startsWith('/dashboard/');
-  const compressedCode = !isHome && !isDashboard ? dynamicCodeFromQrPayload(window.location.href) : null;
+  const isQrPage = path === '/qr';
+  const compressedCode = !isHome && !isDashboard && !isQrPage ? dynamicCodeFromQrPayload(window.location.href) : null;
   const staticDestination =
-    !isHome && !isDashboard && !compressedCode
+    !isHome && !isDashboard && !isQrPage && !compressedCode
       ? staticDestinationFromQrPayload(window.location.href)
       : null;
   if (compressedCode) {
@@ -36,6 +38,7 @@
   }
 
   $effect(() => {
+    if (isQrPage) return;
     const { token, error } = consumeAuthTokenFromUrl();
     if (error) {
       authError = error;
@@ -51,6 +54,7 @@
   });
 
   $effect(() => {
+    if (isQrPage) return;
     fetchActiveSponsor().then((s) => {
       activeSponsor = s;
     });
@@ -74,6 +78,8 @@
 
 {#if compressedCode || staticDestination}
   <p class="px-6 py-16 text-sm text-muted-foreground">Opening link…</p>
+{:else if isQrPage}
+  <QrEmbedPage />
 {:else if !isHome && !isDashboard}
   <NotFound />
 {:else if isDashboard}
