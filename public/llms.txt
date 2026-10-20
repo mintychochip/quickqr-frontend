@@ -1,0 +1,28 @@
+# quickqr2
+
+> Ad-subsidized QR platform (successor to quickqr.app): free dynamic redirects with editable destinations and scan analytics, plus client-side static QR via ha.mr-style URL compression. Go backend, Svelte 5 + TypeScript 7 frontend.
+
+Monorepo layout: `backend/` (Go 1.23+ redirect + REST API), `frontend/` (Vite, Tailwind 4, shadcn-svelte nova), `ha_mr_repo/` (reference compressor). Human and coding-agent canonical detail lives in `AGENTS.md`. Dev: backend `PORT=8080` from `backend/`; frontend `bun run dev` (proxies `/api` and `/r` to the backend).
+
+## Docs
+
+- [AGENTS.md](AGENTS.md): Vision, stack, ha.mr compression reference, API routes, directory map — primary context for AI assistants
+- [frontend/README.md](frontend/README.md): Frontend scripts, typecheck, shadcn-svelte CLI usage
+- [backend/.env.example](backend/.env.example): OAuth and server environment variables
+
+## Backend
+
+- [backend/cmd/server/main.go](backend/cmd/server/main.go): HTTP server entry, routing, graceful shutdown
+- [backend/internal/api/handlers.go](backend/internal/api/handlers.go): Links CRUD, analytics, sponsors API
+- [backend/internal/redirect/redirect.go](backend/internal/redirect/redirect.go): Public `/r/:code` gateway and interstitial
+- [backend/internal/storage/storage.go](backend/internal/storage/storage.go): SQLite / in-memory link store
+
+## Frontend
+
+- [frontend/package.json](frontend/package.json): Dependencies and npm scripts
+- [frontend/components.json](frontend/components.json): shadcn-svelte (nova) CLI config
+
+## Optional
+
+- [ha_mr_repo/README.md](ha_mr_repo/README.md): Upstream ha.mr static URL shortener reference
+- [ha_mr_repo/docs/compress.js](ha_mr_repo/docs/compress.js): BigInt URL compression pipeline (port source for static mode)

@@ -1,0 +1,66 @@
+import { expect, test } from '@playwright/test';
+import { signInViaOAuth } from './helpers';
+
+test('rows show inline scan rates and trend lines', async ({ page }) => {
+  await signInViaOAuth(page);
+  await page.goto('/dashboard');
+
+  await expect(
+    page.getByRole('img', { name: /Scan trend for all dynamic links/i }),
+  ).toBeVisible();
+  const row = page.getByRole('row', { name: /Autumn Cafe Menu/ });
+  await expect(row.getByTestId('scan-rate')).toContainText(/(?:\d+% vs last hour|New this hour)/, {
+    timeout: 15_000,
+  });
+  await expect(row.getByTestId('scan-sparkline')).toBeVisible();
+});
+
+test('mobile cards keep inline scan statistics', async ({ page }) => {
+  await signInViaOAuth(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/dashboard');
+
+  const row = page.getByRole('row', { name: /Autumn Cafe Menu/ });
+  await row.getByTestId('scan-rate').scrollIntoViewIfNeeded();
+  await expect(row.getByTestId('scan-rate')).toContainText(/(?:\d+% vs last hour|New this hour)/, {
+    timeout: 15_000,
+  });
+  await expect(row.getByTestId('scan-sparkline')).toBeVisible();
+});
+
+test('wide dashboard opens link details in the left sidebar', async ({ page }) => {
+  await signInViaOAuth(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/dashboard');
+  await expect(page.getByRole('heading', { name: 'Dynamic links' })).toBeVisible();
+
+  const row = page.getByRole('row', { name: /Autumn Cafe Menu/ });
+  await row.getByRole('button', { name: 'Show analytics' }).click();
+
+  const detail = page.getByTestId('link-detail-sidebar');
+  await expect(detail).toBeVisible();
+  await expect(detail.getByText('Autumn Cafe Menu')).toBeVisible();
+  await expect(detail.getByTestId('scan-rate')).toContainText(
+    /(?:\d+% vs last hour|New this hour)/,
+    { timeout: 15_000 },
+  );
+  await expect(detail.getByTestId('scan-sparkline')).toBeVisible();
+  await expect(detail.getByTestId('qr-dropdown')).toBeVisible();
+  await expect(detail.getByTestId('analytics-dropdown')).toBeVisible();
+  await expect(detail.getByTestId('device-mix-chart')).toBeVisible();
+  await expect(page.getByTestId('row-dropdown')).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Workspace overview' })).toBeVisible();
+
+  // The pane width animates; measure once it has settled.
+  await page.waitForTimeout(300);
+  const detailBox = await detail.boundingBox();
+  const mainBox = await page.locator('main').boundingBox();
+  expect(detailBox).not.toBeNull();
+  expect(mainBox).not.toBeNull();
+  expect(detailBox!.x).toBeLessThan(mainBox!.x);
+  expect(detailBox!.x + detailBox!.width).toBeLessThanOrEqual(mainBox!.x + 1);
+
+  await detail.getByRole('button', { name: 'Close link details' }).click();
+  await expect(detail).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Workspace overview' })).toBeVisible();
+});

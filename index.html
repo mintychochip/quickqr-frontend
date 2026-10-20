@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" class="antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f3f3f5" />
+    <script>
+      (() => {
+        const key = 'quickqr-theme';
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const apply = () => {
+          try {
+            const requested = new URL(location.href).searchParams.get('theme');
+            if (requested === 'light' || requested === 'dark' || requested === 'system') {
+              if (requested === 'system') localStorage.removeItem(key);
+              else localStorage.setItem(key, requested);
+              const clean = new URL(location.href);
+              clean.searchParams.delete('theme');
+              history.replaceState({}, '', clean);
+            }
+          } catch {
+            /* Storage can be unavailable in private modes. */
+          }
+          let mode = 'system';
+          try {
+            const stored = localStorage.getItem(key);
+            if (stored === 'light' || stored === 'dark') mode = stored;
+          } catch {
+            /* Storage can be unavailable in private modes. */
+          }
+          const dark = mode === 'dark' || (mode === 'system' && media.matches);
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#0b0b0d' : '#f3f3f5');
+        };
+        apply();
+        media.addEventListener('change', apply);
+      })();
+    </script>
+    <title>quickqr.app · Free QR codes forever</title>
+    <meta name="description" content="quickqr.app — free QR codes forever. Dynamic destinations you can change after you print, with no subscription trap." />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
