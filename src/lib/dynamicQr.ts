@@ -2,6 +2,7 @@ import { outputAlphabetQR } from './alphabets';
 import { compress, decompress } from './compress';
 
 const compressedAlphabet = /^[$*+./:0-9A-Z-]+$/;
+const directCodeAlphabet = /^[A-Z0-9-]+$/;
 
 /**
  * Canonical dynamic short link. The code stays the editable redirect.
@@ -13,16 +14,25 @@ export function dynamicShortLink(origin: string, code: string): string {
 }
 
 /**
- * QR payload: ha.mr compression of the short link, on this host.
- * Scanning it still opens /r/:code. The scheme and host are uppercase so the
- * wrapper stays in QR alphanumeric mode, matching ha.mr.
+ * QR payload: the shortest alphanumeric representation of the short link.
+ * Short codes use the direct /R/:code form; longer or underscore-bearing codes
+ * use the compressed payload. Both still resolve to /r/:code.
  */
 export function dynamicQrValue(origin: string, code: string): string {
   const short = dynamicShortLink(origin, code);
-  const payload = compress(short, outputAlphabetQR);
   const base = new URL(origin);
   const scheme = base.protocol === 'https:' ? 'HTTPS' : 'HTTP';
-  return `${scheme}://${base.host.toUpperCase()}/${payload}`;
+  const host = base.host.toUpperCase();
+  const upperCode = code.toUpperCase();
+  const direct = `${scheme}://${host}/R/${upperCode}`;
+
+  if (directCodeAlphabet.test(upperCode)) {
+    const compressed = `${scheme}://${host}/${compress(short, outputAlphabetQR)}`;
+    if (direct.length <= compressed.length) return direct;
+    return compressed;
+  }
+
+  return `${scheme}://${host}/${compress(short, outputAlphabetQR)}`;
 }
 
 /**
