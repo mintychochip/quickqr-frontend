@@ -30,13 +30,17 @@ test('share page rejects unsafe links', async ({ page }) => {
   await expect(page.getByTestId('embed-qr')).toHaveCount(0);
 });
 
-test('embed mode is QR-only', async ({ page }) => {
+test('embed mode is QR-only and edge-to-edge', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 360 });
   await page.goto(`/qr?url=${encodeURIComponent(target)}&embed=1`);
 
   await expect(page.getByTestId('embed-qr').locator('svg')).toBeVisible();
   await expect(page.getByTestId('embed-form')).toHaveCount(0);
   await expect(page.getByTestId('embed-copy-iframe')).toHaveCount(0);
   await expect(page.getByTestId('embed-copy-image')).toHaveCount(0);
+
+  const box = await page.getByTestId('embed-qr').boundingBox();
+  expect(box).toEqual({ x: 0, y: 0, width: 360, height: 360 });
 });
 
 test('copy actions provide embed snippets', async ({ page, context }) => {
@@ -47,7 +51,7 @@ test('copy actions provide embed snippets', async ({ page, context }) => {
   const iframe = await page.evaluate(() => navigator.clipboard.readText());
   expect(iframe).toContain('<iframe');
   expect(iframe).toContain('embed=1');
-  expect(iframe).toContain('height="440"');
+  expect(iframe).toContain('height="360"');
 
   await page.getByTestId('embed-copy-image').click();
   const image = await page.evaluate(() => navigator.clipboard.readText());

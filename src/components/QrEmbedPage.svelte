@@ -37,7 +37,7 @@
   );
   const iframeSnippet = $derived(
     embedUrl
-      ? `<iframe src="${escapeHtml(embedUrl)}" width="360" height="440" style="border:0;border-radius:16px" loading="lazy" title="QR code for ${escapeHtml(target)}"></iframe>`
+      ? `<iframe src="${escapeHtml(embedUrl)}" width="360" height="360" style="border:0" loading="lazy" title="QR code for ${escapeHtml(target)}"></iframe>`
       : '',
   );
   const imageSnippet = $derived(
@@ -200,34 +200,24 @@
 </script>
 
 {#if isEmbed}
-  <main class="grid min-h-dvh place-items-center bg-background px-4 py-6">
-    <div class="w-full max-w-[320px] text-center">
-      {#if svg}
-        <div
-          data-testid="embed-qr"
-          bind:this={qrCardEl}
-          role="img"
-          aria-label={`QR code for ${target}`}
-          class="qr-svg mx-auto w-full overflow-hidden rounded-2xl bg-[#f9f9f8] p-2 shadow-[0_18px_50px_-32px_rgba(17,17,19,0.55)] ring-1 ring-black/5 dark:ring-white/10"
-        >
-          {@html svg}
-        </div>
-        <p class="mt-4 text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
-          Scan to open
-        </p>
-        <p
-          data-testid="embed-target"
-          class="mt-1 font-mono text-[11px] leading-relaxed break-all text-muted-foreground"
-        >
-          {target}
-        </p>
-      {:else}
+  <main class="min-h-dvh w-full bg-[#f9f9f8]">
+    {#if svg}
+      <div
+        data-testid="embed-qr"
+        role="img"
+        aria-label={`QR code for ${target}`}
+        class="qr-svg w-full bg-[#f9f9f8]"
+      >
+        {@html svg}
+      </div>
+    {:else}
+      <div class="grid min-h-dvh place-items-center px-6 text-center">
         <Logo markClass="size-10" wordmark={false} />
         <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
           {renderError || errorMessage || 'Add a link to show its QR code.'}
         </p>
-      {/if}
-    </div>
+      </div>
+    {/if}
   </main>
 {:else}
   <div class="min-h-dvh bg-background">
@@ -353,14 +343,14 @@
         <section class="min-w-0">
           <div
             bind:this={qrCardEl}
-            class="mx-auto w-full max-w-[400px] rounded-2xl bg-card p-3 shadow-[0_24px_60px_-36px_rgba(17,17,19,0.55)] ring-1 ring-black/5 dark:ring-white/10"
+            class="mx-auto w-full max-w-[400px] rounded-2xl bg-card p-2 shadow-[0_24px_60px_-36px_rgba(17,17,19,0.55)] ring-1 ring-black/5 dark:ring-white/10"
           >
             {#if svg}
               <div
                 data-testid="embed-qr"
                 role="img"
                 aria-label={`QR code for ${target}`}
-                class="qr-svg overflow-hidden rounded-xl bg-[#f9f9f8] p-2"
+                class="qr-svg overflow-hidden rounded-xl bg-[#f9f9f8] p-1"
               >
                 {@html svg}
               </div>
