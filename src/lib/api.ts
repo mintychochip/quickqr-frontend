@@ -1,10 +1,32 @@
 import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, Sponsor } from '../types';
-import { authHeaders } from './auth';
+import { getAuthToken, setAuthToken } from './auth';
 
 const BASE_URL = '';
 
 const API_UNAVAILABLE =
   'API unavailable. Start the backend: cd backend && go run ./cmd/server (port 8080).';
+
+const SESSION_EXPIRED = 'Your session expired. Sign in again.';
+
+async function request(path: string, init: RequestInit = {}): Promise<Response> {
+  const token = getAuthToken();
+  const headers = new Headers(init.headers);
+  if (init.body !== undefined && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  if (res.status === 401 && token) {
+    setAuthToken(null);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('quickqr:unauthorized'));
+    }
+    throw new Error(SESSION_EXPIRED);
+  }
+  return res;
+}
 
 async function readResponseText(res: Response): Promise<string> {
   try {
@@ -51,7 +73,7 @@ function apiErrorFromBody(
 }
 
 export async function fetchLinks(): Promise<Link[]> {
-  const res = await fetch(`${BASE_URL}/api/links`);
+  const res = await request('/api/links');
   if (!res.ok) {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load links');
   }
@@ -65,9 +87,8 @@ export async function createLink(payload: {
   code?: string;
   ad_style?: string;
 }): Promise<Link> {
-  const res = await fetch(`${BASE_URL}/api/links`, {
+  const res = await request('/api/links', {
     method: 'POST',
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -80,9 +101,8 @@ export async function updateLink(
   code: string,
   payload: { destination_url?: string; title?: string; ad_style?: string }
 ): Promise<Link> {
-  const res = await fetch(`${BASE_URL}/api/links/${encodeURIComponent(code)}`, {
+  const res = await request(`/api/links/${encodeURIComponent(code)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -92,9 +112,8 @@ export async function updateLink(
 }
 
 export async function createMenu(payload: { title: string; items: MenuItem[] }): Promise<Link> {
-  const res = await fetch(`${BASE_URL}/api/menus`, {
+  const res = await request('/api/menus', {
     method: 'POST',
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -107,9 +126,8 @@ export async function updateMenu(
   code: string,
   payload: { title: string; items: MenuItem[] },
 ): Promise<Link> {
-  const res = await fetch(`${BASE_URL}/api/menus/${encodeURIComponent(code)}`, {
+  const res = await request(`/api/menus/${encodeURIComponent(code)}`, {
     method: 'PUT',
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -119,9 +137,8 @@ export async function updateMenu(
 }
 
 export async function createPage(payload: { title: string; links: PageLink[] }): Promise<Link> {
-  const res = await fetch(`${BASE_URL}/api/pages`, {
+  const res = await request('/api/pages', {
     method: 'POST',
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -134,9 +151,8 @@ export async function updatePage(
   code: string,
   payload: { title: string; links: PageLink[] },
 ): Promise<Link> {
-  const res = await fetch(`${BASE_URL}/api/pages/${encodeURIComponent(code)}`, {
+  const res = await request(`/api/pages/${encodeURIComponent(code)}`, {
     method: 'PUT',
-    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -167,7 +183,7 @@ export interface QrSettingsDocument {
 }
 
 export async function fetchQrSettings(code: string): Promise<QrSettingsDocument> {
-  const res = await fetch(`${BASE_URL}/api/qr/${encodeURIComponent(code)}/settings`);
+  const res = await request(`/api/qr/${encodeURIComponent(code)}/settings`);
   if (!res.ok) {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load settings');
   }
@@ -175,9 +191,8 @@ export async function fetchQrSettings(code: string): Promise<QrSettingsDocument>
 }
 
 export async function fetchSiteContext(url: string): Promise<{ name: string; text: string }> {
-  const res = await fetch(`${BASE_URL}/api/qr/context`, {
+  const res = await request('/api/qr/context', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
   });
   if (!res.ok) {
@@ -195,9 +210,8 @@ export async function patchQrSettings(
     style?: Partial<QRStyle> | null;
   },
 ): Promise<QrSettingsDocument> {
-  const res = await fetch(`${BASE_URL}/api/qr/${encodeURIComponent(code)}/settings`, {
+  const res = await request(`/api/qr/${encodeURIComponent(code)}/settings`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   });
   if (!res.ok) {
@@ -207,7 +221,7 @@ export async function patchQrSettings(
 }
 
 export async function deleteLink(code: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}/api/links/${encodeURIComponent(code)}`, {
+  const res = await request(`/api/links/${encodeURIComponent(code)}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
@@ -216,7 +230,7 @@ export async function deleteLink(code: string): Promise<void> {
 }
 
 export async function fetchLinkAnalytics(code: string): Promise<AnalyticsSummary> {
-  const res = await fetch(`${BASE_URL}/api/links/${encodeURIComponent(code)}/analytics`);
+  const res = await request(`/api/links/${encodeURIComponent(code)}/analytics`);
   if (!res.ok) {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load analytics');
   }
@@ -224,7 +238,7 @@ export async function fetchLinkAnalytics(code: string): Promise<AnalyticsSummary
 }
 
 export async function fetchGlobalAnalytics(): Promise<AnalyticsSummary> {
-  const res = await fetch(`${BASE_URL}/api/analytics/global`);
+  const res = await request('/api/analytics/global');
   if (!res.ok) {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load global metrics');
   }
@@ -233,7 +247,7 @@ export async function fetchGlobalAnalytics(): Promise<AnalyticsSummary> {
 
 export async function fetchActiveSponsor(): Promise<Sponsor | null> {
   try {
-    const res = await fetch(`${BASE_URL}/api/sponsors/active`);
+    const res = await request('/api/sponsors/active');
     if (!res.ok) return null;
     const data = await parseJsonResponse<{ sponsor?: Sponsor | null }>(
       res,

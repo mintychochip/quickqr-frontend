@@ -6,10 +6,12 @@
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     class?: string;
+    /** Id of the element that titles the dialog, so a screen reader announces its name. */
+    labelledby?: string;
     children?: Snippet<[{ close: () => void }]>;
   };
 
-  let { open = $bindable(false), onOpenChange, class: className = '', children }: Props = $props();
+  let { open = $bindable(false), onOpenChange, class: className = '', labelledby, children }: Props = $props();
 
   function close() {
     open = false;
@@ -39,6 +41,7 @@
       )}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={labelledby}
     >
       {#if children}
         {@render children({ close })}

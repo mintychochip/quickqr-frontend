@@ -13,7 +13,7 @@
   import { createMenu, updateMenu, fetchLinks } from '../lib/api';
   import { decodeQrCanvas, menuLocationFromScan } from '../lib/scanQr';
   import { dynamicQrValue, dynamicShortLink } from '../lib/dynamicQr';
-  import { presetStyleById, withQrStyleDefaults } from '../lib/qrStylePresets';
+  import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '../lib/qrStylePresets';
   import type { Link, MenuItem } from '../types';
 
   type Props = {
@@ -41,9 +41,8 @@
   let loadError = $state('');
   let errorMsg = $state('');
   let scanError = $state('');
-  let copied = $state(false);
 
-  const qrStyle = withQrStyleDefaults(presetStyleById('quickqr_brand'));
+  const qrStyle = withQrStyleDefaults(presetStyleById(DEFAULT_QR_PRESET_ID));
 
   /** Saved styles predate the newer optional fields; defaults fill the gaps. */
   function savedStyle(style: Link['style']): typeof qrStyle | undefined {
@@ -112,17 +111,6 @@
     } finally {
       submitting = false;
     }
-  }
-
-  function shortLink() {
-    return saved ? `${window.location.origin}/r/${saved.code}` : '';
-  }
-
-  async function copyLink() {
-    if (!saved) return;
-    await navigator.clipboard.writeText(shortLink());
-    copied = true;
-    setTimeout(() => (copied = false), 2000);
   }
 
   /** Same simulator the studio used: decode the shown QR and open the menu it points to. */
@@ -273,24 +261,9 @@
           showLinkActions={Boolean(saved)}
           style={savedStyle(saved?.style) ?? qrStyle}
           label={title || 'menu'}
-          stage
-          size={260}
         />
 
         {#if saved}
-          <div class="flex gap-2">
-            <Button type="button" variant="outline" class="flex-1" onclick={copyLink}>
-              {copied ? 'Copied' : 'Copy link'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              class="flex-1"
-              onclick={() => window.open(shortLink(), '_blank', 'noopener')}
-            >
-              Open page
-            </Button>
-          </div>
           <Button
             type="button"
             class="w-full bg-punch text-ink hover:bg-punch/80"

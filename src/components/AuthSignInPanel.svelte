@@ -12,50 +12,47 @@
   } from '@/lib/auth';
 
   type Props = {
+    /** The title, which also names the dialog it sits in. */
     headline?: string;
-    resumeAfterOAuth?: boolean;
     externalError?: string | null;
-    embedded?: boolean;
     onCancel?: () => void;
+    /** Runs when a provider is chosen, just before the browser leaves for it. */
     onBeforeOAuth?: () => void;
   };
 
   let {
     headline = 'Sign in',
-    resumeAfterOAuth = false,
     externalError = null,
-    embedded = false,
     onCancel,
     onBeforeOAuth,
   }: Props = $props();
 
   let oauthProviders = $state<OAuthProviders>({ google: false, github: false, dev: false });
+  /** Until the server has answered, an empty list means "not yet", not "none". */
+  let providersLoaded = $state(false);
 
   $effect(() => {
     fetchOAuthProviders().then((p) => {
       oauthProviders = p;
+      providersLoaded = true;
     });
   });
 
   function beginOAuth(provider: 'google' | 'github') {
     onBeforeOAuth?.();
     if (oauthProviders[provider]) {
-      startOAuthSignIn(provider, resumeAfterOAuth);
+      startOAuthSignIn(provider);
       return;
     }
-    startDevOAuthSignIn(provider, resumeAfterOAuth);
+    startDevOAuthSignIn(provider);
   }
 
   const realOAuth = $derived(oauthProviders.google || oauthProviders.github);
   const showSocial = $derived(realOAuth || oauthProviders.dev);
 </script>
 
-<div
-  class={embedded
-    ? 'flex flex-col gap-3 border-t border-border pt-4'
-    : 'relative px-6 py-6 sm:px-7 sm:py-7'}
->
-  {#if !embedded && onCancel}
+<div class="relative px-6 py-6 sm:px-7 sm:py-7">
+  {#if onCancel}
     <button
       type="button"
       class="absolute top-4 right-4 grid size-8 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -66,19 +63,15 @@
     </button>
   {/if}
 
-  {#if embedded}
-    <p class="text-sm text-muted-foreground">{headline}</p>
-  {:else}
-    <div class="mb-6 pr-8">
-      <Logo wordmark={false} markClass="size-9" class="mb-4" />
-      <h2 id="auth-dialog-title" class="text-[28px] font-semibold leading-none tracking-[-0.045em]">
-        Sign in
-      </h2>
-      <p class="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
-        Free QR codes forever. An account lets you change the destination after you print.
-      </p>
-    </div>
-  {/if}
+  <div class="mb-6 pr-8">
+    <Logo wordmark={false} markClass="size-9" class="mb-4" />
+    <h2 id="auth-dialog-title" class="text-[28px] font-semibold leading-none tracking-[-0.045em] text-balance">
+      {headline}
+    </h2>
+    <p class="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
+      Free QR codes forever. An account lets you change the destination after you print.
+    </p>
+  </div>
 
   {#if externalError}
     <Alert variant="destructive" class="mb-4">
@@ -87,12 +80,12 @@
   {/if}
 
   {#if showSocial}
-    <div class={embedded ? 'flex flex-col gap-2' : 'flex flex-col gap-2'}>
+    <div class="flex flex-col gap-2">
       {#if oauthProviders.google || oauthProviders.dev}
         <Button
           type="button"
           variant="outline"
-          class="{embedded ? 'h-10 px-2' : 'h-11'} w-full justify-center gap-2 rounded-xl bg-card font-medium"
+          class="h-11 w-full justify-center gap-2 rounded-xl bg-card font-medium"
           onclick={() => beginOAuth('google')}
         >
           <svg class="size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -113,14 +106,14 @@
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          {embedded ? 'Google' : 'Continue with Google'}
+          Continue with Google
         </Button>
       {/if}
       {#if oauthProviders.github || oauthProviders.dev}
         <Button
           type="button"
           variant="outline"
-          class="{embedded ? 'h-10 px-2' : 'h-11'} w-full justify-center gap-2 rounded-xl bg-card font-medium"
+          class="h-11 w-full justify-center gap-2 rounded-xl bg-card font-medium"
           onclick={() => beginOAuth('github')}
         >
           <svg class="size-4 shrink-0 text-foreground" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -128,14 +121,18 @@
               d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.395-.135-.345-.72-1.395-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.855 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
             />
           </svg>
-          {embedded ? 'GitHub' : 'Continue with GitHub'}
+          Continue with GitHub
         </Button>
       {/if}
-      {#if oauthProviders.dev && !realOAuth && !embedded}
+      {#if oauthProviders.dev && !realOAuth}
         <p class="px-1 text-center text-[12px] leading-relaxed text-muted-foreground">
           Local sign-in until Google and GitHub keys are added.
         </p>
       {/if}
     </div>
+  {/if}
+
+  {#if providersLoaded && !showSocial}
+    <p class="text-sm leading-relaxed text-muted-foreground">Sign-in isn't available on this server.</p>
   {/if}
 </div>

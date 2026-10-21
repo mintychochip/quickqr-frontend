@@ -1,9 +1,6 @@
 <script lang="ts">
   import ArrowLeft from '@lucide/svelte/icons/arrow-left';
   import ArrowRight from '@lucide/svelte/icons/arrow-right';
-  import Check from '@lucide/svelte/icons/check';
-  import Copy from '@lucide/svelte/icons/copy';
-  import ExternalLink from '@lucide/svelte/icons/external-link';
   import Globe from '@lucide/svelte/icons/globe';
   import QRCanvas from './QRCanvas.svelte';
   import Alert from '@/lib/components/ui/alert.svelte';
@@ -13,7 +10,7 @@
   import Label from '@/lib/components/ui/label.svelte';
   import { createLink } from '../lib/api';
   import { dynamicQrValue, dynamicShortLink } from '../lib/dynamicQr';
-  import { presetStyleById, withQrStyleDefaults } from '@/lib/qrStylePresets';
+  import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '@/lib/qrStylePresets';
   import type { Link } from '../types';
 
   type Props = {
@@ -32,10 +29,9 @@
   let submitting = $state(false);
   let created = $state<Link | null>(null);
   let errorMsg = $state('');
-  let copied = $state(false);
 
   const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  const qrStyle = withQrStyleDefaults(presetStyleById('quickqr_brand'));
+  const qrStyle = withQrStyleDefaults(presetStyleById(DEFAULT_QR_PRESET_ID));
   const previewValue = $derived(
     dynamicQrValue(window.location.origin, customSlug.trim() || 'preview-code'),
   );
@@ -63,7 +59,6 @@
     adStyle = 'interstitial_3s';
     created = null;
     errorMsg = '';
-    copied = false;
   }
 
   async function submit(event: SubmitEvent) {
@@ -87,13 +82,6 @@
     }
   }
 
-  async function copyLink() {
-    if (!createdShortLink) return;
-    await navigator.clipboard.writeText(createdShortLink);
-    copied = true;
-    setTimeout(() => (copied = false), 2000);
-  }
-
   function createAnother() {
     reset();
     requestAnimationFrame(() => document.getElementById('create-code-destination')?.focus());
@@ -114,9 +102,9 @@
       <h2 class="truncate text-sm font-semibold tracking-[-0.01em] text-foreground">
         {created ? 'Code ready' : 'Create dynamic code'}
       </h2>
-      <p class="truncate text-[11px] text-muted-foreground">
-        {created ? createdShortLink : 'Print once, edit the destination later'}
-      </p>
+      {#if !created}
+        <p class="truncate text-[11px] text-muted-foreground">Print once, edit the destination later</p>
+      {/if}
     </div>
   </header>
 
@@ -127,45 +115,12 @@
           value={createdQrValue}
           style={qrStyle}
           label={created.title}
-          compact
-          size={180}
           displayValue={createdShortLink}
-          showLinkActions={false}
         />
 
-        <div class="grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" onclick={copyLink}>
-            {#if copied}
-              <Check class="size-3.5 text-green-600" />
-              Copied
-            {:else}
-              <Copy class="size-3.5" />
-              Copy link
-            {/if}
-          </Button>
-          <Button
-            href={`/r/${created.code}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outline"
-          >
-            <ExternalLink class="size-3.5" />
-            Open link
-          </Button>
-        </div>
-
-        <div class="rounded-xl border border-border bg-muted/50 px-3 py-3">
-          <p class="text-[13px] font-medium text-foreground">Ready to print</p>
-          <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            This QR never changes. Edit its destination any time from the dashboard.
-          </p>
-          <p
-            data-testid="created-short-link"
-            class="mt-2 block truncate rounded-md bg-card px-2 py-1 font-mono text-[10px] text-muted-foreground"
-          >
-            {createdShortLink}
-          </p>
-        </div>
+        <p class="text-center text-xs leading-relaxed text-muted-foreground">
+          This QR never changes. Edit its destination any time from the dashboard.
+        </p>
       </div>
 
       <div class="flex shrink-0 flex-col gap-2 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">

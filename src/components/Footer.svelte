@@ -16,7 +16,7 @@
   const productLinks: { href: string; label: string }[] = [
     { href: '/#generator', label: 'Create QR' },
     { href: '/dashboard', label: 'Dashboard' },
-    { href: docsHref, label: 'API' },
+    { href: docsHref, label: 'Docs' },
     { href: '/#preview', label: 'Redirect preview' },
   ];
 

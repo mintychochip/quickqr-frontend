@@ -17,7 +17,7 @@ test('creates a dynamic code without leaving the dashboard', async ({ page }) =>
   await panel.getByTestId('create-code-submit').click();
 
   await expect(panel.getByTestId('create-code-success')).toBeVisible({ timeout: 15_000 });
-  const shortLink = (await panel.getByTestId('created-short-link').textContent()) ?? '';
+  const shortLink = (await panel.getByTestId('qr-encoded-value').textContent()) ?? '';
   expect(shortLink).toMatch(/\/r\/[a-z0-9]+/i);
 
   await panel.getByRole('button', { name: 'Done' }).click();

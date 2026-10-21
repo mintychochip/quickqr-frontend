@@ -3,7 +3,6 @@
   import Copy from '@lucide/svelte/icons/copy';
   import Check from '@lucide/svelte/icons/check';
   import Code2 from '@lucide/svelte/icons/code-2';
-  import ExternalLink from '@lucide/svelte/icons/external-link';
   import Button from '@/lib/components/ui/button.svelte';
   import { cn } from '@/lib/utils';
   import type { QrStyleResult } from '@/lib/qrStylePresets';
@@ -28,17 +27,13 @@
     margin?: number;
     label?: string;
     frame?: QrStyleResult['frame'];
-    /** Black plate with the lime mark, used on the studio preview. */
-    stage?: boolean;
-    /** Bitmap size in pixels. Larger codes are easier to scan. */
+    /** Bitmap size in pixels, and the largest the code is drawn. Larger codes are easier to scan. */
     size?: number;
-    /** Tighter preview for the dashboard dropdown. */
-    compact?: boolean;
     /** Symbol only, for a table cell. */
     inline?: boolean;
     /** Text under the symbol. Defaults to the encoded value. */
     displayValue?: string;
-    /** Copy and test-link only after the address is real. */
+    /** Copy, share, and open only after the address is real. */
     showLinkActions?: boolean;
   };
 
@@ -51,9 +46,7 @@
     margin = 2,
     label = 'Dynamic QR',
     frame = 'plain',
-    stage = false,
-    size = 240,
-    compact = false,
+    size = 256,
     inline = false,
     displayValue,
     showLinkActions = true,
@@ -77,6 +70,7 @@
   let canvasEl = $state<HTMLCanvasElement | null>(null);
   let copiedLink = $state(false);
   let copiedShare = $state(false);
+  const copyStatus = $derived(copiedLink ? 'Link copied' : copiedShare ? 'Share link copied' : '');
 
   $effect(() => {
     if (!canvasEl || !value) return;
@@ -115,6 +109,8 @@
   }
 
   const linkText = $derived(shownValue.startsWith('http') ? shownValue : value);
+  /** Only web addresses can be opened or shared as a page; a phone number or plain text is just copied. */
+  const webLink = $derived(/^https?:\/\//i.test(linkText));
   const sharePageUrl = $derived.by(() => {
     if (!linkText) return '';
     const url = new URL('/qr', window.location.origin);
@@ -149,97 +145,97 @@
     style:height="{size}px"
   ></canvas>
 {:else}
-<div
-  class={cn(
-    'mx-auto flex w-full flex-col items-center',
-    compact ? 'max-w-[240px]' : 'max-w-[320px]',
-    stage && 'rounded-[1.6rem] bg-ink px-5 py-5 text-primary-foreground',
-  )}
->
-  {#if stage}
-    <div class="mb-4 flex w-full items-center justify-between">
-      <span class="text-[11px] font-medium tracking-[-0.02em] text-white/70">Preview</span>
-      <span class="size-2.5 rounded-full bg-punch" aria-hidden="true"></span>
+  <!-- The card is as wide as the code plus the plain frame's padding and border, so the rows line up with the tile. -->
+  <div
+    data-testid="qr-card"
+    class="mx-auto flex w-full flex-col gap-2"
+    style:max-width="{size + 34}px"
+  >
+    <div
+      class={cn('flex w-full items-center justify-center', frameClass)}
+      style:background-color={resolvedStyle.bgColor}
+    >
+      <canvas
+        bind:this={canvasEl}
+        data-testid="qr-canvas"
+        class="mx-auto block aspect-square h-auto w-full rounded-lg"
+      ></canvas>
     </div>
-  {/if}
-  <div
-    class={cn('mx-auto flex w-full items-center justify-center', frameClass)}
-    style:background-color={resolvedStyle.bgColor}
-  >
-    <canvas
-      bind:this={canvasEl}
-      data-testid="qr-canvas"
+
+    <div
       class={cn(
-        'mx-auto block aspect-square h-auto w-full rounded-lg',
-        compact ? 'max-w-[168px]' : 'max-w-[240px]',
-      )}
-    ></canvas>
-  </div>
-
-  <div
-    data-testid="qr-encoded-value"
-    class={cn(
-      'w-full truncate rounded-lg border px-3 py-1 text-center font-mono text-[11px]',
-      compact ? 'mt-2' : 'mt-3',
-      stage
-        ? 'border-white/10 bg-white/10 text-white/80'
-        : 'border-border bg-muted text-muted-foreground',
-    )}
-  >
-    {shownValue}
-  </div>
-
-  <div class={cn('flex w-full items-center justify-center gap-2', compact ? 'mt-2' : 'mt-4')}>
-    <Button
-      type="button"
-      size="sm"
-      class={cn('flex-1', stage && 'bg-punch text-ink hover:bg-punch/80')}
-      onclick={downloadPNG}
-    >
-      <Download class="size-3.5" />
-      PNG
-    </Button>
-    <Button type="button" size="sm" variant="outline" class="flex-1 bg-white text-ink hover:bg-white/90" onclick={downloadSVG}>SVG</Button>
-    {#if showLinkActions}
-      <Button type="button" size="icon-sm" variant="outline" class="bg-white text-ink hover:bg-white/90" onclick={copyLink} title="Copy link URL">
-        {#if copiedLink}
-          <Check class="size-3.5 text-green-600" />
-        {:else}
-          <Copy class="size-3.5" />
-        {/if}
-      </Button>
-      <Button
-        type="button"
-        size="icon-sm"
-        variant="outline"
-        class="bg-white text-ink hover:bg-white/90"
-        onclick={copySharePage}
-        title="Copy QR share link for Discord"
-        data-testid="copy-qr-share"
-      >
-        {#if copiedShare}
-          <Check class="size-3.5 text-green-600" />
-        {:else}
-          <Code2 class="size-3.5" />
-        {/if}
-      </Button>
-    {/if}
-  </div>
-
-  {#if showLinkActions}
-    <a
-      href={linkText}
-      target="_blank"
-      rel="noopener noreferrer"
-      class={cn(
-        'inline-flex items-center gap-1 text-[11px] transition-colors',
-        compact ? 'mt-1.5' : 'mt-3',
-        stage ? 'text-white/60 hover:text-white' : 'text-muted-foreground hover:text-foreground',
+        'flex h-9 min-w-0 items-center gap-0.5 rounded-lg border border-border bg-muted/50 pl-3',
+        showLinkActions ? 'pr-1' : 'pr-3',
       )}
     >
-      <span>Test link</span>
-      <ExternalLink class="size-3" />
-    </a>
-  {/if}
-</div>
+      {#if showLinkActions && webLink}
+        <a
+          data-testid="qr-encoded-value"
+          href={linkText}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open {shownValue}"
+          class="min-w-0 flex-1 truncate rounded-sm font-mono text-[11px] text-muted-foreground underline-offset-2 outline-none transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          {shownValue}
+        </a>
+      {:else}
+        <span
+          data-testid="qr-encoded-value"
+          title={shownValue}
+          class="min-w-0 flex-1 truncate font-mono text-[11px] text-muted-foreground"
+        >
+          {shownValue}
+        </span>
+      {/if}
+      {#if showLinkActions}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          class="text-muted-foreground"
+          aria-label={webLink ? 'Copy link' : 'Copy'}
+          title={webLink ? 'Copy link' : 'Copy'}
+          onclick={copyLink}
+        >
+          {#if copiedLink}
+            <Check class="size-3.5 text-green-600" />
+          {:else}
+            <Copy class="size-3.5" />
+          {/if}
+        </Button>
+        {#if webLink}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            class="text-muted-foreground"
+            aria-label="Copy share link"
+            title="Copy share link (unfurls in Discord, embeds in iframes)"
+            data-testid="copy-qr-share"
+            onclick={copySharePage}
+          >
+            {#if copiedShare}
+              <Check class="size-3.5 text-green-600" />
+            {:else}
+              <Code2 class="size-3.5" />
+            {/if}
+          </Button>
+        {/if}
+      {/if}
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <Button type="button" size="lg" aria-label="Download PNG" onclick={downloadPNG}>
+        <Download class="size-3.5" />
+        PNG
+      </Button>
+      <Button type="button" size="lg" variant="outline" aria-label="Download SVG" onclick={downloadSVG}>
+        <Download class="size-3.5" />
+        SVG
+      </Button>
+    </div>
+
+    <span class="sr-only" role="status">{copyStatus}</span>
+  </div>
 {/if}

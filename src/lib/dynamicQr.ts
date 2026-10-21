@@ -1,5 +1,5 @@
 import { outputAlphabetQR } from './alphabets';
-import { compress, decompress } from './compress';
+import { compress, decompress } from './compression';
 
 const compressedAlphabet = /^[$*+./:0-9A-Z-]+$/;
 const directCodeAlphabet = /^[A-Z0-9-]+$/;
@@ -53,7 +53,8 @@ export function dynamicCodeFromQrPayload(payload: string): string | null {
   const direct = url.pathname.match(/^\/r\/([A-Za-z0-9_-]+)\/?$/i);
   if (direct?.[1]) return direct[1].toLowerCase();
 
-  let compressed = url.pathname.replace(/^\/+/, '');
+  // One slash separates the host from the payload; a payload may itself start with `/`.
+  let compressed = url.pathname.replace(/^\//, '');
   if (!compressed || compressed.toLowerCase().startsWith('r/')) return null;
   try {
     compressed = decodeURIComponent(compressed);
@@ -87,7 +88,7 @@ export function staticDestinationFromQrPayload(payload: string): string | null {
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
 
-  let compressed = url.pathname.replace(/^\/+/, '');
+  let compressed = url.pathname.replace(/^\//, '');
   if (!compressed || compressed.toLowerCase().startsWith('r/')) return null;
   try {
     compressed = decodeURIComponent(compressed);

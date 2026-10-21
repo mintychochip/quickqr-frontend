@@ -73,17 +73,11 @@ export function oauthStartUrl(provider: 'google' | 'github', returnTo?: string):
   return `/api/auth/oauth/${provider}/start?return_to=${encodeURIComponent(target)}`;
 }
 
-export function startOAuthSignIn(provider: 'google' | 'github', resumePendingDynamic = false): void {
-  if (resumePendingDynamic) {
-    sessionStorage.setItem('quickqr2_oauth_resume', 'dynamic');
-  }
+export function startOAuthSignIn(provider: 'google' | 'github'): void {
   window.location.assign(oauthStartUrl(provider));
 }
 
-export function startDevOAuthSignIn(provider: 'google' | 'github', resumePendingDynamic = false): void {
-  if (resumePendingDynamic) {
-    sessionStorage.setItem('quickqr2_oauth_resume', 'dynamic');
-  }
+export function startDevOAuthSignIn(provider: 'google' | 'github'): void {
   const base = typeof window !== 'undefined' ? window.location.href.split('?')[0].split('#')[0] : '/';
   const params = new URLSearchParams({ as: provider, return_to: base });
   window.location.assign(`/api/auth/oauth/dev/start?${params.toString()}`);

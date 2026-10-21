@@ -3,16 +3,16 @@
   import QRStyleAssistant from './QRStyleAssistant.svelte';
   import QRStylePresets from './QRStylePresets.svelte';
   import QRStyleEditor from './QRStyleEditor.svelte';
-  import { compress } from '../lib/compress';
+  import { compress } from '../lib/compression';
   import { dynamicQrValue, dynamicShortLink } from '../lib/dynamicQr';
   import { outputAlphabetQR } from '../lib/alphabets';
+  import { resolve, type FieldValues, type TypeId } from '../lib/payload';
   import { createLink } from '../lib/api';
   import type { Link } from '../types';
   import type { QrStyleResult } from '@/lib/qrStyleAssistant';
   import { finalizeQrStyle } from '@/lib/qrStyleAssistant';
   import type { QrStylePresetId } from '@/lib/qrStylePresets';
-  import { presetStyleById, withQrStyleDefaults } from '@/lib/qrStylePresets';
-  import Globe from '@lucide/svelte/icons/globe';
+  import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '@/lib/qrStylePresets';
   import ArrowRight from '@lucide/svelte/icons/arrow-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
@@ -26,24 +26,28 @@
   import Alert from '@/lib/components/ui/alert.svelte';
   import AlertDescription from '@/lib/components/ui/alert-description.svelte';
   import { stashPendingDynamicLink, takePendingDynamicLink } from '@/lib/auth';
-  import AuthSignInPanel from './AuthSignInPanel.svelte';
+  import AuthModal from './AuthModal.svelte';
+  import SourceField from './SourceField.svelte';
 
   type Props = {
     onLinkCreated?: (link: Link) => void;
     isAuthenticated: boolean;
-    authExternalError?: string | null;
   };
 
   let {
     onLinkCreated,
     isAuthenticated,
-    authExternalError = null,
   }: Props = $props();
 
   let mode = $state<'dynamic' | 'static'>('dynamic');
   let showOptions = $state(false);
+  /** The sign-in modal Create opens while nobody is signed in. */
+  let signInOpen = $state(false);
 
-  let destinationUrl = $state('https://example.com/menu');
+  let source = $state('https://example.com/events/spring-menu?table=4');
+  /** The type chosen from the menu. While it is null, the bar works the type out as you type. */
+  let forcedType = $state<TypeId | null>(null);
+  let fieldValues = $state<FieldValues>({});
   let title = $state('');
   let customSlug = $state('');
   let adStyle = $state<'interstitial_3s' | 'sponsor_banner' | 'direct'>('interstitial_3s');
@@ -51,13 +55,10 @@
   let createdDynamicLink = $state<Link | null>(null);
   let errorMsg = $state('');
 
-  let staticTargetUrl = $state('https://example.com/events/spring-menu?table=4');
-  let staticOutputUrl = $state('');
-  let staticSavings = $state<number | null>(null);
-
-  let qrStyle = $state<QrStyleResult>(withQrStyleDefaults(presetStyleById('quickqr_brand')));
-  let styleSummary = $state('quickqr brand look');
-  let activePresetId = $state<QrStylePresetId | null>('quickqr_brand');
+  const defaultStyle = withQrStyleDefaults(presetStyleById(DEFAULT_QR_PRESET_ID));
+  let qrStyle = $state<QrStyleResult>(defaultStyle);
+  let styleSummary = $state(defaultStyle.summary);
+  let activePresetId = $state<QrStylePresetId | null>(DEFAULT_QR_PRESET_ID);
   let styleBarOpacity = $state(1);
   let styleBarShift = $state(0);
   let styleBarEl = $state<HTMLDivElement | null>(null);
@@ -95,22 +96,23 @@
     styleSummary = 'Custom style';
   }
 
-  $effect(() => {
-    if (mode === 'static' && staticTargetUrl.trim()) {
-      try {
-        const compressed = compress(staticTargetUrl.trim(), outputAlphabetQR);
-        const scheme = window.location.protocol === 'https:' ? 'HTTPS' : 'HTTP';
-        const host = window.location.host.toUpperCase();
-        const fullLink = `${scheme}://${host}/${compressed}`;
-        staticOutputUrl = fullLink;
-        const origLen = staticTargetUrl.length;
-        const compLen = fullLink.length;
-        staticSavings = Math.round((1 - compLen / origLen) * 100);
-      } catch (e) {
-        console.warn('Static compression error:', e);
-        staticOutputUrl = staticTargetUrl;
-        staticSavings = 0;
-      }
+  const resolved = $derived(
+    resolve(source, forcedType ? { type: forcedType, values: fieldValues[forcedType] } : undefined),
+  );
+  const linkPayload = $derived(resolved.status === 'ready' && resolved.type.id === 'link' ? resolved.payload : null);
+  /** Everything that is not a web link goes into the code as it is: no redirect, nothing to save. */
+  const directPayload = $derived(resolved.status === 'ready' && resolved.type.id !== 'link' ? resolved.payload : null);
+
+  const staticResult = $derived.by(() => {
+    if (!linkPayload) return null;
+    try {
+      const compressed = compress(linkPayload, outputAlphabetQR);
+      const scheme = window.location.protocol === 'https:' ? 'HTTPS' : 'HTTP';
+      const url = `${scheme}://${window.location.host.toUpperCase()}/${compressed}`;
+      return { url, savings: Math.round((1 - url.length / linkPayload.length) * 100) };
+    } catch (e) {
+      console.warn('Static compression error:', e);
+      return { url: linkPayload, savings: 0 };
     }
   });
 
@@ -118,7 +120,8 @@
     if (!isAuthenticated) return;
     const pending = takePendingDynamicLink();
     if (!pending) return;
-    destinationUrl = pending.destinationUrl;
+    source = pending.destinationUrl;
+    forcedType = null;
     title = pending.title;
     customSlug = pending.customSlug;
     adStyle = pending.adStyle as typeof adStyle;
@@ -131,14 +134,14 @@
   }
 
   async function submitDynamicLink() {
-    if (!destinationUrl.trim()) return;
+    if (!linkPayload) return;
 
     isSubmitting = true;
     errorMsg = '';
 
     try {
       const link = await createLink({
-        destination_url: destinationUrl.trim(),
+        destination_url: linkPayload,
         title: title.trim() || 'Dynamic Link',
         code: customSlug.trim() || undefined,
         ad_style: adStyle,
@@ -152,31 +155,42 @@
     }
   }
 
+  /** Runs as the browser leaves for a provider: the link waits in the session and is saved once sign-in returns. */
+  function keepLinkThroughSignIn() {
+    if (!linkPayload) return;
+    stashPendingDynamicLink({
+      // The address as it will be saved, not as typed, so that it is the same link again whatever type was chosen.
+      destinationUrl: linkPayload,
+      title: title.trim(),
+      customSlug: customSlug.trim(),
+      adStyle,
+    });
+  }
+
   async function handleCreateDynamic(e: SubmitEvent) {
     e.preventDefault();
-    if (!destinationUrl.trim()) return;
+    if (!linkPayload) return;
 
     if (!isAuthenticated) {
-      stashPendingDynamicLink({
-        destinationUrl: destinationUrl.trim(),
-        title: title.trim(),
-        customSlug: customSlug.trim(),
-        adStyle,
-      });
+      signInOpen = true;
       return;
     }
 
     await submitDynamicLink();
   }
 
+  /** Copy and download are offered only once a real address is behind the code, never for the placeholder. */
   const linkReady = $derived(
-    mode === 'static' || (mode === 'dynamic' && createdDynamicLink != null),
+    mode === 'static' ? resolved.status === 'ready' : directPayload !== null || createdDynamicLink != null,
   );
 
   const liveCode = $derived(createdDynamicLink?.code || customSlug || 'preview-code');
   const currentShortLink = $derived(dynamicShortLink(window.location.origin, liveCode));
   const currentQRValue = $derived(
-    mode === 'static' ? staticOutputUrl || 'https://quickqr2.app' : dynamicQrValue(window.location.origin, liveCode),
+    directPayload ??
+      (mode === 'static'
+        ? (staticResult?.url ?? 'https://quickqr2.app')
+        : dynamicQrValue(window.location.origin, liveCode)),
   );
 </script>
 
@@ -226,14 +240,27 @@
           <div class="order-2 w-full lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:order-none lg:self-start">
             <QRCanvas
               value={currentQRValue}
-              displayValue={!linkReady ? 'Not saved yet' : mode === 'static' ? undefined : currentShortLink}
+              displayValue={!linkReady
+                ? mode === 'static'
+                  ? 'Nothing to encode yet'
+                  : 'Not saved yet'
+                : mode === 'static' || directPayload !== null
+                  ? undefined
+                  : currentShortLink}
               showLinkActions={linkReady}
               style={qrStyle}
               label={title || 'quickqr'}
-              stage
-              size={240}
             />
           </div>
+        {/snippet}
+
+        {#snippet directNote()}
+          <p
+            data-testid="direct-note"
+            class="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground"
+          >
+            This goes straight into the code. There's nothing to save or sign in for, and it can't be edited after printing.
+          </p>
         {/snippet}
 
         {#if mode === 'dynamic'}
@@ -242,24 +269,14 @@
             class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-10"
           >
             <div class="contents lg:col-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-            <div class="order-1 min-w-0 space-y-2">
-              <Label for="destination-url">Link</Label>
-              <div class="relative">
-                <Globe
-                  class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  id="destination-url"
-                  type="url"
-                  required
-                  bind:value={destinationUrl}
-                  placeholder="https://yoursite.com/menu"
-                  class="h-11 pl-9 text-base md:text-base"
-                />
-              </div>
+            <div class="order-1 min-w-0">
+              <SourceField id="destination-url" bind:value={source} bind:forcedType bind:fieldValues {resolved} />
             </div>
 
             <div class="order-3 min-w-0 space-y-4">
+              {#if directPayload !== null}
+                {@render directNote()}
+              {:else if resolved.status === 'ready' || resolved.status === 'empty'}
 
               <Button
                 type="button"
@@ -329,28 +346,13 @@
                 </div>
               {/if}
 
-              {#if !isAuthenticated}
-                <AuthSignInPanel
-                  embedded
-                  headline="Sign in to save this link."
-                  resumeAfterOAuth={true}
-                  externalError={authExternalError}
-                  onBeforeOAuth={() =>
-                    stashPendingDynamicLink({
-                      destinationUrl: destinationUrl.trim(),
-                      title: title.trim(),
-                      customSlug: customSlug.trim(),
-                      adStyle,
-                    })}
-                />
-              {:else}
-                {#if errorMsg}
-                  <Alert variant="destructive">
-                    <AlertDescription>{errorMsg}</AlertDescription>
-                  </Alert>
-                {/if}
+              {#if errorMsg}
+                <Alert variant="destructive">
+                  <AlertDescription>{errorMsg}</AlertDescription>
+                </Alert>
+              {/if}
 
-                {#if createdDynamicLink}
+              {#if createdDynamicLink}
                 <div
                   data-testid="dynamic-link-success"
                   class="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-3 text-xs"
@@ -368,15 +370,15 @@
                 </div>
               {/if}
 
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  class="h-10 w-full bg-punch text-ink hover:bg-punch/80"
-                  data-testid="create-dynamic-link"
-                >
-                  <span>{isSubmitting ? 'Creating...' : 'Create QR code'}</span>
-                  <ArrowRight class="size-4" />
-                </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                class="h-10 w-full bg-punch text-ink hover:bg-punch/80"
+                data-testid="create-dynamic-link"
+              >
+                <span>{isSubmitting ? 'Creating...' : 'Create QR code'}</span>
+                <ArrowRight class="size-4" />
+              </Button>
               {/if}
             </div>
             </div>
@@ -385,32 +387,31 @@
           {:else}
             <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-10">
               <div class="contents lg:col-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-              <div class="order-1 min-w-0 space-y-2">
-                <Label for="static-url">Link</Label>
-                <Input
-                  id="static-url"
-                  type="url"
-                  bind:value={staticTargetUrl}
-                  placeholder="https://example.com/very-long-url"
-                  class="h-11 text-base md:text-base"
-                />
+              <div class="order-1 min-w-0">
+                <SourceField id="static-url" bind:value={source} bind:forcedType bind:fieldValues {resolved} />
               </div>
 
-              <div class="order-3 min-w-0 space-y-2 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-                <p data-testid="static-compressed-url" class="break-all font-mono text-xs text-foreground">
-                  {staticOutputUrl || '—'}
-                </p>
-                <div class="flex justify-between text-muted-foreground">
-                  <span>Original</span>
-                  <span class="font-mono text-foreground">{staticTargetUrl.length} chars</span>
-                </div>
-                <div class="flex justify-between text-muted-foreground">
-                  <span>Compressed</span>
-                  <span class="font-mono font-medium text-green-600">
-                    {staticOutputUrl.length} chars
-                    {staticSavings ? `(${staticSavings}% smaller)` : ''}
-                  </span>
-                </div>
+              <div class="order-3 min-w-0">
+                {#if directPayload !== null}
+                  {@render directNote()}
+                {:else if resolved.status === 'ready' || resolved.status === 'empty'}
+                  <div class="space-y-2 rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                    <p data-testid="static-compressed-url" class="break-all font-mono text-xs text-foreground">
+                      {staticResult?.url ?? '—'}
+                    </p>
+                    <div class="flex justify-between text-muted-foreground">
+                      <span>Original</span>
+                      <span class="font-mono text-foreground">{linkPayload?.length ?? 0} chars</span>
+                    </div>
+                    <div class="flex justify-between text-muted-foreground">
+                      <span>Compressed</span>
+                      <span class="font-mono font-medium text-green-600">
+                        {staticResult?.url.length ?? 0} chars
+                        {staticResult && staticResult.savings > 0 ? `(${staticResult.savings}% smaller)` : ''}
+                      </span>
+                    </div>
+                  </div>
+                {/if}
               </div>
               </div>
               {@render preview()}
@@ -470,4 +471,6 @@
       </div>
     </div>
   </div>
+
+  <AuthModal bind:open={signInOpen} headline="Sign in to save this link" onBeforeOAuth={keepLinkThroughSignIn} />
 </section>

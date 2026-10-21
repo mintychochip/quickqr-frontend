@@ -9,7 +9,7 @@ import { dynamicCodeFromQrPayload } from './src/lib/dynamicQr'
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 
-/** Send ha.mr-compressed dynamic QR paths to the short link on the API. */
+/** Send compressed dynamic QR paths to the short link on the API. */
 function compressedShortLinkPlugin(): Plugin {
   const handler: Connect.NextHandleFunction = (req, res, next) => {
     const requestUrl = req.url ?? '/'

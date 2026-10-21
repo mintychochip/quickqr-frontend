@@ -13,6 +13,23 @@ test('share page renders a QR for any link', async ({ page }) => {
   await expect(page.getByTestId('embed-copy-image')).toBeVisible();
 });
 
+test('share page draws its code in plain black on white, with no logo', async ({ page }) => {
+  await page.goto(`/qr?url=${encodeURIComponent(target)}`);
+  const svg = page.getByTestId('embed-qr').locator('svg');
+  await expect(svg).toBeVisible();
+
+  const fills = await svg.evaluate((root) =>
+    Array.from(root.querySelectorAll('[fill]'), (el) => el.getAttribute('fill') ?? ''),
+  );
+  expect(fills.length).toBeGreaterThan(0);
+  for (const fill of fills) {
+    expect(fill, 'a hex colour').toMatch(/^#[0-9a-f]{6}$/i);
+    const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => parseInt(fill.slice(at, at + 2), 16));
+    expect(Math.max(r, g, b) - Math.min(r, g, b), `${fill} is grey`).toBeLessThan(16);
+  }
+  await expect(svg.locator('image')).toHaveCount(0);
+});
+
 test('share page turns a pasted link into a QR', async ({ page }) => {
   await page.goto('/qr');
   await page.getByLabel('Link').fill('example.com/menu');

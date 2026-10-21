@@ -95,7 +95,7 @@ export const QR_STYLE_PRESETS: QrStylePresetDef[] = [
     id: 'black_on_white',
     label: 'Black on white',
     promptExample: 'Black on white maximum contrast',
-    match: /\bblack\s+on\s+white\b/i,
+    match: /\b(black\s+on\s+white|default)\b/i,
     style: {
       fgColor: '#0a0a0a',
       bgColor: '#ffffff',
@@ -108,7 +108,7 @@ export const QR_STYLE_PRESETS: QrStylePresetDef[] = [
     id: 'quickqr_brand',
     label: 'Brand',
     promptExample: 'Brand blue on cream',
-    match: /\b(brand|quickqr|default)\b/i,
+    match: /\b(brand|quickqr)\b/i,
     style: {
       fgColor: '#1e3a8a',
       bgColor: '#f9f9f8',
@@ -242,6 +242,12 @@ export const QR_STYLE_PRESETS: QrStylePresetDef[] = [
 export const QR_STYLE_PRESET_BY_ID: Record<QrStylePresetId, QrStylePresetDef> = Object.fromEntries(
   QR_STYLE_PRESETS.map((p) => [p.id, p]),
 ) as Record<QrStylePresetId, QrStylePresetDef>;
+
+/**
+ * The look a code has until someone styles it: plain black on white, which every scanner reads. Every surface that
+ * draws a code before it has been styled reads this, so none of them names a preset of its own.
+ */
+export const DEFAULT_QR_PRESET_ID: QrStylePresetId = 'black_on_white';
 
 export type QrStylePreset = { id: QrStylePresetId; summary: string; style: QrStyleResult };
 

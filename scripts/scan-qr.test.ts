@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { outputAlphabetQR } from '../src/lib/alphabets';
-import { compress } from '../src/lib/compress';
+import { compress } from '../src/lib/compression';
 import { dynamicQrValue, dynamicShortLink } from '../src/lib/dynamicQr';
 import { menuLocationFromScan } from '../src/lib/scanQr';
 

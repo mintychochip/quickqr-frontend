@@ -10,7 +10,7 @@
   import Button from '@/lib/components/ui/button.svelte';
   import Input from '@/lib/components/ui/input.svelte';
   import Label from '@/lib/components/ui/label.svelte';
-  import { presetStyleById, withQrStyleDefaults } from '@/lib/qrStylePresets';
+  import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '@/lib/qrStylePresets';
   import { renderQrToDataURL, renderQrToSvg } from '@/lib/qrCode';
 
   const MAX_URL_LENGTH = 2048;
@@ -18,7 +18,7 @@
   const initialRaw = params.get('url')?.trim() ?? '';
   const initialResult = initialRaw ? normalizeTargetInput(initialRaw) : null;
   const isEmbed = params.get('embed') === '1' || window.self !== window.top;
-  const style = withQrStyleDefaults(presetStyleById('quickqr_brand'));
+  const style = withQrStyleDefaults(presetStyleById(DEFAULT_QR_PRESET_ID));
 
   let target = $state(initialResult && 'value' in initialResult ? initialResult.value : '');
   let inputUrl = $state(initialRaw);

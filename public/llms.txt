@@ -1,12 +1,12 @@
 # quickqr2
 
-> Ad-subsidized QR platform (successor to quickqr.app): free dynamic redirects with editable destinations and scan analytics, plus client-side static QR via ha.mr-style URL compression. Go backend, Svelte 5 + TypeScript 7 frontend.
+> Ad-subsidized QR platform (successor to quickqr.app): free dynamic redirects with editable destinations and scan analytics, plus client-side static QR via URL compression. Go backend, Svelte 5 + TypeScript 7 frontend.
 
-Monorepo layout: `backend/` (Go 1.23+ redirect + REST API), `frontend/` (Vite, Tailwind 4, shadcn-svelte nova), `ha_mr_repo/` (reference compressor). Human and coding-agent canonical detail lives in `AGENTS.md`. Dev: backend `PORT=8080` from `backend/`; frontend `bun run dev` (proxies `/api` and `/r` to the backend).
+Monorepo layout: `backend/` (Go 1.23+ redirect + REST API), `frontend/` (Vite, Tailwind 4, shadcn-svelte nova), `compression_reference/` (upstream reference compressor). Human and coding-agent canonical detail lives in `AGENTS.md`. Dev: backend `PORT=8080` from `backend/`; frontend `bun run dev` (proxies `/api` and `/r` to the backend).
 
 ## Docs
 
-- [AGENTS.md](AGENTS.md): Vision, stack, ha.mr compression reference, API routes, directory map — primary context for AI assistants
+- [AGENTS.md](AGENTS.md): Vision, stack, compression reference, API routes, directory map — primary context for AI assistants
 - [frontend/README.md](frontend/README.md): Frontend scripts, typecheck, shadcn-svelte CLI usage
 - [backend/.env.example](backend/.env.example): OAuth and server environment variables
 
@@ -15,7 +15,7 @@ Monorepo layout: `backend/` (Go 1.23+ redirect + REST API), `frontend/` (Vite, T
 - [backend/cmd/server/main.go](backend/cmd/server/main.go): HTTP server entry, routing, graceful shutdown
 - [backend/internal/api/handlers.go](backend/internal/api/handlers.go): Links CRUD, analytics, sponsors API
 - [backend/internal/redirect/redirect.go](backend/internal/redirect/redirect.go): Public `/r/:code` gateway and interstitial
-- [backend/internal/storage/storage.go](backend/internal/storage/storage.go): SQLite / in-memory link store
+- [backend/internal/storage/storage.go](backend/internal/storage/storage.go): In-memory link store (nothing is persisted)
 
 ## Frontend
 
@@ -24,5 +24,5 @@ Monorepo layout: `backend/` (Go 1.23+ redirect + REST API), `frontend/` (Vite, T
 
 ## Optional
 
-- [ha_mr_repo/README.md](ha_mr_repo/README.md): Upstream ha.mr static URL shortener reference
-- [ha_mr_repo/docs/compress.js](ha_mr_repo/docs/compress.js): BigInt URL compression pipeline (port source for static mode)
+- [compression_reference/README.md](compression_reference/README.md): Upstream static URL shortener reference (the original compressor)
+- [compression_reference/docs/compress.js](compression_reference/docs/compress.js): BigInt URL compression pipeline (port source for static mode)

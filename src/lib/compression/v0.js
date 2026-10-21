@@ -77,7 +77,7 @@ for (const key in pathEncode) {
  * @param {string[]} alphabet Ordered list of possible character sequences in output
  * @returns {string} String representing the input number
  */
-function numberToString (number, alphabet) {
+export function numberToString (number, alphabet) {
   const alphabetSize = BigInt(alphabet.length);
   let string = "";
 
@@ -96,7 +96,7 @@ function numberToString (number, alphabet) {
  * @param {string[]} alphabet Ordered list of possible character sequences in `string`
  * @returns {BigInt} Decoded number
  */
-function stringToNumber (string, alphabet) {
+export function stringToNumber (string, alphabet) {
   const alphabetSize = BigInt(alphabet.length);
   let number = 0n;
 
@@ -124,7 +124,7 @@ function stringToNumber (string, alphabet) {
  * @param {string} sequence Binary sequence of "0"/"1" string characters
  * @returns {BigInt} Modified input number with binary sequence encoded
  */
-function huffmanEncode (number, sequence) {
+export function huffmanEncode (number, sequence) {
   for (let i = sequence.length - 1; i >= 0; i --) {
     number <<= 1n;
     if (sequence[i] === "1") number ++;
@@ -139,7 +139,7 @@ function huffmanEncode (number, sequence) {
  * @returns {{newNumber: BigInt, digit: string}}
  *  Modified input number after decoding, output string
  */
-function huffmanDecode (number, lookup) {
+export function huffmanDecode (number, lookup) {
   let sequence = "";
   do {
     sequence += number & 1n;
@@ -156,7 +156,7 @@ function huffmanDecode (number, lookup) {
  * @param {BigInt} number 128-bit IPv6 value
  * @returns {string} IPv6 address without square brackets
  */
-function numberToIPv6 (number) {
+export function numberToIPv6 (number) {
   const hextets = [];
 
   for (let i = 0; i < 8; i ++) {
@@ -196,7 +196,7 @@ function numberToIPv6 (number) {
  * @param {string} input IPv6 address without square brackets
  * @returns {BigInt} 128-bit IPv6 value
  */
-function ipv6ToNumber (input) {
+export function ipv6ToNumber (input) {
   const halves = input.split("::");
   const left = halves[0] ? halves[0].split(":") : [];
   const right = halves[1] ? halves[1].split(":") : [];
@@ -661,4 +661,9 @@ export function decompress (input, alphabet) {
 /** Decode tables for a native port of {@link decompress}. */
 export function decompressionTables () {
   return { subalphabets, tldDecode, sldDecode, domainDecode, pathDecode };
+}
+
+/** Encode tables for the v1 codec, which reuses the v0 header and host coding. */
+export function encodingTables () {
+  return { tldEncode, sldEncode, domainEncode, sldList };
 }

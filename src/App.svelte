@@ -64,6 +64,17 @@
     });
   });
 
+  $effect(() => {
+    if (isQrPage) return;
+    const onUnauthorized = (): void => {
+      user = null;
+    };
+    window.addEventListener('quickqr:unauthorized', onUnauthorized);
+    return () => {
+      window.removeEventListener('quickqr:unauthorized', onUnauthorized);
+    };
+  });
+
   function openAuth() {
     authError = null;
     authOpen = true;
@@ -146,10 +157,7 @@
   />
 
   <main class="flex-1">
-    <Generator
-      isAuthenticated={user !== null}
-      authExternalError={authError}
-    />
+    <Generator isAuthenticated={user !== null} />
 
     <HomeCards />
 
