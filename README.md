@@ -20,9 +20,9 @@ The Vite dev/preview servers proxy `/api` and `/r` to the Go backend on `localho
 
 There are two Pages projects. `quickqr` is production (quickqr.app) and is connected to Git
 (`mintychochip/quickqr-frontend`), so do not upload to it by hand: pushing `master` is the production deploy, and any
-other branch builds a preview. `master` was the old React app; the Svelte rebuild was merged in with `-s ours`, so that
-history is kept but the tree is the rebuild's. `quickqr-staging` is a direct-upload project; `staging.quickqr.app`
-reaches it through the proxy worker in `staging-worker/`.
+other branch builds a preview. `master` was the old Astro and Supabase app; the Svelte rebuild was merged in with
+`-s ours`, so that history is kept but the tree is the rebuild's. `quickqr-staging` is a direct-upload project;
+`staging.quickqr.app` reaches it through the proxy worker in `staging-worker/`.
 
 Git builds run `npm run build` on Cloudflare's image, whose bun (1.2.15) cannot read a `bun.lock` written by bun 1.4
 (`lockfileVersion: 2`). `wrangler.toml` is the source of truth for the build's env vars, so its `[vars]` pins
