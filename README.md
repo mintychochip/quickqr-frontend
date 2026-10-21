@@ -18,11 +18,26 @@ The Vite dev/preview servers proxy `/api` and `/r` to the Go backend on `localho
 
 ## Cloudflare Pages
 
-The static frontend deploys with Wrangler:
+There are two Pages projects. `quickqr` is production (quickqr.app) and is connected to Git
+(`mintychochip/quickqr-frontend`), so do not upload to it by hand: pushing `master` is the production deploy, and any
+other branch builds a preview. `master` was the old React app; the Svelte rebuild was merged in with `-s ours`, so that
+history is kept but the tree is the rebuild's. `quickqr-staging` is a direct-upload project; `staging.quickqr.app`
+reaches it through the proxy worker in `staging-worker/`.
+
+Git builds run `npm run build` on Cloudflare's image, whose bun (1.2.15) cannot read a `bun.lock` written by bun 1.4
+(`lockfileVersion: 2`). `wrangler.toml` is the source of truth for the build's env vars, so its `[vars]` pins
+`BUN_VERSION`. Keep it equal to `bun --version` whenever `bun.lock` is regenerated, or the install step fails before
+anything builds.
+
+Deploy to staging with Wrangler:
 
 ```sh
 bun run build
-wrangler pages deploy dist --project-name quickqr-frontend
+wrangler pages deploy dist --project-name quickqr-staging --branch main
 ```
+
+`--branch main` matters. Staging's production branch is `main`, and Cloudflare treats any other branch name (this
+checkout is on `svelte-rebuild`) as a preview deployment, which `staging.quickqr.app` does not serve. When the working
+tree is ahead of the last commit, add `--commit-dirty=true --commit-message "..."` so the dashboard says what is there.
 
 The Pages deployment includes `_redirects` for SPA routing and `_worker.js`, which returns a JSON 404 for `/api/*` and `/r/*` until the Go backend is hosted separately. Dashboard authentication and dynamic redirects require that backend; the marketing page and static QR generator work without it.
