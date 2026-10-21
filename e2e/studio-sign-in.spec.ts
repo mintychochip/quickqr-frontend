@@ -98,6 +98,16 @@ test('continuing with a provider signs in and creates the link that was typed, w
   await gen.getByRole('button', { name: 'Slug and ads' }).click();
   await gen.locator('#slug').fill(slug);
   await gen.getByTestId('create-dynamic-link').click();
+  // With real Google credentials configured the button goes to Google. Send that request to the local stand-in instead, so
+  // this test does not depend on which providers a developer has set up. Without them the app already goes straight to the
+  // stand-in and this route never fires.
+  await page.route(/\/api\/auth\/oauth\/google\/start(\?|$)/, (route) => {
+    const from = new URL(route.request().url());
+    const standIn = new URL('/api/auth/oauth/dev/start', from.origin);
+    standIn.searchParams.set('as', 'google');
+    standIn.searchParams.set('return_to', from.searchParams.get('return_to') ?? new URL('/', from.origin).toString());
+    return route.fulfill({ status: 302, headers: { location: standIn.toString() } });
+  });
   await signInModal(page).getByRole('button', { name: 'Continue with Google' }).click();
 
   await page.getByRole('textbox', { name: 'Email' }).fill('ada@example.com');

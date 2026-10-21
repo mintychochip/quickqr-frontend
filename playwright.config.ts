@@ -42,6 +42,8 @@ export default defineConfig({
         PORT: '8080',
         // Keep E2E deterministic: no external Jev/LLM calls required.
         TYPESAFE_JEV_STYLE: '0',
+        // Specs sign in through the local stand-in, which is off unless asked for.
+        OAUTH_DEV: '1',
       },
     },
     {
