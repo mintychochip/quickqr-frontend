@@ -1,5 +1,4 @@
-const escapeHtml = (text: string): string =>
-  text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&#34;', "'": '&#39;' })[c] ?? c);
+import { escapeHtml } from './html';
 
 /** The page the local sign-in stand-in shows: one email field, no password. */
 export function renderDevConsent(state: string, provider: 'github' | 'google'): string {

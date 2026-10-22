@@ -62,7 +62,8 @@ interface Entry {
 const AUTH_MODES: AuthMode[] = ['public', 'optional', 'any', 'session'];
 const CLASSES: RouteClass[] = ['none', 'read', 'write', 'expensive', 'embed', 'auth', 'keys'];
 
-const notFound = () => new Response('404 page not found\n', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+/** Go's http.NotFound: the answer for a path nothing is registered at. */
+export const notFound = () => new Response('404 page not found\n', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 
 function splitPattern(pattern: string): { method: string; path: string } {
   const space = pattern.indexOf(' ');
