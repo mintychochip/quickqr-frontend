@@ -40,4 +40,14 @@ wrangler pages deploy dist --project-name quickqr-staging --branch main
 checkout is on `svelte-rebuild`) as a preview deployment, which `staging.quickqr.app` does not serve. When the working
 tree is ahead of the last commit, add `--commit-dirty=true --commit-message "..."` so the dashboard says what is there.
 
-The Pages deployment includes `_redirects` for SPA routing and `_worker.js`, which returns a JSON 404 for `/api/*` and `/r/*` until the Go backend is hosted separately. Dashboard authentication and dynamic redirects require that backend; the marketing page and static QR generator work without it.
+The Pages deployment includes `_redirects` for SPA routing and `_worker.js`, which answers `/api/*` and `/r/*` with a JSON 404 because Pages cannot reach a backend. Nothing in front of production (`quickqr.app`) does either yet, so sign-in and dynamic links do not work there; the marketing page and static QR generator do.
+
+## Staging API
+
+`staging-worker/worker.js` sends `/api/`, `/r/`, `/R/`, `/qr`, `/qr.png`, `/qr.svg`, and `/healthz` on `staging.quickqr.app` to the Go backend and every other path to the Pages project, so `_worker.js` never sees the API paths there. The backend call goes through a Workers VPC binding (`BACKEND` in `staging-worker/wrangler.toml`) to a Cloudflare Tunnel connector on the machine that runs the server, so the backend has no public hostname and no open port. The worker replaces `X-Forwarded-For` with `CF-Connecting-IP` and sets `X-Forwarded-Proto: https`, so the backend must trust only the connector (`TRUSTED_PROXIES=127.0.0.1`) and have `OAUTH_REDIRECT_ORIGIN` and `APP_PUBLIC_URL` set to `https://staging.quickqr.app`. A failed backend call answers `502 {"error":"The staging API is unreachable."}`.
+
+Deploy it from `staging-worker/` with the account pinned, because a stale account cached under `node_modules/.cache/wrangler` can send Wrangler to the wrong one:
+
+```sh
+CLOUDFLARE_ACCOUNT_ID=<the account that owns quickqr.app> wrangler deploy
+```

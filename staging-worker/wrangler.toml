@@ -2,3 +2,8 @@ name = "quickqr-staging-proxy"
 main = "worker.js"
 compatibility_date = "2026-10-19"
 routes = [{ pattern = "staging.quickqr.app", custom_domain = true }]
+
+[[vpc_services]]
+binding = "BACKEND"
+service_id = "01a160e7-7234-7280-9bf7-0f8635d0df53"
+remote = true
