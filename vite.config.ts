@@ -14,7 +14,7 @@ function compressedShortLinkPlugin(): Plugin {
   const handler: Connect.NextHandleFunction = (req, res, next) => {
     const requestUrl = req.url ?? '/'
     const pathOnly = requestUrl.split('?')[0] ?? '/'
-    if (pathOnly === '/' || pathOnly === '/qr' || pathOnly.startsWith('/qr.') || /^\/r\//i.test(pathOnly) || pathOnly.startsWith('/api') || pathOnly.startsWith('/@') || pathOnly.startsWith('/src/') || pathOnly.startsWith('/node_modules') || pathOnly.startsWith('/__')) {
+    if (pathOnly === '/' || pathOnly === '/qr' || pathOnly === '/healthz' || pathOnly.startsWith('/qr.') || /^\/r\//i.test(pathOnly) || pathOnly.startsWith('/api') || pathOnly.startsWith('/@') || pathOnly.startsWith('/src/') || pathOnly.startsWith('/node_modules') || pathOnly.startsWith('/__')) {
       next()
       return
     }
@@ -73,6 +73,10 @@ const apiProxy = {
     changeOrigin: true,
   },
   '/qr.svg': {
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+  },
+  '/healthz': {
     target: 'http://localhost:8080',
     changeOrigin: true,
   },

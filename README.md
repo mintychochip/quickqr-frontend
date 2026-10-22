@@ -82,5 +82,8 @@ done, `staging-worker/` can be deleted.
 The Worker (deployed from `staging-worker/` with `wrangler deploy`) also refuses `/api/qr/context` with `503`, because the
 Go server's site reader fetches whatever address the caller names from the machine it runs on. The Pages backend has no
 such worker in front of it: its reader refuses literal private addresses, `localhost`, `.local`, and `.internal`, checks every
-redirect hop, and times out after 8 seconds, and Cloudflare documents that a Worker cannot reach private networks (not
-tested here). It is still an anonymous GET fetcher.
+redirect hop, and times out after 8 seconds. It cannot see where a hostname points, so a name that resolves to a private
+address is left to Cloudflare, which refuses the connection: on 2026-10-22 `localtest.me` and `nip.io` names resolving to
+127.0.0.1, 10.0.0.1, 192.168.0.1, and 169.254.169.254 each came back `That site returned 530` from the deployed staging
+project. That is five names with one hop each, not a proof for every internal address. The route is still an anonymous GET
+fetcher.
