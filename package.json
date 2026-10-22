@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5186 --host 0.0.0.0 --strictPort",
-    "build": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.app.json && vite build",
+    "build": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.edge.json && vite build",
     "check:ts": "tsc --noEmit -p tsconfig.app.json",
+    "check:edge": "tsc --noEmit -p tsconfig.edge.json",
+    "test:edge": "bun test edge",
     "lint": "oxlint",
     "ui:add": "shadcn-svelte add",
     "preview": "vite preview --port 5185 --host 0.0.0.0 --strictPort",
