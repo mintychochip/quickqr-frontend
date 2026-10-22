@@ -1,6 +1,7 @@
 import { registerAuthRoutes } from './routes/auth';
 import { registerHostedRoutes } from './routes/hosted';
 import { registerLinkRoutes } from './routes/links';
+import { registerQrRoutes } from './routes/qr';
 import { Router, type Authenticator } from './router';
 import { userFromToken } from './store/users';
 
@@ -22,5 +23,6 @@ export function createApp(deps: AppDeps = platform): Router {
   registerAuthRoutes(router, deps);
   registerLinkRoutes(router, deps);
   registerHostedRoutes(router, deps);
+  registerQrRoutes(router, deps);
   return router;
 }

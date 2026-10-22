@@ -70,7 +70,7 @@ export async function readForm(req: Request, cap?: number): Promise<URLSearchPar
   return new URLSearchParams(await readText(req, cap));
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+export const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * A decoded JSON body that must be an object. `null` counts as an object with no fields, because that is what Go's
@@ -99,4 +99,11 @@ export function objectList(body: Record<string, unknown>, key: string): Record<s
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) throw new HttpError(400, INVALID_BODY);
   return value.map((entry) => bodyObject(entry));
+}
+
+/** One JSON value read as a string the way Go's json.Unmarshal does: null is '', and any other type is a 400 naming the field. */
+export function stringValue(raw: unknown, name: string): string {
+  if (raw === null) return '';
+  if (typeof raw !== 'string') throw new HttpError(400, `${name} must be a string`);
+  return raw;
 }
