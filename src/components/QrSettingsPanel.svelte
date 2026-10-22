@@ -1,6 +1,7 @@
 <script lang="ts">
   import Paperclip from '@lucide/svelte/icons/paperclip';
   import X from '@lucide/svelte/icons/x';
+  import { fileToBase64, readImageForAgent } from '@/lib/agentImage';
   import Button from '@/lib/components/ui/button.svelte';
   import Input from '@/lib/components/ui/input.svelte';
   import { fetchQrSettings, fetchSiteContext, patchQrSettings, type QrSettingsDocument } from '../lib/api';
@@ -115,19 +116,6 @@
       });
   });
 
-  function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const value = String(reader.result ?? '');
-        const comma = value.indexOf(',');
-        resolve(comma >= 0 ? value.slice(comma + 1) : value);
-      };
-      reader.onerror = () => reject(new Error('Could not read that file'));
-      reader.readAsDataURL(file);
-    });
-  }
-
   async function addContextFiles(list: FileList | null) {
     error = '';
     if (!list || list.length === 0) return;
@@ -152,14 +140,15 @@
         error = `${file.name} is larger than 1.2MB`;
         continue;
       }
-      const dataBase64 = await fileToBase64(file);
+      // The thumbnail keeps the photo as it is; what the agent is sent is shrunk to fit.
+      const sent = await readImageForAgent(file);
       next.push({
         id: crypto.randomUUID(),
         name: file.name,
         kind: 'image',
-        mediaType: file.type,
-        dataBase64,
-        preview: `data:${file.type};base64,${dataBase64}`,
+        mediaType: sent.mediaType,
+        dataBase64: sent.dataBase64,
+        preview: `data:${file.type};base64,${await fileToBase64(file)}`,
       });
     }
     materials = next;

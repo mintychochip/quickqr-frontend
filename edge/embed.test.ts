@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+import { encodeMatrix } from './qr/matrix';
 import { describe, expect, test } from 'bun:test';
 import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
@@ -136,6 +138,63 @@ describe('the PNG', () => {
     ]) {
       const res = await go(r, `/qr.png${query}`);
       expect([res.status, res.headers.get('Content-Type'), await text(res)]).toEqual([400, 'text/plain; charset=utf-8', `${message}\n`]);
+    }
+  });
+});
+
+describe('the code itself', () => {
+  const url = (length: number): string => `https://example.com/${Array.from({ length }, (_, i) => 'abcdefghijklmnopqrstuvwxyz0123456789'[(i * 7 + (i >> 3)) % 36]).join('')}`;
+  const bestMask = (address: string) => QRCode.create(address, { errorCorrectionLevel: 'M' });
+
+  test('a small code is the best of all eight masks, as the library finds it', () => {
+    for (const length of [5, 30, 60, 100]) {
+      const address = url(length);
+      const best = bestMask(address);
+      expect(best.version).toBeLessThan(10);
+      expect(Array.from(encodeMatrix(address).data)).toEqual(Array.from(best.modules.data));
+    }
+  });
+
+  test('a large code skips the eight-mask search, which costs CPU in proportion to its area', () => {
+    for (const length of [300, 600, 1200]) {
+      const address = url(length);
+      expect(bestMask(address).version).toBeGreaterThanOrEqual(10);
+      expect(Array.from(encodeMatrix(address).data)).toEqual(Array.from(QRCode.create(address, { errorCorrectionLevel: 'M', maskPattern: 0 }).modules.data));
+    }
+  });
+
+  /** The module grid read straight off the PNG's pixels, at the middle of each module: no decoder in between. */
+  function modulesFromPng(body: Uint8Array, size: number): Uint8Array {
+    const png = PNG.sync.read(Buffer.from(body));
+    const total = size + 8;
+    const out = new Uint8Array(size * size);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const px = Math.floor(((x + 4.5) * png.width) / total);
+        const py = Math.floor(((y + 4.5) * png.height) / total);
+        out[y * size + x] = (png.data[(py * png.width + px) * 4] ?? 255) < 128 ? 1 : 0;
+      }
+    }
+    return out;
+  }
+
+  test('every size is drawn exactly: the PNG holds its module grid, and the SVG reads back as its address', async () => {
+    const r = rig();
+    for (const length of [10, 60, 150, 250, 400, 700, 1000, 1500, 1970]) {
+      const address = url(length);
+      const matrix = encodeMatrix(address);
+      const png = await bytes(await go(r, `/qr.png?url=${encodeURIComponent(address)}`));
+      expect([length, Array.from(modulesFromPng(png, matrix.size)).join('') === Array.from(matrix.data).join('')]).toEqual([length, true]);
+      const svg = decodeSvg(await text(await go(r, `/qr.svg?url=${encodeURIComponent(address)}`)));
+      expect([length, svg.text === address]).toEqual([length, true]);
+    }
+  });
+
+  test('a phone-sized picture of any code a decoder can resample reads back as its address', async () => {
+    const r = rig();
+    for (const length of [10, 60, 150, 250, 400, 700, 1000]) {
+      const address = url(length);
+      expect([length, decodePng(await bytes(await go(r, `/qr.png?url=${encodeURIComponent(address)}`))).text === address]).toEqual([length, true]);
     }
   });
 });

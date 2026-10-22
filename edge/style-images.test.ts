@@ -81,6 +81,12 @@ describe('PNG, against pixels we chose', () => {
     expect(got[5 * 4 + 3]).toBe(0);
   });
 
+  test('the size the app shrinks a photo to is read, and a bigger picture is not', async () => {
+    const fits = specFor(6, 8, 128, 128, 11);
+    expect(asArray((await decodePng(encodePng(fits)))?.rgba ?? new Uint8ClampedArray())).toEqual(Array.from(expectedRgba(fits)));
+    expect(await decodePng(encodePng(specFor(6, 8, 200, 200, 12)))).toBeNull();
+  });
+
   test('a picture over the pixel cap is not decoded, and its data is never inflated', async () => {
     const spec = specFor(6, 8, 4, 4, 1);
     const png = encodePng(spec);
