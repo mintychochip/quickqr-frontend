@@ -1,0 +1,96 @@
+// The JSON shapes the API sends. They mirror backend/internal/models (Go) and docs/openapi.yaml field for field.
+
+export const LINK_KIND_MENU = 'menu';
+export const LINK_KIND_LINK_PAGE = 'linkpage';
+
+export interface MenuItem {
+  name: string;
+  price: string;
+}
+
+export interface PageLink {
+  name: string;
+  url: string;
+}
+
+export interface QRStyle {
+  fgColor: string;
+  bgColor: string;
+  accentColor?: string;
+  errorLevel: string;
+  frame: string;
+  moduleColorMode?: string;
+  dotShape?: string;
+  summary?: string;
+}
+
+export interface Link {
+  id: string;
+  code: string;
+  title: string;
+  destination_url: string;
+  created_at: string;
+  updated_at: string;
+  total_scans: number;
+  ad_style: string;
+  is_active: boolean;
+  kind?: string;
+  items?: MenuItem[];
+  links?: PageLink[];
+  style?: QRStyle;
+}
+
+/** A link plus the owner, which is stored but never sent to a client. */
+export interface StoredLink extends Link {
+  owner_id: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
+export interface ScanEvent {
+  id: string;
+  link_code: string;
+  timestamp: string;
+  /** The client address as seen at the edge. It is hashed before it is stored and never read back. */
+  ip: string;
+  user_agent: string;
+  device_type: string;
+  browser: string;
+  referrer: string;
+  country: string;
+  city: string;
+}
+
+/** A stored scan as analytics returns it: `ip` is the network prefix, not the address. */
+export type ScanRecord = Omit<ScanEvent, never>;
+
+export interface Sponsor {
+  id: string;
+  brand_name: string;
+  badge: string;
+  headline: string;
+  tagline: string;
+  cta: string;
+  target_url: string;
+  logo_url: string;
+  active: boolean;
+}
+
+export interface TimeCountPoint {
+  time: string;
+  count: number;
+}
+
+export interface AnalyticsSummary {
+  link_code?: string;
+  total_scans: number;
+  unique_devices: number;
+  device_breakdown: Record<string, number>;
+  recent_scans: ScanRecord[];
+  hourly_timeline: TimeCountPoint[];
+  top_referrers: Record<string, number>;
+}

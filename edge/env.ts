@@ -1,0 +1,32 @@
+import type { Db } from './db';
+
+/**
+ * Everything the backend reads from the platform. `DB` is the D1 binding; the rest are plain variables and secrets
+ * (see docs/content/docs/self-hosting.mdx for what each one does). Every optional value is off when unset.
+ */
+export interface Env {
+  DB: Db;
+  /** Pages static assets, used to fall through to the app for paths the API does not own. */
+  ASSETS?: { fetch(request: Request): Promise<Response> };
+
+  OAUTH_REDIRECT_ORIGIN?: string;
+  APP_PUBLIC_URL?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GITHUB_CLIENT_ID?: string;
+  GITHUB_CLIENT_SECRET?: string;
+  OAUTH_DEV?: string;
+
+  /** Keys the hash that stands in for a scanner's IP address. */
+  SCAN_HASH_KEY?: string;
+  SCAN_RETENTION_DAYS?: string;
+
+  TYPESAFE_API_KEY?: string;
+  TYPESAFE_MODEL?: string;
+  TYPESAFE_JEV_STYLE?: string;
+  STYLE_LLM_API_KEY?: string;
+  STYLE_LLM_MODEL?: string;
+  STYLE_LLM_BASE_URL?: string;
+  XAI_API_KEY?: string;
+  XAI_MODEL?: string;
+}
