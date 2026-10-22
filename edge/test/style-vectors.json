@@ -1,0 +1,866 @@
+{
+ "decisions": [
+  {
+   "name": "empty prompt, default look",
+   "prompt": "make it nice",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "pair from notes",
+   "prompt": "",
+   "notes": [
+    "navy on cream"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a5f",
+    "bgColor": "#faf7f0",
+    "accentColor": "#1e3a5f",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From notes"
+   }
+  },
+  {
+   "name": "pair named in the prompt",
+   "prompt": "Teal on mint please",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#096b62",
+    "bgColor": "#ecfdf5",
+    "accentColor": "#0d9488",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "first match only",
+   "prompt": "scan on mobile, red on white",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "one name unknown",
+   "prompt": "turquoise on white",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "print safe",
+   "prompt": "print safe poster",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#000000",
+    "bgColor": "#ffffff",
+    "accentColor": "#000000",
+    "errorLevel": "H",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "Print safe"
+   }
+  },
+  {
+   "name": "print-safe hyphen",
+   "prompt": "Print-Safe",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#000000",
+    "bgColor": "#ffffff",
+    "accentColor": "#000000",
+    "errorLevel": "H",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "Print safe"
+   }
+  },
+  {
+   "name": "flyer locks print look",
+   "prompt": "a flyer for the cafe, navy on cream",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#000000",
+    "bgColor": "#ffffff",
+    "accentColor": "#000000",
+    "errorLevel": "H",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "sticker",
+   "prompt": "sticker",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#000000",
+    "bgColor": "#ffffff",
+    "accentColor": "#000000",
+    "errorLevel": "H",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "minimal frame",
+   "prompt": "something minimal",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "plain frame",
+   "prompt": "plain please",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "ring frame",
+   "prompt": "ring it",
+   "notes": null,
+   "images": null,
+   "current": {
+    "frame": "soft"
+   },
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "soft frame",
+   "prompt": "soft edges",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "soft",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "frame precedence minimal over ring",
+   "prompt": "minimal ring soft",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "high contrast raises error level",
+   "prompt": "high contrast",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "H",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "logo raises error level",
+   "prompt": "I will put a logo in the middle",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "H",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "site cues",
+   "prompt": "",
+   "notes": [
+    "file:site.txt\nSite example.com\nTitle: Example\ntheme-color: #AABB33\nbackground: #112233\nvisible text"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#111113",
+    "bgColor": "#112233",
+    "accentColor": "#aabb33",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From example.com"
+   }
+  },
+  {
+   "name": "site theme only",
+   "prompt": "",
+   "notes": [
+    "Site cafe.example.org\ntheme-color: #0d9488"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#096b62",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#0d9488",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From cafe.example.org"
+   }
+  },
+  {
+   "name": "site background only",
+   "prompt": "",
+   "notes": [
+    "background: #ffeedd"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#ffeedd",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From notes"
+   }
+  },
+  {
+   "name": "site cues ignored when a pair locks",
+   "prompt": "red on white",
+   "notes": [
+    "Site example.com\ntheme-color: #00ff00"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#dc2626",
+    "bgColor": "#ffffff",
+    "accentColor": "#dc2626",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From example.com"
+   }
+  },
+  {
+   "name": "current style is the base",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "accentColor": "#654321",
+    "bgColor": "#fafafa",
+    "fgColor": "#123456",
+    "frame": "soft"
+   },
+   "style": {
+    "fgColor": "#123456",
+    "bgColor": "#fafafa",
+    "accentColor": "#654321",
+    "errorLevel": "M",
+    "frame": "soft",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "blank and wrong-typed current values fall back",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "accentColor": null,
+    "bgColor": 5,
+    "fgColor": "  ",
+    "frame": [
+     "x"
+    ]
+   },
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "low contrast gets darkened",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "bgColor": "#ffffff",
+    "fgColor": "#ffff00"
+   },
+   "style": {
+    "fgColor": "#5f5f00",
+    "bgColor": "#ffffff",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "light on dark is not scannable and is darkened",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "bgColor": "#0f172a",
+    "fgColor": "#f8fafc"
+   },
+   "style": {
+    "fgColor": "#b3b4b5",
+    "bgColor": "#0f172a",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "fg already fine",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "bgColor": "#eeeeee",
+    "fgColor": "#222222"
+   },
+   "style": {
+    "fgColor": "#222222",
+    "bgColor": "#eeeeee",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "named pair that cannot reach contrast",
+   "prompt": "yellow on white",
+   "notes": null,
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#916303",
+    "bgColor": "#ffffff",
+    "accentColor": "#ca8a04",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "three-char hex",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "bgColor": "#fff",
+    "fgColor": "#f80"
+   },
+   "style": {
+    "fgColor": "#844700",
+    "bgColor": "#fff",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "uppercase hex keeps case until darkened",
+   "prompt": "hello",
+   "notes": null,
+   "images": null,
+   "current": {
+    "bgColor": "#F9F9F8",
+    "fgColor": "#1E3A8A"
+   },
+   "style": {
+    "fgColor": "#1E3A8A",
+    "bgColor": "#F9F9F8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From your prompt"
+   }
+  },
+  {
+   "name": "photo sets the palette",
+   "prompt": "match my photo",
+   "notes": null,
+   "images": [
+    "two-tone.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#2060e0",
+    "bgColor": "#f0f0f0",
+    "accentColor": "#2060e0",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From two-tone.png"
+   }
+  },
+  {
+   "name": "two photos pool their colors",
+   "prompt": "",
+   "notes": null,
+   "images": [
+    "three-tone.png",
+    "two-tone.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#0c5c23",
+    "bgColor": "#f0f0f0",
+    "accentColor": "#108030",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From three-tone.png, two-tone.png"
+   }
+  },
+  {
+   "name": "photo locked out by a pair",
+   "prompt": "navy on cream",
+   "notes": null,
+   "images": [
+    "two-tone.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a5f",
+    "bgColor": "#faf7f0",
+    "accentColor": "#1e3a5f",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From two-tone.png"
+   }
+  },
+  {
+   "name": "photo locked out by print safe",
+   "prompt": "print safe",
+   "notes": null,
+   "images": [
+    "two-tone.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#000000",
+    "bgColor": "#ffffff",
+    "accentColor": "#000000",
+    "errorLevel": "H",
+    "frame": "plain",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "Print safe"
+   }
+  },
+  {
+   "name": "gray photo keeps the default accent",
+   "prompt": "",
+   "notes": null,
+   "images": [
+    "gray.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#111113",
+    "bgColor": "#ffffff",
+    "accentColor": "#111113",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From gray.png"
+   }
+  },
+  {
+   "name": "photo and site notes: photo wins",
+   "prompt": "",
+   "notes": [
+    "Site example.com\ntheme-color: #00ff00"
+   ],
+   "images": [
+    "two-tone.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#2060e0",
+    "bgColor": "#f0f0f0",
+    "accentColor": "#2060e0",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From two-tone.png"
+   }
+  },
+  {
+   "name": "jpeg",
+   "prompt": "",
+   "notes": null,
+   "images": [
+    "blocks.jpg"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#c02020",
+    "bgColor": "#f0f0f0",
+    "accentColor": "#c02020",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From blocks.jpg"
+   }
+  },
+  {
+   "name": "gif",
+   "prompt": "",
+   "notes": null,
+   "images": [
+    "paletted.gif"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#c01050",
+    "bgColor": "#f0f0f0",
+    "accentColor": "#c01050",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From paletted.gif"
+   }
+  },
+  {
+   "name": "notes only summary",
+   "prompt": "",
+   "notes": [
+    "some words about the brand"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From notes"
+   }
+  },
+  {
+   "name": "site host summary",
+   "prompt": "",
+   "notes": [
+    "Site Brand-Name.co.uk\nstuff"
+   ],
+   "images": null,
+   "current": null,
+   "style": {
+    "fgColor": "#1e3a8a",
+    "bgColor": "#f9f9f8",
+    "accentColor": "#2563eb",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From Brand-Name.co.uk"
+   }
+  },
+  {
+   "name": "photo names in summary",
+   "prompt": "",
+   "notes": null,
+   "images": [
+    "gradient.png",
+    "semi.png"
+   ],
+   "current": null,
+   "style": {
+    "fgColor": "#a00000",
+    "bgColor": "#ffffff",
+    "accentColor": "#a00000",
+    "errorLevel": "M",
+    "frame": "ring",
+    "moduleColorMode": "uniform",
+    "dotShape": "square",
+    "summary": "From gradient.png, semi.png"
+   }
+  }
+ ],
+ "images": [
+  {
+   "name": "two-tone.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAbklEQVR42uzaQQ2AAAhAUXREMIPJjGUyM9gBM3hgjvn+nY23cSSrKia3xvAAAAAAAAAAAAAAvivfDuzH3brQdW5OCAAAAAAAAAAAAAAAAAAAAAAAAAAAAKC3xb8QAAAAAAAAAAAAwG8BTwAAAP//tEAJfg9v9AUAAAAASUVORK5CYII=",
+   "palette": {
+    "accent": "#2060e0",
+    "bg": "#f0f0f0",
+    "ok": true
+   },
+   "width": 64,
+   "height": 64
+  },
+  {
+   "name": "three-tone.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAAGAAAABACAIAAABqVuVZAAAAgklEQVR42uzQQQ0AIQwAweZyHnBQD1jBDN7QgQJUoKIJj1kB+5h/Z0ZlfbTS/5mr9P+FAAECBAgQIECABAgQIECAAAECJECAAAECBAgQIEAIAAECBAgQIECABAgQIECAAAECJECAAAECBAgQIAECBAgQIECAAAESIECAAD3XDQAA//+DJQSAVfjk0gAAAABJRU5ErkJggg==",
+   "palette": {
+    "accent": "#108030",
+    "bg": "#f0f0f0",
+    "ok": true
+   },
+   "width": 96,
+   "height": 64
+  },
+  {
+   "name": "semi.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAANElEQVR42uzOQQ0AIAwAsQvBvwacMhn7tAp6f70WnZYJCAgICAgICAgICAgICAhMAAAA//9mhQHiMzUpGAAAAABJRU5ErkJggg==",
+   "palette": {
+    "accent": "#a00000",
+    "bg": "#ffffff",
+    "ok": true
+   },
+   "width": 32,
+   "height": 32
+  },
+  {
+   "name": "clear.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAQElEQVR42uzRMQ0AIBDF0B5BAviX+nHARhiuVfCSTki4FGrzsMHnBAgQUIHlAgECBAgQIECAAAECWgNOAAAA//+gEgRogvZhUAAAAABJRU5ErkJggg==",
+   "palette": {
+    "accent": "#0000f0",
+    "bg": "#ffffff",
+    "ok": true
+   },
+   "width": 32,
+   "height": 32
+  },
+  {
+   "name": "gray.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAAPUlEQVR42uzNsQnAMBAEwce4hCvz+o/VwycCMZsv8yeZbW3X7zeXAoPBYDAYDAaDwWAwGAwGvwifAAAA//9OwQHTBESJFwAAAABJRU5ErkJggg==",
+   "palette": {
+    "accent": "#111113",
+    "bg": "#ffffff",
+    "ok": true
+   },
+   "width": 40,
+   "height": 40
+  },
+  {
+   "name": "gradient.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAAICAIAAACZNLboAAAAMklEQVR42uzTAREAIAzDwMIhHOebkP5fLORl/plInd1AMQNgADAAGAAMAAaABhsAAP//3pQAoScoi6sAAAAASUVORK5CYII=",
+   "palette": {
+    "accent": "#f00080",
+    "bg": "#ffffff",
+    "ok": true
+   },
+   "width": 256,
+   "height": 8
+  },
+  {
+   "name": "paletted.png",
+   "media_type": "image/png",
+   "data": "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwAgMAAAAqbBEUAAAACVBMVEX////IHloUFBTX0fslAAAAHElEQVR42mJYtWpVKBgwMDCMckY5NOYAAgAA///Udr9BEelObAAAAABJRU5ErkJggg==",
+   "palette": {
+    "accent": "#c01050",
+    "bg": "#f0f0f0",
+    "ok": true
+   },
+   "width": 48,
+   "height": 48
+  },
+  {
+   "name": "paletted.gif",
+   "media_type": "image/gif",
+   "data": "R0lGODlhMAAwAIEAAP///8geWhQUFAAAACwAAAAAMAAwAAACo5SPFsvtz4CcVKYroN61A5xsouNVIDKmQUmdhzqyk6vAnPzR9i3T2Q7B5VzAIM5XfAiRycZS14wcodHVlFi19qjRJ7bqPWW1LCb4Ks6GQeM1po1mq+Pv+fbbpV/g9/S5L/dXxtXktmc3iFeoF4JYYpYHWCf4SJhk2EjpAbkoeajZwXnJiOK4aVmEWQpqggqk+mIa6roDW8PaQmtj+4M7owsjVAAAOw==",
+   "palette": {
+    "accent": "#c01050",
+    "bg": "#f0f0f0",
+    "ok": true
+   },
+   "width": 48,
+   "height": 48
+  },
+  {
+   "name": "transparent.gif",
+   "media_type": "image/gif",
+   "data": "R0lGODlhIAAgAIAAAAAAAACgoCH5BAEAAAAALAAAAAAgACAAAAJHhI8Jwe0flDywtjmtxVJXrngQmIgPiZgOSqkMa7gvLEe0DC/47ea1v2P9eCpgj2gyFpEiZZLpcTahGmmUusF+tCPuybsCNwoAOw==",
+   "palette": {
+    "accent": "#00a0a0",
+    "bg": "#ffffff",
+    "ok": true
+   },
+   "width": 32,
+   "height": 32
+  },
+  {
+   "name": "blocks.jpg",
+   "media_type": "image/jpeg",
+   "data": "/9j/2wCEAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBABAwMDBAMECAQECBALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/AABEIAGAAgAMBIgACEQEDEQH/xAGiAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+gEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/APFKKKK/Nz+1QooooAKKKKACiiigCvRRRX96n+YQUUUUAfuNRRRX8pH7QFFFFAH4g0UUV+bn9qhRRRQAUUUUAFFFFAFeiiiv71P8wgooooA/caiiiv5SP2gKKKKAPxBooor83P7VCiiigAooooAKKKKAK9FFFf3qf5hBRRRQB+41FFFfykftAUUUUAfiDRRRX5uf2qFFFFABRRRQAUUUUAft9RRRX6QfxUFFFFABRRRQAUUUUAfiDRRRX5uf2qFFFFABRRRQAUUUUAft9RRRX6QfxUFFFFABRRRQAUUUUAfiDRRRX5uf2qFFFFABRRRQAUUUUAft9RRRX6QfxUFFFFABRRRQAUUUUAf/2Q==",
+   "palette": {
+    "accent": "#c02020",
+    "bg": "#f0f0f0",
+    "ok": true
+   },
+   "width": 128,
+   "height": 96
+  },
+  {
+   "name": "gray.jpg",
+   "media_type": "image/jpeg",
+   "data": "/9j/2wCEAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRQBAwQEBQQFCQUFCRQNCw0UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFP/AAAsIAEAAQAEBEQD/xADSAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/aAAgBAQAAPwD7Aooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooor//Z",
+   "palette": {
+    "accent": "#111113",
+    "bg": "#ffffff",
+    "ok": true
+   },
+   "width": 64,
+   "height": 64
+  }
+ ]
+}
