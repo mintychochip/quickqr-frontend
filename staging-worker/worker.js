@@ -4,14 +4,24 @@
 const API_PREFIXES = ['/api/', '/r/', '/R/'];
 const API_PATHS = new Set(['/healthz', '/qr', '/qr.png', '/qr.svg']);
 
-const isApi = (pathname) => API_PATHS.has(pathname) || API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+export const isApi = (pathname) => API_PATHS.has(pathname) || API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
-async function callBackend(request, env, url) {
+// The backend builds client addresses (scan logs) and absolute share URLs (/qr) from these headers, and a visitor can
+// send any of them. None of the visitor's are passed on: they are rebuilt from what Cloudflare saw.
+export function backendHeaders(request, url) {
   const headers = new Headers(request.headers);
+  for (const name of [...headers.keys()]) {
+    if (name === 'forwarded' || name === 'x-real-ip' || name.startsWith('x-forwarded-')) headers.delete(name);
+  }
   const client = request.headers.get('CF-Connecting-IP');
   if (client) headers.set('X-Forwarded-For', client);
-  else headers.delete('X-Forwarded-For');
   headers.set('X-Forwarded-Proto', 'https');
+  headers.set('X-Forwarded-Host', url.host);
+  return headers;
+}
+
+async function callBackend(request, env, url) {
+  const headers = backendHeaders(request, url);
 
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
   try {
