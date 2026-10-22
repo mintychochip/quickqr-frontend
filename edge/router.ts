@@ -27,11 +27,14 @@ export interface Principal {
   kind: 'session';
 }
 
+/** All a handler may ask of the platform's execution context: to keep working after the response, as scan recording does. */
+export type Exec = Pick<ExecutionContext, 'waitUntil'>;
+
 export interface Ctx {
   req: Request;
   url: URL;
   env: Env;
-  exec: ExecutionContext;
+  exec: Exec;
   params: Record<string, string>;
   principal: Principal | null;
   policy: Policy;
@@ -113,11 +116,11 @@ export class Router {
     return params;
   }
 
-  async dispatch(req: Request, env: Env, exec: ExecutionContext): Promise<Response> {
+  async dispatch(req: Request, env: Env, exec: Exec): Promise<Response> {
     return withCors(req, await this.route(req, env, exec));
   }
 
-  private async route(req: Request, env: Env, exec: ExecutionContext): Promise<Response> {
+  private async route(req: Request, env: Env, exec: Exec): Promise<Response> {
     const method = req.method.toUpperCase();
     if (method === 'OPTIONS') return new Response(null, { status: 200 });
 

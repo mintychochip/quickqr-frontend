@@ -1,3 +1,5 @@
+export const INVALID_BODY = 'Invalid request body';
+
 /** A failure that maps straight to a response: the router turns it into `{"error": message}` with this status. */
 export class HttpError extends Error {
   status: number;
@@ -59,11 +61,31 @@ export async function readJson<T = unknown>(req: Request, cap?: number): Promise
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new HttpError(400, 'Invalid request body');
+    throw new HttpError(400, INVALID_BODY);
   }
 }
 
 /** Reads a form body (urlencoded) no larger than `cap` bytes. */
 export async function readForm(req: Request, cap?: number): Promise<URLSearchParams> {
   return new URLSearchParams(await readText(req, cap));
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * A decoded JSON body that must be an object. `null` counts as an object with no fields, because that is what Go's
+ * decoder makes of it; an array, string, or number is a 400.
+ */
+export function bodyObject(body: unknown): Record<string, unknown> {
+  if (body === null) return {};
+  if (!isRecord(body)) throw new HttpError(400, INVALID_BODY);
+  return body;
+}
+
+/** A string field. Absent and null read as '', as Go's zero value does; any other type is a 400, as it is for Go's decoder. */
+export function stringField(body: Record<string, unknown>, key: string): string {
+  const value = body[key];
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string') throw new HttpError(400, INVALID_BODY);
+  return value;
 }

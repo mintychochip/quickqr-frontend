@@ -1,3 +1,4 @@
+import type { AppDeps } from '../app';
 import { HttpError, bearerToken, errorJson, html, json, readForm } from '../http';
 import { randomCode } from '../ids';
 import {
@@ -14,18 +15,10 @@ import {
   type Provider,
 } from '../oauth';
 import { renderDevConsent } from '../pages/devConsent';
-import type { Ctx, Policy, Router } from '../router';
+import type { Ctx, Router } from '../router';
 import { StoreError } from '../store/errors';
 import { consumeOAuthState, loginOrRegisterOAuth, logoutToken, peekOAuthState, saveOAuthState, userFromToken } from '../store/users';
-
-export interface AuthDeps {
-  /** The network, injected so tests can stand in for Google and GitHub. */
-  fetch: typeof fetch;
-}
-
-const publicAuth: Policy = { auth: 'public', class: 'auth' };
-const optionalAuth: Policy = { auth: 'optional', class: 'auth' };
-const signedIn: Policy = { auth: 'any', class: 'read' };
+import { optionalAuth, publicAuth, signedIn } from './policies';
 
 const STATE_MS = 10 * 60 * 1000;
 const FORM_CAP = 64 << 10;
@@ -50,9 +43,9 @@ function oauthSuccess(appPublicUrl: string, returnTo: string, token: string): Re
   return redirect(to.toString());
 }
 
-export function registerAuthRoutes(router: Router, deps: AuthDeps): void {
+export function registerAuthRoutes(router: Router, deps: AppDeps): void {
   router.handle('GET /api/auth/me', signedIn, async (c) => {
-    const user = await userFromToken(c.env.DB, bearerToken(c.req));
+    const user = await userFromToken(c.env.DB, bearerToken(c.req), deps.now());
     return user ? json(200, { user }) : errorJson(401, 'Sign in to continue.');
   });
 
@@ -68,12 +61,13 @@ export function registerAuthRoutes(router: Router, deps: AuthDeps): void {
     const config = cfg[provider];
     if (!config) return errorJson(503, `${provider === 'google' ? 'Google' : 'GitHub'} sign-in is not configured on this server.`);
     const state = randomCode(24);
-    await saveOAuthState(c.env.DB, state, {
-      provider,
-      returnTo: allowedReturnTo(cfg, c.url.searchParams.get('return_to') ?? ''),
-      expiresAt: new Date(Date.now() + STATE_MS),
-      as: '',
-    });
+    const now = deps.now();
+    await saveOAuthState(
+      c.env.DB,
+      state,
+      { provider, returnTo: allowedReturnTo(cfg, c.url.searchParams.get('return_to') ?? ''), expiresAt: new Date(now.getTime() + STATE_MS), as: '' },
+      now,
+    );
     return redirect(authorizeUrl(config, state, provider === 'google' ? { access_type: 'online' } : {}));
   };
 
@@ -86,7 +80,7 @@ export function registerAuthRoutes(router: Router, deps: AuthDeps): void {
     const reported = c.url.searchParams.get('error');
     if (reported) return fail(reported);
 
-    const st = await consumeOAuthState(c.env.DB, c.url.searchParams.get('state') ?? '');
+    const st = await consumeOAuthState(c.env.DB, c.url.searchParams.get('state') ?? '', deps.now());
     if (!st || st.provider !== provider) return fail('invalid oauth state');
 
     const code = c.url.searchParams.get('code') ?? '';
@@ -107,7 +101,7 @@ export function registerAuthRoutes(router: Router, deps: AuthDeps): void {
     }
 
     try {
-      const { token } = await loginOrRegisterOAuth(c.env.DB, provider, profile.subject, profile.email);
+      const { token } = await loginOrRegisterOAuth(c.env.DB, provider, profile.subject, profile.email, deps.now());
       return oauthSuccess(cfg.appPublicUrl, st.returnTo, token);
     } catch (err) {
       if (err instanceof StoreError) return fail(err.message);
@@ -127,12 +121,13 @@ export function registerAuthRoutes(router: Router, deps: AuthDeps): void {
     if (!devEnabled(cfg)) return devOff();
     const as = c.url.searchParams.get('as') === 'github' ? 'github' : 'google';
     const state = randomCode(24);
-    await saveOAuthState(c.env.DB, state, {
-      provider: 'dev',
-      returnTo: allowedReturnTo(cfg, c.url.searchParams.get('return_to') ?? ''),
-      expiresAt: new Date(Date.now() + STATE_MS),
-      as,
-    });
+    const now = deps.now();
+    await saveOAuthState(
+      c.env.DB,
+      state,
+      { provider: 'dev', returnTo: allowedReturnTo(cfg, c.url.searchParams.get('return_to') ?? ''), expiresAt: new Date(now.getTime() + STATE_MS), as },
+      now,
+    );
     return redirect(`/api/auth/oauth/dev/consent?state=${encodeURIComponent(state)}`);
   });
 
@@ -152,15 +147,15 @@ export function registerAuthRoutes(router: Router, deps: AuthDeps): void {
     }
     const state = posting ? (form.get('state') ?? '') : (c.url.searchParams.get('state') ?? '');
 
-    const st = await peekOAuthState(c.env.DB, state);
+    const st = await peekOAuthState(c.env.DB, state, deps.now());
     if (!st || st.provider !== 'dev') return oauthError(cfg.appPublicUrl, 'invalid oauth state');
 
     if (!posting) return html(200, renderDevConsent(state, st.as === 'github' ? 'github' : 'google'));
 
     const email = (form.get('email') ?? '').trim();
-    if (!(await consumeOAuthState(c.env.DB, state))) return oauthError(cfg.appPublicUrl, 'invalid oauth state');
+    if (!(await consumeOAuthState(c.env.DB, state, deps.now()))) return oauthError(cfg.appPublicUrl, 'invalid oauth state');
     try {
-      const { token } = await loginOrRegisterOAuth(c.env.DB, 'dev', email.toLowerCase(), email);
+      const { token } = await loginOrRegisterOAuth(c.env.DB, 'dev', email.toLowerCase(), email, deps.now());
       return oauthSuccess(cfg.appPublicUrl, st.returnTo, token);
     } catch (err) {
       if (err instanceof StoreError) return oauthError(cfg.appPublicUrl, err.message);

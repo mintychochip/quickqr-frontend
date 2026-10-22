@@ -51,11 +51,11 @@ export interface User {
   created_at: string;
 }
 
+/** A scan. `ip` is whatever the writer had; analytics returns the network prefix there, never the address. */
 export interface ScanEvent {
   id: string;
   link_code: string;
   timestamp: string;
-  /** The client address as seen at the edge. It is hashed before it is stored and never read back. */
   ip: string;
   user_agent: string;
   device_type: string;
@@ -64,9 +64,6 @@ export interface ScanEvent {
   country: string;
   city: string;
 }
-
-/** A stored scan as analytics returns it: `ip` is the network prefix, not the address. */
-export type ScanRecord = Omit<ScanEvent, never>;
 
 export interface Sponsor {
   id: string;
@@ -90,7 +87,7 @@ export interface AnalyticsSummary {
   total_scans: number;
   unique_devices: number;
   device_breakdown: Record<string, number>;
-  recent_scans: ScanRecord[];
+  recent_scans: ScanEvent[];
   hourly_timeline: TimeCountPoint[];
   top_referrers: Record<string, number>;
 }

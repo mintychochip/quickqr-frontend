@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { Env } from './env';
 import { Router, SIGN_IN_REQUIRED, type Ctx, type Policy, type Principal } from './router';
 
-const exec = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
+const exec = { waitUntil() {} };
 const env = {} as Env;
 
 const publicNone: Policy = { auth: 'public', class: 'none' };

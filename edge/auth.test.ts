@@ -1,60 +1,19 @@
 import { describe, expect, test } from 'bun:test';
-import { createApp } from './app';
 import type { Env } from './env';
-import type { Router } from './router';
-import { testDb, type TestDb } from './test/sqlite';
+import { bearer, go, location, ORIGIN, rig, type NetworkHandler, type Rig } from './test/rig';
 
-const exec = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
-const ORIGIN = 'https://staging.quickqr.app';
-
-const configured = {
-  OAUTH_REDIRECT_ORIGIN: ORIGIN,
-  APP_PUBLIC_URL: ORIGIN,
-  GOOGLE_CLIENT_ID: 'gid',
-  GOOGLE_CLIENT_SECRET: 'gsecret',
-  GITHUB_CLIENT_ID: 'hid',
-  GITHUB_CLIENT_SECRET: 'hsecret',
-};
-
-type Handler = (req: Request) => Response | Promise<Response>;
-
-/** A stand-in for the network: only the endpoints a sign-in touches, and a loud failure for anything else. */
-function network(handlers: Record<string, Handler>): typeof fetch {
-  return (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const req = new Request(input, init);
-    const handler = handlers[`${req.method} ${req.url}`];
-    if (!handler) throw new Error(`unexpected request: ${req.method} ${req.url}`);
-    return handler(req);
-  }) as typeof fetch;
-}
-
-const googleOk = (userinfo: object): Record<string, Handler> => ({
+const googleOk = (userinfo: object): Record<string, NetworkHandler> => ({
   'POST https://oauth2.googleapis.com/token': () => Response.json({ access_token: 'tok-g', token_type: 'Bearer' }),
   'GET https://www.googleapis.com/oauth2/v2/userinfo': (req) =>
     req.headers.get('Authorization') === 'Bearer tok-g' ? Response.json(userinfo) : new Response('no', { status: 401 }),
 });
 
-const githubOk = (user: object, emails: object): Record<string, Handler> => ({
+const githubOk = (user: object, emails: object): Record<string, NetworkHandler> => ({
   'POST https://github.com/login/oauth/access_token': () => Response.json({ access_token: 'tok-h', token_type: 'bearer' }),
   'GET https://api.github.com/user': (req) => (req.headers.get('Authorization') === 'Bearer tok-h' ? Response.json(user) : new Response('no', { status: 401 })),
   'GET https://api.github.com/user/emails': (req) =>
     req.headers.get('Authorization') === 'Bearer tok-h' ? Response.json(emails) : new Response('no', { status: 401 }),
 });
-
-interface Rig {
-  db: TestDb;
-  env: Env;
-  app: Router;
-}
-
-function rig(over: Partial<Env> = {}, handlers: Record<string, Handler> = {}): Rig {
-  const db = testDb();
-  return { db, env: { DB: db, ...configured, ...over }, app: createApp({ fetch: network(handlers) }) };
-}
-
-const go = (r: Rig, path: string, init: RequestInit = {}) => r.app.dispatch(new Request(`${ORIGIN}${path}`, { redirect: 'manual', ...init }), r.env, exec);
-const location = (res: Response) => new URL(res.headers.get('Location') ?? 'x:', ORIGIN);
-const bearer = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
 
 /** Starts a sign-in and returns the state the provider would send back. */
 async function start(r: Rig, provider: 'google' | 'github', returnTo = `${ORIGIN}/dashboard`): Promise<string> {
@@ -199,6 +158,16 @@ describe('Google callback', () => {
     const state = await start(r, 'google');
     expect(location(await go(r, `/api/auth/oauth/google/callback?state=${state}&code=c`)).searchParams.get('auth_token')).not.toBeNull();
     expect(location(await go(r, `/api/auth/oauth/google/callback?state=${state}&code=c`)).searchParams.get('auth_error')).toBe('invalid oauth state');
+  });
+
+  test('a state expires after ten minutes', async () => {
+    const r = rig({}, googleOk(verified));
+    const state = await start(r, 'google');
+    r.advance(10 * 60 * 1000 + 1000);
+    expect(location(await go(r, `/api/auth/oauth/google/callback?state=${state}&code=c`)).searchParams.get('auth_error')).toBe('invalid oauth state');
+    const fresh = await start(r, 'google');
+    r.advance(9 * 60 * 1000);
+    expect(location(await go(r, `/api/auth/oauth/google/callback?state=${fresh}&code=c`)).searchParams.get('auth_token')).not.toBeNull();
   });
 
   test('a state made for another provider is refused', async () => {
@@ -394,6 +363,14 @@ describe('session routes', () => {
       expect(res.status).toBe(401);
       expect(await res.json()).toEqual({ error: 'Sign in to continue.' });
     }
+  });
+
+  test('a session lasts 30 days', async () => {
+    const { r, token } = await signedIn();
+    r.advance(29 * 24 * 3600 * 1000);
+    expect((await go(r, '/api/auth/me', bearer(token))).status).toBe(200);
+    r.advance(2 * 24 * 3600 * 1000);
+    expect((await go(r, '/api/auth/me', bearer(token))).status).toBe(401);
   });
 
   test('logout always answers 200, and ends the session it was given', async () => {

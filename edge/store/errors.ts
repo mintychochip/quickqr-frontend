@@ -18,3 +18,5 @@ export class StoreError extends Error {
     this.code = code;
   }
 }
+
+export const isStoreError = (err: unknown, code: StoreErrorCode): boolean => err instanceof StoreError && err.code === code;
