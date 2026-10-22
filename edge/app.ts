@@ -1,4 +1,5 @@
 import { registerAuthRoutes } from './routes/auth';
+import { registerHostedRoutes } from './routes/hosted';
 import { registerLinkRoutes } from './routes/links';
 import { Router, type Authenticator } from './router';
 import { userFromToken } from './store/users';
@@ -20,5 +21,6 @@ export function createApp(deps: AppDeps = platform): Router {
   const router = new Router(authenticate);
   registerAuthRoutes(router, deps);
   registerLinkRoutes(router, deps);
+  registerHostedRoutes(router, deps);
   return router;
 }

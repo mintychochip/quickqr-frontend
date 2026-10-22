@@ -89,3 +89,14 @@ export function stringField(body: Record<string, unknown>, key: string): string 
   if (typeof value !== 'string') throw new HttpError(400, INVALID_BODY);
   return value;
 }
+
+/**
+ * A list of objects. Absent and null read as an empty list; anything else that is not a list of objects is a 400. A null
+ * entry reads as an object with no fields, as it does for Go's decoder.
+ */
+export function objectList(body: Record<string, unknown>, key: string): Record<string, unknown>[] {
+  const value = body[key];
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new HttpError(400, INVALID_BODY);
+  return value.map((entry) => bodyObject(entry));
+}
