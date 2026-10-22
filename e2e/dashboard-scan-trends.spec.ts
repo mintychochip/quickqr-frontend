@@ -97,3 +97,25 @@ test('a person with no dynamic links makes no analytics request at all', async (
   await page.waitForLoadState('networkidle');
   expect(analytics).toEqual([]);
 });
+
+test('selecting a link on a wide screen makes one full analytics call, not two', async ({ page }) => {
+  // The sidebar's trend line needs only the last six hours; the analytics panel beside it is the one full per-link call.
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await signInViaOAuth(page);
+  await page.goto('/dashboard');
+  const row = page.getByRole('row', { name: /Autumn Cafe Menu/ });
+  await expect(row.getByTestId('scan-rate')).toContainText(/(?:\d+% vs last hour|New this hour)/, { timeout: 15_000 });
+
+  const perLink: string[] = [];
+  page.on('request', (request) => {
+    const { pathname } = new URL(request.url());
+    if (/^\/api\/links\/[^/]+\/analytics$/.test(pathname)) perLink.push(pathname);
+  });
+  await row.getByRole('button', { name: 'Show analytics' }).click();
+  const detail = page.getByTestId('link-detail-sidebar');
+  await expect(detail.getByTestId('device-mix-chart')).toBeVisible();
+  await expect(detail.getByTestId('scan-rate')).toContainText(/(?:\d+% vs last hour|New this hour)/, { timeout: 15_000 });
+  await expect(detail.getByTestId('scan-sparkline')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  expect(perLink).toHaveLength(1);
+});

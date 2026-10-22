@@ -4,14 +4,14 @@
   import { fade } from 'svelte/transition';
   import type { Link } from '../types';
   import type { SavedLink } from '../types/dashboard';
-  import { fetchLinkAnalytics } from '../lib/api';
+  import { fetchTrends } from '../lib/api';
   import { dynamicQrValue } from '../lib/dynamicQr';
   import {
     failedScanTrend,
     formatScanRate,
     pendingScanTrend,
     scanRateTone,
-    scanTrendFromSummary,
+    scanTrendsFor,
     type ScanTrend,
   } from '../lib/scanStats';
   import LinkRowDropdown from './LinkRowDropdown.svelte';
@@ -32,15 +32,17 @@
   const qrValue = $derived(dynamicQrValue(window.location.origin, link.code));
 
   $effect(() => {
-    const code = link.code;
+    const selected = link;
     let cancelled = false;
-    trend = pendingScanTrend(link.total_scans || 0);
-    fetchLinkAnalytics(code)
-      .then((summary) => {
-        if (!cancelled) trend = scanTrendFromSummary(summary);
+    trend = pendingScanTrend(selected.total_scans || 0);
+    // The trend line needs only the last six hours. The analytics panel below makes the one full per-link call.
+    fetchTrends()
+      .then((trends) => {
+        if (cancelled) return;
+        trend = scanTrendsFor([selected], trends)[selected.code] ?? failedScanTrend(selected.total_scans || 0);
       })
       .catch(() => {
-        if (!cancelled) trend = failedScanTrend(link.total_scans || 0);
+        if (!cancelled) trend = failedScanTrend(selected.total_scans || 0);
       });
     return () => {
       cancelled = true;

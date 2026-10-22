@@ -1,4 +1,4 @@
-import type { AnalyticsSummary, Link, TrendsSummary } from '../types';
+import type { Link, TrendsSummary } from '../types';
 
 export type ScanTrend = {
   total: number;
@@ -26,13 +26,6 @@ export function scanTrendFromCounts(total: number, counts: number[]): ScanTrend 
     rate: scanRate(lastHour, previousHour),
     points: counts,
   };
-}
-
-export function scanTrendFromSummary(summary: AnalyticsSummary): ScanTrend {
-  return scanTrendFromCounts(
-    summary.total_scans,
-    summary.hourly_timeline.map((point) => point.count),
-  );
 }
 
 /**

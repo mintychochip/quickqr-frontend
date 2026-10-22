@@ -1,5 +1,5 @@
-import { scanTrendFromCounts, scanTrendFromSummary, scanTrendsFor } from './scanStats';
-import type { AnalyticsSummary, TrendsSummary } from '../types';
+import { scanTrendFromCounts, scanTrendsFor } from './scanStats';
+import type { TrendsSummary } from '../types';
 
 const hours = ['10', '11', '12', '13', '14', '15'].map((h) => `2026-10-22T${h}:00:00Z`);
 
@@ -17,19 +17,6 @@ describe('scanTrendFromCounts', () => {
   test('from no scans to some is "new this hour" (a null rate) and from none to none is flat', () => {
     expect(scanTrendFromCounts(3, [0, 0, 0, 0, 0, 3]).rate).toBeNull();
     expect(scanTrendFromCounts(0, [0, 0, 0, 0, 0, 0]).rate).toBe(0);
-  });
-
-  test('draws exactly what the per-link analytics answer it replaces would have drawn', () => {
-    const counts = [2, 0, 5, 1, 0, 4];
-    const summary: AnalyticsSummary = {
-      total_scans: 12,
-      unique_devices: 3,
-      device_breakdown: {},
-      recent_scans: [],
-      top_referrers: {},
-      hourly_timeline: counts.map((count, i) => ({ time: `${10 + i}:00`, count })),
-    };
-    expect(scanTrendFromCounts(summary.total_scans, counts)).toEqual(scanTrendFromSummary(summary));
   });
 });
 
