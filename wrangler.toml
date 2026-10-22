@@ -2,7 +2,7 @@ name = "quickqr"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-13"
 
-# Production: the Git-connected `quickqr` Pages project. Staging is wrangler.staging.toml.
+# Production: the Git-connected `quickqr` Pages project. Staging is staging/wrangler.toml.
 #
 # Secrets are set on the project, never here:
 #   bunx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name quickqr
@@ -22,4 +22,19 @@ GOOGLE_CLIENT_ID = "488834070117-krb6561gmj74nkbto5oel0b36klqvohf.apps.googleuse
 binding = "DB"
 database_name = "quickqr-prod"
 database_id = "b83ff4c1-f4f1-4ccc-a1da-7ced89c5ab45"
+migrations_dir = "edge/migrations"
+
+# Preview deployments (every branch but master) are built from this same file, and without this section they would use
+# the production database above. They get the staging one instead, and no Google client id, so a preview can neither
+# sign anyone in nor touch real data. The origins are staging's only to keep the sign-in stand-in off: it turns on
+# whenever every named origin is loopback, and naming none falls back to localhost.
+[env.preview.vars]
+BUN_VERSION = "1.4.0"
+OAUTH_REDIRECT_ORIGIN = "https://staging.quickqr.app"
+APP_PUBLIC_URL = "https://staging.quickqr.app"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "quickqr-staging"
+database_id = "619f58ec-9a6d-4ec9-a034-1ff192636164"
 migrations_dir = "edge/migrations"
