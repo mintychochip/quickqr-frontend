@@ -48,6 +48,12 @@ the tree is the rebuild's. Git builds run `npm run build` on Cloudflare's image,
 `bun.lock` written by bun 1.4 (`lockfileVersion: 2`), so `wrangler.toml` pins `BUN_VERSION` in `[vars]`. Keep it equal to
 `bun --version` whenever `bun.lock` is regenerated, or the install step fails before anything builds.
 
+Preview deployments (every other branch) are built from the same `wrangler.toml`. Without an `[env.preview]` section they
+take the top-level binding, which is the production database, so the file has one: previews use the staging database and
+get no Google client id, which leaves every sign-in provider off. `pages dev` cannot resolve that section locally (it has
+no `--env` or `--branch`), so a change to it is tested by pushing a branch and reading the project's `deployment_configs`
+back from the Pages API.
+
 Pages does not take `--config`, which is why staging has its own directory. `bun run deploy:staging` builds, copies
 `dist/` to `staging/out/`, compiles the same `functions/` directory to `staging/out/_worker.js/`, and deploys that from
 `staging/` so `staging/wrangler.toml`, not the production file, decides the bindings. (Compiling `functions/` through a
@@ -74,5 +80,7 @@ Wrangler login used so far can attach the domain but cannot write DNS, so that s
 done, `staging-worker/` can be deleted.
 
 The Worker (deployed from `staging-worker/` with `wrangler deploy`) also refuses `/api/qr/context` with `503`, because the
-Go server's site reader fetches whatever address the caller names from the machine it runs on. The Pages backend does not
-need that: Workers cannot reach private networks, every redirect hop is checked, and the reader has an 8 second timeout.
+Go server's site reader fetches whatever address the caller names from the machine it runs on. The Pages backend has no
+such worker in front of it: its reader refuses literal private addresses, `localhost`, `.local`, and `.internal`, checks every
+redirect hop, and times out after 8 seconds, and Cloudflare documents that a Worker cannot reach private networks (not
+tested here). It is still an anonymous GET fetcher.
