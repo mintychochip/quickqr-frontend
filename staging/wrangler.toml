@@ -17,5 +17,5 @@ GOOGLE_CLIENT_ID = "488834070117-krb6561gmj74nkbto5oel0b36klqvohf.apps.googleuse
 [[d1_databases]]
 binding = "DB"
 database_name = "quickqr-staging"
-database_id = "619f58ec-9a6d-4ec9-a034-1ff192636164"
+database_id = "2d8ccc49-c968-4359-b742-2ebd7afd2bc7"
 migrations_dir = "../edge/migrations"
