@@ -1,4 +1,4 @@
-import worker, { backendHeaders, isApi } from './worker.js';
+import worker, { backendHeaders, isApi, isBlocked } from './worker.js';
 
 const url = new URL('https://staging.quickqr.app/qr?url=x');
 const request = (headers) => new Request(url, { headers });
@@ -75,6 +75,29 @@ describe('isApi', () => {
   });
 });
 
+// The backend's site reader fetches whatever address the caller names, from the machine it runs on, and its test for
+// "public" lets through every routable address, including hosts that only answer from inside the network it sits on.
+describe('isBlocked', () => {
+  test('refuses the site reader however the path is spelled', () => {
+    for (const path of [
+      '/api/qr/context',
+      '/api/qr/context/',
+      '/api/qr/%63ontext',
+      '/api/qr/c%6Fntext',
+      '/api/%71r/context',
+      '/api/qr/%zz', // a path the worker cannot decode is refused, not guessed at
+    ]) {
+      expect(isBlocked(path)).toBe(true);
+    }
+  });
+
+  test('leaves the rest of the API alone', () => {
+    for (const path of ['/api/qr', '/api/qr/style-parser', '/api/qr/abc123/settings', '/api/qr/contextual', '/api/links']) {
+      expect(isBlocked(path)).toBe(false);
+    }
+  });
+});
+
 describe('fetch', () => {
   test('answers 502 JSON, not a Cloudflare error page, when the backend cannot be reached', async () => {
     const env = {
@@ -87,5 +110,38 @@ describe('fetch', () => {
     const res = await worker.fetch(new Request('https://staging.quickqr.app/api/links'), env);
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: 'The staging API is unreachable.' });
+  });
+
+  test('never passes a request for the site reader to the backend', async () => {
+    const reached = [];
+    const env = {
+      BACKEND: {
+        fetch: async (target) => {
+          reached.push(target);
+          return new Response('{}');
+        },
+      },
+    };
+    for (const path of ['/api/qr/context', '/api/qr/%63ontext']) {
+      const body = JSON.stringify({ url: 'http://136.168.1.1/' });
+      const res = await worker.fetch(new Request(`https://staging.quickqr.app${path}`, { method: 'POST', body }), env);
+      expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({ error: 'Reading a site is turned off on this server.' });
+    }
+    expect(reached).toEqual([]);
+  });
+
+  test('still passes the rest of the API through', async () => {
+    const reached = [];
+    const env = {
+      BACKEND: {
+        fetch: async (target) => {
+          reached.push(target);
+          return new Response('{}');
+        },
+      },
+    };
+    await worker.fetch(new Request('https://staging.quickqr.app/api/qr/style-parser'), env);
+    expect(reached).toEqual(['http://staging.quickqr.app/api/qr/style-parser']);
   });
 });

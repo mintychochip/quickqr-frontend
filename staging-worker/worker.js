@@ -6,6 +6,22 @@ const API_PATHS = new Set(['/healthz', '/qr', '/qr.png', '/qr.svg']);
 
 export const isApi = (pathname) => API_PATHS.has(pathname) || API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
+// The backend's site reader (POST /api/qr/context) fetches whatever address the caller names, from the machine the
+// backend runs on. Its test for "public" refuses loopback, private, and link-local addresses but accepts every other
+// routable one, which on a campus or corporate network includes hosts that only answer from inside. Staging runs on
+// such a machine, so the route is refused here instead. The path is compared after percent-decoding because the
+// backend's router decodes each segment before matching (/api/qr/%63ontext reaches the same handler).
+const BLOCKED_PATHS = new Set(['/api/qr/context']);
+
+export function isBlocked(pathname) {
+  try {
+    const decoded = pathname.split('/').map(decodeURIComponent).join('/').replace(/\/+$/, '');
+    return BLOCKED_PATHS.has(decoded);
+  } catch {
+    return true;
+  }
+}
+
 // The backend builds client addresses (scan logs) and absolute share URLs (/qr) from these headers, and a visitor can
 // send any of them. None of the visitor's are passed on: they are rebuilt from what Cloudflare saw.
 export function backendHeaders(request, url) {
@@ -40,7 +56,12 @@ async function callBackend(request, env, url) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (env.BACKEND && isApi(url.pathname)) return callBackend(request, env, url);
+    if (env.BACKEND && isApi(url.pathname)) {
+      if (isBlocked(url.pathname)) {
+        return Response.json({ error: 'Reading a site is turned off on this server.' }, { status: 503 });
+      }
+      return callBackend(request, env, url);
+    }
 
     url.hostname = 'quickqr-staging.pages.dev';
     return fetch(new Request(url.toString(), request));
