@@ -1,9 +1,10 @@
 /**
  * The longest side, in pixels, of a photo as the style agent receives it. The agent only needs a photo's main colors, so
- * this is plenty, and it keeps the picture small enough for the server to read within its CPU budget (see
- * `LIMITS` in `edge/style/images/raster.ts`, which this must stay under: a 128 by 128 PNG is 65,664 bytes decoded).
+ * this is plenty, and it keeps the picture small enough for the server to read within its CPU budget (see `LIMITS` in
+ * `edge/style/images/raster.ts`, which this must stay under: a 96 by 96 RGBA PNG is 36,960 bytes decoded). Measured on
+ * Cloudflare, reading a 128 by 128 photo took about 6 ms of the 10 ms a request has, and the cost grows with the pixels.
  */
-export const AGENT_IMAGE_SIDE = 128;
+export const AGENT_IMAGE_SIDE = 96;
 
 /** A file's contents as base64, without the `data:` prefix. */
 export function fileToBase64(file: Blob): Promise<string> {

@@ -44,5 +44,5 @@ test('a large photo is shrunk to fit before it is sent, and keeps its proportion
   const image = sent?.images[0];
   expect([image?.name, image?.media_type]).toEqual(['big.png', 'image/png']);
   const decoded = PNG.sync.read(Buffer.from(image?.data ?? '', 'base64'));
-  expect([decoded.width, decoded.height]).toEqual([128, 85]);
+  expect([decoded.width, decoded.height]).toEqual([96, 64]);
 });
