@@ -113,9 +113,10 @@ test('selecting a link on a wide screen makes one full analytics call, not two',
   });
   await row.getByRole('button', { name: 'Show analytics' }).click();
   const detail = page.getByTestId('link-detail-sidebar');
+  // The chart draws from the analytics answer, and everything a selection asks for is sent when it mounts, so by now
+  // every per-link request has been made. (networkidle would not help: it has usually fired already and returns at once.)
   await expect(detail.getByTestId('device-mix-chart')).toBeVisible();
   await expect(detail.getByTestId('scan-rate')).toContainText(/(?:\d+% vs last hour|New this hour)/, { timeout: 15_000 });
   await expect(detail.getByTestId('scan-sparkline')).toBeVisible();
-  await page.waitForLoadState('networkidle');
   expect(perLink).toHaveLength(1);
 });
