@@ -14,7 +14,7 @@ import {
   updateMenu,
   updatePage,
 } from './store/links';
-import { getActiveSponsor, getAnalytics, getAnalyticsForOwner, purgeScansBefore, recordScan, scanIdentity } from './store/scans';
+import { getActiveSponsor, getAnalytics, getAnalyticsForOwner, getTrendsForOwner, purgeScansBefore, recordScan, scanIdentity, TRENDS_SQL } from './store/scans';
 import {
   consumeOAuthState,
   linkOAuthIdentity,
@@ -416,6 +416,81 @@ describe('scans and analytics', () => {
     expect(await purgeScansBefore(db, days(-90), 2)).toBe(1);
     expect(await purgeScansBefore(db, days(-90), 2)).toBe(0);
     expect((await getAnalytics(db, 'abc123', NOW)).total_scans).toBe(3);
+  });
+});
+
+describe('trends for the dashboard', () => {
+  const sixHours = ['10', '11', '12', '13', '14', '15'].map((h) => `2026-10-22T${h}:00:00Z`);
+
+  test('are the six UTC clock hours ending with the current one, with a count per hour for each link that has scans', async () => {
+    await link('usr-a', 'abc123');
+    await link('usr-a', 'quiet');
+    await scan('abc123', { timestamp: NOW });
+    await scan('abc123', { timestamp: minutes(-40) });
+    await scan('abc123', { timestamp: hours(-2) });
+    await scan('abc123', { timestamp: hours(-2) });
+    await scan('abc123', { timestamp: hours(-5) });
+    const t = await getTrendsForOwner(db, 'usr-a', NOW);
+    expect(t.hours).toEqual(sixHours);
+    expect(t.links).toEqual([{ code: 'abc123', counts: [1, 0, 0, 2, 1, 1] }]); // "quiet" has none in the window, so it is left out
+  });
+
+  test('count exactly what the per-link timeline counts, so the dashboard draws the same sparkline either way', async () => {
+    await link('usr-a', 'one');
+    await link('usr-a', 'two');
+    const at = [NOW, minutes(-5), minutes(-61), hours(-2), hours(-2), minutes(-250), hours(-5), hours(-6), hours(-24)];
+    for (const [i, timestamp] of at.entries()) await scan(i % 2 ? 'one' : 'two', { timestamp, ip: `203.0.113.${i + 1}` });
+    const t = await getTrendsForOwner(db, 'usr-a', NOW);
+    for (const code of ['one', 'two']) {
+      const timeline = (await getAnalytics(db, code, NOW)).hourly_timeline.map((p) => p.count);
+      expect(t.links.find((l) => l.code === code)?.counts, code).toEqual(timeline);
+    }
+  });
+
+  test('the window starts on the hour five hours back: a scan just before it is left out and one on it is counted', async () => {
+    await link('usr-a', 'edge');
+    await scan('edge', { timestamp: new Date('2026-10-22T09:59:59.999Z') });
+    await scan('edge', { timestamp: new Date('2026-10-22T10:00:00.000Z') });
+    expect((await getTrendsForOwner(db, 'usr-a', NOW)).links).toEqual([{ code: 'edge', counts: [1, 0, 0, 0, 0, 0] }]);
+  });
+
+  test("a scan from the same hour yesterday is not counted in today's bucket", async () => {
+    await link('usr-a', 'abc123');
+    await scan('abc123', { timestamp: hours(-24) });
+    expect((await getTrendsForOwner(db, 'usr-a', NOW)).links).toEqual([]);
+  });
+
+  test("cover only the caller's links, and an unknown or empty owner gets no links but still the six hours", async () => {
+    await link('usr-a', 'mine');
+    await link('usr-b', 'theirs');
+    await scan('mine');
+    await scan('theirs');
+    expect((await getTrendsForOwner(db, 'usr-a', NOW)).links.map((l) => l.code)).toEqual(['mine']);
+    expect((await getTrendsForOwner(db, 'usr-nobody', NOW)).links).toEqual([]);
+    expect(await getTrendsForOwner(db, '', NOW)).toEqual({ hours: sixHours, links: [] });
+  });
+
+  test('list the links in code order', async () => {
+    for (const code of ['mid', 'zeta', 'alpha']) {
+      await link('usr-a', code);
+      await scan(code);
+    }
+    expect((await getTrendsForOwner(db, 'usr-a', NOW)).links.map((l) => l.code)).toEqual(['alpha', 'mid', 'zeta']);
+  });
+
+  test('a deleted link and its scans drop out', async () => {
+    await link('usr-a', 'gone');
+    await scan('gone');
+    await deleteLink(db, 'gone');
+    expect((await getTrendsForOwner(db, 'usr-a', NOW)).links).toEqual([]);
+  });
+
+  test('read the scans of the window through the (link_code, ts) index and never scan the whole table', () => {
+    // This is what keeps the cost off the number of scans a link has had: on D1 a full scan of `scans` is billed per row.
+    const plan = db.sqlite.query(`EXPLAIN QUERY PLAN ${TRENDS_SQL}`).all('usr-a', '2026-10-22T10:00:00.000Z') as { detail: string }[];
+    const steps = plan.map((p) => p.detail);
+    expect(steps.some((d) => /SEARCH scans USING (COVERING )?INDEX scans_link_ts \(link_code=\? AND ts>\?\)/.test(d)), steps.join(' | ')).toBe(true);
+    expect(steps.filter((d) => /^SCAN scans\b/.test(d)), steps.join(' | ')).toEqual([]);
   });
 });
 

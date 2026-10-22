@@ -4,6 +4,7 @@ import {
   fetchLinkAnalytics,
   fetchLinks,
   fetchQrSettings,
+  fetchTrends,
   patchQrSettings,
   updateLink,
 } from './api';
@@ -81,8 +82,9 @@ describe('authenticated request helper', () => {
     await patchQrSettings('menu-cafe', { title: 'New title' });
     await fetchLinkAnalytics('menu-cafe');
     await fetchGlobalAnalytics();
+    await fetchTrends();
 
-    expect(captured).toHaveLength(7);
+    expect(captured).toHaveLength(8);
     for (const { url, init } of captured) {
       if (new Headers(init?.headers).get('Authorization') !== `Bearer ${TOKEN}`) {
         throw new Error(`missing token on ${url}`);
@@ -154,5 +156,28 @@ describe('authenticated request helper', () => {
     );
     expect(getAuthToken()).toBe(TOKEN);
     expect(dispatched).toHaveLength(0);
+  });
+});
+
+describe('fetchTrends', () => {
+  test("reads every link's hourly counts from one request", async () => {
+    setAuthToken(TOKEN);
+    const answer = { hours: ['2026-10-22T10:00:00Z'], links: [{ code: 'menu-cafe', counts: [1] }] };
+    responder = () => json(200, answer);
+
+    expect(await fetchTrends()).toEqual(answer);
+    expect(captured.map((request) => request.url)).toEqual(['/api/analytics/trends']);
+  });
+
+  test('throws the server message when it answers with an error', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(500, { error: 'boom' });
+
+    const thrown = await fetchTrends().then(
+      () => null,
+      (err: unknown) => err,
+    );
+    expect(thrown).toBeInstanceOf(Error);
+    expect(thrown instanceof Error ? thrown.message : thrown).toBe('boom');
   });
 });

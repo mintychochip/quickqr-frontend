@@ -4,7 +4,7 @@ import { randomCode } from '../ids';
 import type { Router } from '../router';
 import { isStoreError } from '../store/errors';
 import { createLink, deleteLink, listLinksByOwner, toPublicLink, updateLink } from '../store/links';
-import { getActiveSponsor, getAnalytics, getAnalyticsForOwner } from '../store/scans';
+import { getActiveSponsor, getAnalytics, getAnalyticsForOwner, getTrendsForOwner } from '../store/scans';
 import { publicNone, publicRead, readPolicy, SCOPES, writePolicy } from './policies';
 import { hasHttpScheme, ownedLink, userId } from './shared';
 
@@ -92,5 +92,11 @@ export function registerLinkRoutes(router: Router, deps: AppDeps): void {
 
   router.handle('GET /api/analytics/global', readPolicy(SCOPES.analyticsRead), async (c) =>
     json(200, await getAnalyticsForOwner(c.env.DB, userId(c), deps.now())),
+  );
+
+  // What the dashboard draws for every link at once. It costs the scans of the last six hours, where one analytics call
+  // per link costs every scan the link has had.
+  router.handle('GET /api/analytics/trends', readPolicy(SCOPES.analyticsRead), async (c) =>
+    json(200, await getTrendsForOwner(c.env.DB, userId(c), deps.now())),
   );
 }

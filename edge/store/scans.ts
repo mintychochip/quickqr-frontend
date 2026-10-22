@@ -1,6 +1,6 @@
 import type { Db } from '../db';
 import { hmacSha256Hex, randomCode } from '../ids';
-import type { AnalyticsSummary, ScanEvent, Sponsor, TimeCountPoint } from '../types';
+import type { AnalyticsSummary, LinkTrend, ScanEvent, Sponsor, TimeCountPoint, TrendsSummary } from '../types';
 import { StoreError } from './errors';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -188,6 +188,36 @@ export function getAnalytics(db: Db, code: string, now = new Date()): Promise<An
 export function getAnalyticsForOwner(db: Db, ownerId: string, now = new Date()): Promise<AnalyticsSummary> {
   if (!ownerId) return summarize(db, '0', [], undefined, now);
   return summarize(db, 'link_code IN (SELECT code FROM links WHERE owner_id = ?)', [ownerId], undefined, now);
+}
+
+/**
+ * Scans per link per clock hour inside the window, for the links one person owns. It reads the window through the
+ * (link_code, ts) index, so its cost follows the scans of the last six hours and the number of links, not how many scans
+ * a link has ever had (a test pins the query plan). `h` is the hour as `YYYY-MM-DDTHH`, the same bucket `summarize` uses.
+ */
+export const TRENDS_SQL =
+  'SELECT link_code AS code, substr(ts, 1, 13) AS h, COUNT(*) AS n FROM scans WHERE link_code IN (SELECT code FROM links WHERE owner_id = ?) AND ts >= ? GROUP BY link_code, h';
+
+/** The hourly counts the dashboard draws for every link a person owns, in one query instead of five per link. */
+export async function getTrendsForOwner(db: Db, ownerId: string, now = new Date()): Promise<TrendsSummary> {
+  const window = lastSixHours(now);
+  const hours = window.map((h) => `${h.start}:00:00Z`);
+  if (!ownerId) return { hours, links: [] };
+
+  const windowStart = `${window[0]?.start ?? ''}:00:00.000Z`;
+  const { results } = await db.prepare(TRENDS_SQL).bind(ownerId, windowStart).all<{ code: string; h: string; n: number }>();
+
+  const byCode = new Map<string, number[]>();
+  for (const row of results) {
+    const slot = window.findIndex((h) => h.start === row.h);
+    if (slot < 0) continue; // after the current hour: a scan stamped by a clock that ran ahead
+    const counts = byCode.get(row.code) ?? window.map(() => 0);
+    counts[slot] = Number(row.n);
+    byCode.set(row.code, counts);
+  }
+  const links: LinkTrend[] = [...byCode].map(([code, counts]) => ({ code, counts }));
+  links.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0)); // by code unit, as Go sorts, whatever the locale
+  return { hours, links };
 }
 
 /** Deletes up to `limit` scans older than `cutoff` and says how many it deleted. Call until it returns 0. */

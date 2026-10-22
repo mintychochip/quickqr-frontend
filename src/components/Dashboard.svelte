@@ -7,7 +7,7 @@
   import { fade } from 'svelte/transition';
   import type { Link, Sponsor } from '../types';
   import type { DetailSelection, SavedLink } from '../types/dashboard';
-  import { fetchLinkAnalytics, fetchLinks, updateLink, deleteLink } from '../lib/api';
+  import { fetchLinks, fetchTrends, updateLink, deleteLink } from '../lib/api';
   import AdSpace from './AdSpace.svelte';
   import LinkRowDropdown from './LinkRowDropdown.svelte';
   import LinkRowMenu from './LinkRowMenu.svelte';
@@ -20,7 +20,7 @@
     pendingScanTrend,
     scanRate,
     scanRateTone,
-    scanTrendFromSummary,
+    scanTrendsFor,
     type ScanTrend,
   } from '../lib/scanStats';
   import Button from '@/lib/components/ui/button.svelte';
@@ -68,28 +68,15 @@
     for (const link of items) initial[link.code] = pendingScanTrend(link.total_scans || 0);
     rowStats = initial;
 
-    const queue = [...items];
-    const workers = Array.from({ length: 5 }, async () => {
-      while (queue.length > 0) {
-        const link = queue.shift();
-        if (!link) return;
-        try {
-          const summary = await fetchLinkAnalytics(link.code);
-          if (generation !== statsGeneration) return;
-          rowStats = {
-            ...rowStats,
-            [link.code]: scanTrendFromSummary(summary),
-          };
-        } catch {
-          if (generation !== statsGeneration) return;
-          rowStats = {
-            ...rowStats,
-            [link.code]: failedScanTrend(link.total_scans || 0),
-          };
-        }
-      }
-    });
-    await Promise.all(workers);
+    // One request for every row. A call per link would read every scan each link has ever had.
+    try {
+      const trends = await fetchTrends();
+      if (generation !== statsGeneration) return;
+      rowStats = scanTrendsFor(items, trends);
+    } catch {
+      if (generation !== statsGeneration) return;
+      rowStats = Object.fromEntries(items.map((link) => [link.code, failedScanTrend(link.total_scans || 0)]));
+    }
   }
 
   async function loadData() {

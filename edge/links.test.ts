@@ -275,4 +275,46 @@ describe('analytics', () => {
     expect(((await (await go(r, '/api/analytics/global', bearer(bob.token))).json()) as { total_scans: number }).total_scans).toBe(3);
     expect((await go(r, '/api/analytics/global')).status).toBe(401);
   });
+
+  describe('trends for the dashboard', () => {
+    type Trends = { hours: string[]; links: { code: string; counts: number[] }[]; error?: string };
+    const trends = async (r: Rig, token?: string): Promise<{ status: number; body: Trends }> => {
+      const res = await go(r, '/api/analytics/trends', token ? bearer(token) : {});
+      return { status: res.status, body: (await res.json()) as Trends };
+    };
+    const scanNow = (r: Rig, code: string) => recordScan(r.db, { ...scan(code, '198.51.100.4'), timestamp: r.now() }, configured.SCAN_HASH_KEY);
+
+    test("answer with the caller's links only, six hours of counts each, in one request", async () => {
+      const { r, ada, bob } = await pair();
+      for (const code of ['a1', 'a2', 'quiet']) await made(r, ada.token, { code, destination_url: 'a.co' });
+      await made(r, bob.token, { code: 'b1', destination_url: 'b.co' });
+      for (const code of ['a1', 'a1', 'a2', 'b1', 'b1', 'b1']) await scanNow(r, code);
+
+      const mine = await trends(r, ada.token);
+      expect(mine.status).toBe(200);
+      expect(mine.body.hours).toHaveLength(6);
+      expect(mine.body.hours[5]).toBe(`${r.now().toISOString().slice(0, 13)}:00:00Z`);
+      expect(mine.body.links).toEqual([
+        { code: 'a1', counts: [0, 0, 0, 0, 0, 2] },
+        { code: 'a2', counts: [0, 0, 0, 0, 0, 1] },
+      ]); // "quiet" had no scans, and bob's link is not here
+      expect((await trends(r, bob.token)).body.links).toEqual([{ code: 'b1', counts: [0, 0, 0, 0, 0, 3] }]);
+    });
+
+    test('need a session', async () => {
+      const r = rig();
+      expect(await trends(r)).toMatchObject({ status: 401, body: { error: 'Sign in to continue.' } });
+      expect((await trends(r, 'stale-token-value')).status).toBe(401);
+    });
+
+    test("move with the app's clock: two hours later the scan is two buckets back, and after six it is gone", async () => {
+      const { r, ada } = await pair();
+      await made(r, ada.token, { code: 'clock', destination_url: 'a.co' });
+      await scanNow(r, 'clock');
+      r.advance(2 * 3_600_000);
+      expect((await trends(r, ada.token)).body.links).toEqual([{ code: 'clock', counts: [0, 0, 0, 1, 0, 0] }]);
+      r.advance(4 * 3_600_000);
+      expect((await trends(r, ada.token)).body.links).toEqual([]);
+    });
+  });
 });

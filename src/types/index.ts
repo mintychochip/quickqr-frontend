@@ -73,3 +73,17 @@ export interface AnalyticsSummary {
   hourly_timeline: TimeCountPoint[];
   top_referrers: Record<string, number>;
 }
+
+/** Scans in each of the hours of TrendsSummary.hours, for one link. */
+export interface LinkTrend {
+  code: string;
+  counts: number[];
+}
+
+/** Hourly scan counts for all of a person's links in one answer (GET /api/analytics/trends). */
+export interface TrendsSummary {
+  /** The six UTC clock hours ending with the current one, oldest first, each as the instant it starts. */
+  hours: string[];
+  /** Only links with a scan in those hours; a link that is not listed had none. */
+  links: LinkTrend[];
+}

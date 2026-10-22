@@ -24,7 +24,7 @@ interface Row {
   freshTokens?: boolean;
   /** After the stranger's call, the owner's item must still have its original title. */
   untouched?: Kind;
-  check?: 'listScopedToCaller' | 'analyticsScopedToCaller';
+  check?: 'listScopedToCaller' | 'analyticsScopedToCaller' | 'trendsScopedToCaller';
 }
 
 const everyone = (status: number): Statuses => [status, status, status, status];
@@ -58,6 +58,7 @@ const matrix: Row[] = [
   { pattern: 'DELETE /api/links/{code}', code: 'link', want: [401, 401, 404, 200], untouched: 'link' },
   { pattern: 'GET /api/links/{code}/analytics', code: 'link', want: [401, 401, 404, 200] },
   { pattern: 'GET /api/analytics/global', want: [401, 401, 200, 200], check: 'analyticsScopedToCaller' },
+  { pattern: 'GET /api/analytics/trends', want: [401, 401, 200, 200], check: 'trendsScopedToCaller' },
   { pattern: 'GET /api/sponsors/active', want: everyone(200) },
   { pattern: 'GET /api/scan-host', sameForAll: true },
   { pattern: 'POST /api/menus', body: menuBody, want: [401, 401, 201, 201] },
@@ -160,6 +161,13 @@ describe('access matrix', () => {
         const total = async (token: string) => ((await (await go(r, '/api/analytics/global', bearer(token))).json()) as { total_scans: number }).total_scans;
         expect(await total(other)).toBe(0);
         expect(await total(owner)).toBeGreaterThanOrEqual(1);
+      }
+      if (row.check === 'trendsScopedToCaller') {
+        await go(r, `/r/${links.link}?direct=1`);
+        await r.settle();
+        const codes = async (token: string) => ((await (await go(r, '/api/analytics/trends', bearer(token))).json()) as { links: { code: string }[] }).links.map((l) => l.code);
+        expect(await codes(other)).toEqual([]);
+        expect(await codes(owner)).toContain(links.link);
       }
     });
   }

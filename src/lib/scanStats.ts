@@ -1,4 +1,4 @@
-import type { AnalyticsSummary } from '../types';
+import type { AnalyticsSummary, Link, TrendsSummary } from '../types';
 
 export type ScanTrend = {
   total: number;
@@ -15,17 +15,41 @@ export function scanRate(lastHour: number, previousHour: number): number | null 
   return Math.round(((lastHour - previousHour) / previousHour) * 100);
 }
 
-export function scanTrendFromSummary(summary: AnalyticsSummary): ScanTrend {
-  const points = summary.hourly_timeline.map((point) => point.count);
-  const lastHour = points[points.length - 1] ?? 0;
-  const previousHour = points[points.length - 2] ?? 0;
+/** The trend of one link from its hourly counts, oldest first: the last two are this hour and the one before. */
+export function scanTrendFromCounts(total: number, counts: number[]): ScanTrend {
+  const lastHour = counts[counts.length - 1] ?? 0;
+  const previousHour = counts[counts.length - 2] ?? 0;
   return {
-    total: summary.total_scans,
+    total,
     lastHour,
     previousHour,
     rate: scanRate(lastHour, previousHour),
-    points,
+    points: counts,
   };
+}
+
+export function scanTrendFromSummary(summary: AnalyticsSummary): ScanTrend {
+  return scanTrendFromCounts(
+    summary.total_scans,
+    summary.hourly_timeline.map((point) => point.count),
+  );
+}
+
+/**
+ * A trend for every link in `links`, from one trends answer. The answer lists only links with a scan in its hours, so a
+ * link it leaves out gets six zeros. Totals come from the link itself, which the list already carries.
+ */
+export function scanTrendsFor(
+  links: Pick<Link, 'code' | 'total_scans'>[],
+  trends: TrendsSummary,
+): Record<string, ScanTrend> {
+  const counts = new Map(trends.links.map((trend) => [trend.code, trend.counts]));
+  return Object.fromEntries(
+    links.map((link) => [
+      link.code,
+      scanTrendFromCounts(link.total_scans || 0, counts.get(link.code) ?? trends.hours.map(() => 0)),
+    ]),
+  );
 }
 
 export function pendingScanTrend(total = 0): ScanTrend {

@@ -1,4 +1,4 @@
-import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, Sponsor } from '../types';
+import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, Sponsor, TrendsSummary } from '../types';
 import { getAuthToken, setAuthToken } from './auth';
 
 const BASE_URL = '';
@@ -243,6 +243,15 @@ export async function fetchGlobalAnalytics(): Promise<AnalyticsSummary> {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load global metrics');
   }
   return parseJsonResponse<AnalyticsSummary>(res, 'Failed to load global metrics');
+}
+
+/** Every link's scans in each of the last six hours, in one request: what the dashboard draws its trend lines from. */
+export async function fetchTrends(): Promise<TrendsSummary> {
+  const res = await request('/api/analytics/trends');
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load scan trends');
+  }
+  return parseJsonResponse<TrendsSummary>(res, 'Failed to load scan trends');
 }
 
 export async function fetchActiveSponsor(): Promise<Sponsor | null> {

@@ -64,3 +64,20 @@ test('wide dashboard opens link details in the left sidebar', async ({ page }) =
   await expect(detail).toHaveCount(0);
   await expect(page.getByRole('complementary', { name: 'Workspace overview' })).toBeVisible();
 });
+
+test("one request draws every row's trend, however many links there are", async ({ page }) => {
+  // An analytics call per link reads every scan the link has ever had (on D1, billed per row read). One trends call
+  // reads only the last six hours, so loading the dashboard must not scale with the number of links or their scans.
+  const analytics: string[] = [];
+  page.on('request', (request) => {
+    const { pathname } = new URL(request.url());
+    if (pathname.startsWith('/api/') && pathname.includes('analytics')) analytics.push(pathname);
+  });
+  await signInViaOAuth(page);
+  await page.goto('/dashboard');
+
+  const row = page.getByRole('row', { name: /Autumn Cafe Menu/ });
+  await expect(row.getByTestId('scan-rate')).toContainText(/(?:\d+% vs last hour|New this hour)/, { timeout: 15_000 });
+  await expect(row.getByTestId('scan-sparkline')).toBeVisible();
+  expect(analytics).toEqual(['/api/analytics/trends']);
+});
