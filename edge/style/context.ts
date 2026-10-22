@@ -1,3 +1,4 @@
+import type { Fetch } from '../http';
 import { clipBytes } from '../text';
 
 const MAX_BODY = 256 << 10;
@@ -156,7 +157,7 @@ async function readCapped(res: Response): Promise<string> {
  * Reads a public site into a short note. Redirects are followed by hand, at most twice, and every address along the way
  * is held to the same rule as the first, so a public page cannot bounce this server toward an internal one.
  */
-export async function fetchPublicSiteContext(fetchFn: typeof fetch, raw: string): Promise<{ name: string; text: string }> {
+export async function fetchPublicSiteContext(fetchFn: Fetch, raw: string): Promise<{ name: string; text: string }> {
   let page = publicSiteUrl(raw);
   const host = page.hostname;
   let res: Response;

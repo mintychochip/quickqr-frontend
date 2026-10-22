@@ -55,10 +55,10 @@ export function registerLinkRoutes(router: Router, deps: AppDeps): void {
     return json(200, { links, count: links.length });
   });
 
-  router.handle('GET /api/links/{code}', readPolicy(SCOPES.linksRead), async (c) => json(200, toPublicLink(await ownedLink(c, c.params.code))));
+  router.handle('GET /api/links/{code}', readPolicy(SCOPES.linksRead), async (c) => json(200, toPublicLink(await ownedLink(c, c.param('code')))));
 
   router.handle('PUT /api/links/{code}', writePolicy(SCOPES.linksWrite), async (c) => {
-    const code = c.params.code;
+    const code = c.param('code');
     await ownedLink(c, code);
     const body = bodyObject(await c.json());
     const destination = stringField(body, 'destination_url').trim();
@@ -74,7 +74,7 @@ export function registerLinkRoutes(router: Router, deps: AppDeps): void {
   });
 
   router.handle('DELETE /api/links/{code}', writePolicy(SCOPES.linksWrite), async (c) => {
-    const code = c.params.code;
+    const code = c.param('code');
     await ownedLink(c, code);
     try {
       await deleteLink(c.env.DB, code);
@@ -86,8 +86,8 @@ export function registerLinkRoutes(router: Router, deps: AppDeps): void {
   });
 
   router.handle('GET /api/links/{code}/analytics', readPolicy(SCOPES.analyticsRead), async (c) => {
-    await ownedLink(c, c.params.code);
-    return json(200, await getAnalytics(c.env.DB, c.params.code, deps.now()));
+    await ownedLink(c, c.param('code'));
+    return json(200, await getAnalytics(c.env.DB, c.param('code'), deps.now()));
   });
 
   router.handle('GET /api/analytics/global', readPolicy(SCOPES.analyticsRead), async (c) =>

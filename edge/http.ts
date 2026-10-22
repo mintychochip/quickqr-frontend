@@ -1,5 +1,8 @@
 export const INVALID_BODY = 'Invalid request body';
 
+/** The platform's fetch, as a plain function so a test can stand in for it without reproducing everything Bun adds to the global. */
+export type Fetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
 /** A failure that maps straight to a response: the router turns it into `{"error": message}` with this status. */
 export class HttpError extends Error {
   status: number;

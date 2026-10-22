@@ -18,29 +18,30 @@ function parseIPv4(text: string): number[] | null {
 }
 
 /** The eight 16-bit groups of an IPv6 address, or null. Handles `::` and an embedded IPv4 tail. */
-function parseIPv6(text: string): number[] | null {
-  text = text.split('%')[0];
+function parseIPv6(input: string): number[] | null {
+  const text = input.split('%')[0] ?? '';
   const doubled = text.split('::');
   if (doubled.length > 2) return null;
   const toGroups = (side: string): number[] | null => {
     if (side === '') return [];
     const out: number[] = [];
     const pieces = side.split(':');
-    for (let i = 0; i < pieces.length; i++) {
-      if (i === pieces.length - 1 && pieces[i].includes('.')) {
-        const v4 = parseIPv4(pieces[i]);
+    for (const [i, piece] of pieces.entries()) {
+      if (i === pieces.length - 1 && piece.includes('.')) {
+        const v4 = parseIPv4(piece);
         if (!v4) return null;
-        out.push((v4[0] << 8) | v4[1], (v4[2] << 8) | v4[3]);
-      } else if (/^[0-9a-fA-F]{1,4}$/.test(pieces[i])) {
-        out.push(parseInt(pieces[i], 16));
+        const [a = 0, b = 0, c = 0, d = 0] = v4;
+        out.push((a << 8) | b, (c << 8) | d);
+      } else if (/^[0-9a-fA-F]{1,4}$/.test(piece)) {
+        out.push(parseInt(piece, 16));
       } else {
         return null;
       }
     }
     return out;
   };
-  const head = toGroups(doubled[0]);
-  const tail = doubled.length === 2 ? toGroups(doubled[1]) : [];
+  const head = toGroups(doubled[0] ?? '');
+  const tail = doubled.length === 2 ? toGroups(doubled[1] ?? '') : [];
   if (!head || !tail) return null;
   if (doubled.length === 1) return head.length === 8 ? head : null;
   const missing = 8 - head.length - tail.length;
@@ -55,15 +56,18 @@ function parseIPv6(text: string): number[] | null {
 export async function scanIdentity(key: string, ip: string): Promise<{ hash: string; prefix: string }> {
   const text = ip.trim();
   const v4 = parseIPv4(text);
-  if (v4) return { hash: await hmacSha256Hex(key, v4.join('.')), prefix: `${v4[0]}.${v4[1]}.${v4[2]}.0/24` };
+  if (v4) {
+    const [a = 0, b = 0, c = 0] = v4;
+    return { hash: await hmacSha256Hex(key, v4.join('.')), prefix: `${a}.${b}.${c}.0/24` };
+  }
   const v6 = parseIPv6(text);
   if (v6) {
-    const mapped = v6.slice(0, 5).every((g) => g === 0) && v6[5] === 0xffff;
-    if (mapped) {
-      const octets = [v6[6] >> 8, v6[6] & 255, v6[7] >> 8, v6[7] & 255];
+    const [g0 = 0, g1 = 0, g2 = 0, , , g5 = 0, g6 = 0, g7 = 0] = v6;
+    if (v6.slice(0, 5).every((g) => g === 0) && g5 === 0xffff) {
+      const octets = [g6 >> 8, g6 & 255, g7 >> 8, g7 & 255];
       return { hash: await hmacSha256Hex(key, octets.join('.')), prefix: `${octets[0]}.${octets[1]}.${octets[2]}.0/24` };
     }
-    return { hash: await hmacSha256Hex(key, v6.map((g) => g.toString(16)).join(':')), prefix: `${v6[0].toString(16)}:${v6[1].toString(16)}:${v6[2].toString(16)}::/48` };
+    return { hash: await hmacSha256Hex(key, v6.map((g) => g.toString(16)).join(':')), prefix: `${g0.toString(16)}:${g1.toString(16)}:${g2.toString(16)}::/48` };
   }
   return { hash: await hmacSha256Hex(key, text), prefix: 'unknown' };
 }
@@ -104,7 +108,7 @@ export async function recordScan(db: Db, scan: NewScan, hashKey: string): Promis
       ),
     db.prepare('UPDATE links SET total_scans = total_scans + 1 WHERE code = ?').bind(scan.linkCode),
   ]);
-  if (results[0].meta.changes === 0) throw new StoreError('not_found');
+  if ((results[0]?.meta.changes ?? 0) === 0) throw new StoreError('not_found');
 }
 
 interface RecentRow {
@@ -133,8 +137,8 @@ function lastSixHours(now: Date): { start: string; label: string }[] {
 
 async function summarize(db: Db, scope: string, params: unknown[], linkCode: string | undefined, now: Date): Promise<AnalyticsSummary> {
   const hours = lastSixHours(now);
-  const windowStart = `${hours[0].start}:00:00.000Z`;
-  const [totals, devices, referrers, recent, hourly] = await db.batch([
+  const windowStart = `${hours[0]?.start ?? ''}:00:00.000Z`;
+  const batch = await db.batch([
     db.prepare(`SELECT COUNT(*) AS total, COUNT(DISTINCT ip_hash) AS uniq FROM scans WHERE ${scope}`).bind(...params),
     db.prepare(`SELECT device_type AS k, COUNT(*) AS n FROM scans WHERE ${scope} GROUP BY device_type`).bind(...params),
     db.prepare(`SELECT referrer AS k, COUNT(*) AS n FROM scans WHERE ${scope} GROUP BY referrer ORDER BY n DESC, k ASC LIMIT ${TOP_REFERRERS}`).bind(...params),
@@ -145,17 +149,18 @@ async function summarize(db: Db, scope: string, params: unknown[], linkCode: str
       .bind(...params),
     db.prepare(`SELECT substr(ts, 1, 13) AS h, COUNT(*) AS n FROM scans WHERE ${scope} AND ts >= ? GROUP BY h`).bind(...params, windowStart),
   ]);
+  const rowsAt = (index: number): Record<string, unknown>[] => batch[index]?.results ?? [];
 
-  const counts = new Map((hourly.results as { h: string; n: number }[]).map((r) => [r.h, r.n]));
+  const counts = new Map((rowsAt(4) as { h: string; n: number }[]).map((r) => [r.h, r.n]));
   const timeline: TimeCountPoint[] = hours.map((h) => ({ time: h.label, count: counts.get(h.start) ?? 0 }));
   const tally = (rows: Record<string, unknown>[]): Record<string, number> => Object.fromEntries(rows.map((r) => [String(r.k), Number(r.n)]));
-  const head = (totals.results[0] ?? {}) as { total?: number; uniq?: number };
+  const head = (rowsAt(0)[0] ?? {}) as { total?: number; uniq?: number };
 
   const summary: AnalyticsSummary = {
     total_scans: head.total ?? 0,
     unique_devices: head.uniq ?? 0,
-    device_breakdown: tally(devices.results),
-    recent_scans: (recent.results as unknown as RecentRow[]).map((r) => ({
+    device_breakdown: tally(rowsAt(1)),
+    recent_scans: (rowsAt(3) as unknown as RecentRow[]).map((r) => ({
       id: r.uid,
       link_code: r.link_code,
       timestamp: r.ts,
@@ -168,7 +173,7 @@ async function summarize(db: Db, scope: string, params: unknown[], linkCode: str
       city: r.city,
     })),
     hourly_timeline: timeline,
-    top_referrers: tally(referrers.results),
+    top_referrers: tally(rowsAt(2)),
   };
   if (linkCode !== undefined) summary.link_code = linkCode;
   return summary;

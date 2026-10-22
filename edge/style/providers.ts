@@ -1,5 +1,5 @@
 import type { Env } from '../env';
-import { isRecord } from '../http';
+import { isRecord, type Fetch } from '../http';
 import { darkenForScan } from './colors';
 import type { AgentImage, StyleAgentStyle } from './decision';
 
@@ -38,7 +38,7 @@ const sortedJson = (value: unknown): string =>
 
 const field = (source: unknown, key: string): string => (isRecord(source) && typeof source[key] === 'string' ? source[key] : '');
 
-async function post(fetchFn: typeof fetch, url: string, headers: Record<string, string>, body: unknown): Promise<{ status: number; text: string }> {
+async function post(fetchFn: Fetch, url: string, headers: Record<string, string>, body: unknown): Promise<{ status: number; text: string }> {
   const res = await fetchFn(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
@@ -76,7 +76,7 @@ fgColor (hex), bgColor (hex), errorLevel (L|M|Q|H), frame (plain|soft|ring), sum
 Prefer scannable contrast. Respect print/outdoor/logo constraints when mentioned.`;
 
 /** Asks an OpenAI-compatible chat endpoint (STYLE_LLM_*) for a style. Throws on any failure; the route says only that parsing failed. */
-export async function callStyleLlm(fetchFn: typeof fetch, env: Env, prompt: string, current: Record<string, unknown> | undefined): Promise<StyleParseResult> {
+export async function callStyleLlm(fetchFn: Fetch, env: Env, prompt: string, current: Record<string, unknown> | undefined): Promise<StyleParseResult> {
   const baseUrl = trimmed(env.STYLE_LLM_BASE_URL).replace(/\/+$/, '') || 'https://api.openai.com/v1';
   const { status, text } = await post(
     fetchFn,
@@ -185,7 +185,7 @@ export interface JevStyle {
 
 /** Asks Jev (TYPESAFE_*) to pick a template and colors. */
 export async function callJevStyleParser(
-  fetchFn: typeof fetch,
+  fetchFn: Fetch,
   env: Env,
   prompt: string,
   current: Record<string, unknown> | undefined,
@@ -251,7 +251,7 @@ function xaiOutputText(body: string): string {
 
 /** Asks xAI to style a code from the prompt, notes, and photos. Throws on any failure; the caller falls back to the decision model. */
 export async function callXaiStyleAgent(
-  fetchFn: typeof fetch,
+  fetchFn: Fetch,
   env: Env,
   prompt: string,
   notes: string[],

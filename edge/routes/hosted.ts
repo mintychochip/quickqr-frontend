@@ -45,7 +45,7 @@ function registerHosted<Entry>(router: Router, deps: AppDeps, spec: Hosted<Entry
   });
 
   router.handle(`PUT ${spec.path}/{code}`, writePolicy(SCOPES.linksWrite), async (c) => {
-    const code = c.params.code;
+    const code = c.param('code');
     await ownedLink(c, code, spec.notFound);
     const { title, entries } = await read(c);
     try {

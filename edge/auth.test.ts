@@ -61,11 +61,12 @@ describe('the local sign-in stand-in is fail-closed', () => {
 
   test('every dev route answers 404 while it is off', async () => {
     const r = rig();
-    for (const [method, path] of [
+    const routes: [string, string][] = [
       ['GET', '/api/auth/oauth/dev/start'],
       ['GET', '/api/auth/oauth/dev/consent?state=x'],
       ['POST', '/api/auth/oauth/dev/consent?state=x'],
-    ]) {
+    ];
+    for (const [method, path] of routes) {
       const res = await go(r, path, { method, body: method === 'POST' ? 'email=a%40b.co' : undefined, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
       expect(res.status).toBe(404);
       expect(await res.json()).toEqual({ error: 'Local sign-in is not enabled.' });

@@ -35,7 +35,8 @@ export interface Ctx {
   url: URL;
   env: Env;
   exec: Exec;
-  params: Record<string, string>;
+  /** The value of a `{name}` in the route's pattern. A route only reads names its own pattern declares. */
+  param(name: string): string;
   principal: Principal | null;
   policy: Policy;
   json<T = unknown>(): Promise<T>;
@@ -110,9 +111,10 @@ export class Router {
     if (decoded.length !== entry.segments.length) return null;
     const params: Record<string, string> = {};
     for (let i = 0; i < decoded.length; i++) {
-      const want = entry.segments[i];
-      if (want.startsWith('{') && want.endsWith('}')) params[want.slice(1, -1)] = decoded[i];
-      else if (want !== decoded[i]) return null;
+      const want = entry.segments[i] ?? '';
+      const got = decoded[i] ?? '';
+      if (want.startsWith('{') && want.endsWith('}')) params[want.slice(1, -1)] = got;
+      else if (want !== got) return null;
     }
     return params;
   }
@@ -155,7 +157,7 @@ export class Router {
       if ((policy.auth === 'any' || policy.auth === 'session') && !principal) return errorJson(401, SIGN_IN_REQUIRED);
     }
 
-    const ctx: Ctx = { req, url, env, exec, params, principal, policy, json: <T>() => readJson<T>(req, policy.maxBody) };
+    const ctx: Ctx = { req, url, env, exec, param: (name) => params[name] ?? '', principal, policy, json: <T>() => readJson<T>(req, policy.maxBody) };
     let res: Response;
     try {
       res = await entry.handler(ctx);

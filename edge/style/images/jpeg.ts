@@ -55,7 +55,9 @@ class Bits {
   private count = 0;
   private padding = 0;
   pos: number;
-  constructor(private data: Uint8Array, start: number) {
+  private data: Uint8Array;
+  constructor(data: Uint8Array, start: number) {
+    this.data = data;
     this.pos = start;
   }
 

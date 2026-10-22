@@ -1,3 +1,4 @@
+import type { Fetch } from './http';
 import type { Env } from './env';
 
 export interface Provider {
@@ -133,7 +134,7 @@ export function authorizeUrl(provider: Provider, state: string, extra: Record<st
 }
 
 /** Trades an authorization code for an access token. Any failure is a plain error: the person is told only that it failed. */
-export async function exchangeCode(fetchFn: typeof fetch, provider: Provider, code: string): Promise<string> {
+export async function exchangeCode(fetchFn: Fetch, provider: Provider, code: string): Promise<string> {
   const res = await fetchFn(provider.tokenUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
@@ -162,13 +163,13 @@ export interface Profile {
   email: string;
 }
 
-async function getJson(fetchFn: typeof fetch, url: string, token: string, accept: string): Promise<unknown> {
+async function getJson(fetchFn: Fetch, url: string, token: string, accept: string): Promise<unknown> {
   const res = await fetchFn(url, { headers: { Authorization: `Bearer ${token}`, Accept: accept, 'User-Agent': 'quickqr' } });
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   return res.json();
 }
 
-export async function fetchGoogleProfile(fetchFn: typeof fetch, token: string): Promise<Profile> {
+export async function fetchGoogleProfile(fetchFn: Fetch, token: string): Promise<Profile> {
   const data = (await getJson(fetchFn, 'https://www.googleapis.com/oauth2/v2/userinfo', token, 'application/json')) as {
     id?: unknown;
     email?: unknown;
@@ -185,7 +186,7 @@ const GITHUB_ACCEPT = 'application/vnd.github+json';
  * Only an address GitHub has verified is used: the primary one if it is verified, else any verified one. The profile's
  * own public email is never used, because its owner can set it to an address they have not verified.
  */
-export async function fetchGitHubProfile(fetchFn: typeof fetch, token: string): Promise<Profile> {
+export async function fetchGitHubProfile(fetchFn: Fetch, token: string): Promise<Profile> {
   const user = (await getJson(fetchFn, 'https://api.github.com/user', token, GITHUB_ACCEPT)) as { id?: unknown };
   const emails = (await getJson(fetchFn, 'https://api.github.com/user/emails', token, GITHUB_ACCEPT)) as {
     email?: unknown;

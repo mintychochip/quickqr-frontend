@@ -55,10 +55,10 @@ const settingsBody = (link: Link) => ({
 export function registerQrRoutes(router: Router, deps: AppDeps): void {
   router.handle('GET /api/qr', publicRead, () => json(200, INDEX));
 
-  router.handle('GET /api/qr/{code}/settings', readPolicy(SCOPES.linksRead), async (c) => json(200, settingsBody(await ownedLink(c, c.params.code, NOT_FOUND))));
+  router.handle('GET /api/qr/{code}/settings', readPolicy(SCOPES.linksRead), async (c) => json(200, settingsBody(await ownedLink(c, c.param('code'), NOT_FOUND))));
 
   router.handle('PATCH /api/qr/{code}/settings', writePolicy(SCOPES.linksWrite), async (c) => {
-    const code = c.params.code;
+    const code = c.param('code');
     const link = await ownedLink(c, code, NOT_FOUND);
     const body = bodyObject(await c.json());
     for (const key of Object.keys(body)) if (!SETTINGS.includes(key)) return errorJson(400, `Unknown setting: ${key}`);

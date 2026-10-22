@@ -22,8 +22,8 @@ function build(): Router {
   r.handle('GET /optional', optional, who);
   r.handle('GET /private', signedIn, who);
   r.handle('GET /session', sessionOnly, who);
-  r.handle('GET /links/{code}', signedIn, (c) => Response.json({ code: c.params.code }));
-  r.handle('GET /links/{code}/analytics', signedIn, (c) => Response.json({ analytics: c.params.code }));
+  r.handle('GET /links/{code}', signedIn, (c) => Response.json({ code: c.param('code') }));
+  r.handle('GET /links/{code}/analytics', signedIn, (c) => Response.json({ analytics: c.param('code') }));
   r.handle('GET /links/new', publicNone, () => Response.json({ literal: true }));
   r.handle('PUT /links/{code}', write, async (c) => Response.json({ body: await c.json() }));
   r.handle('/r/', publicNone, (c) => Response.json({ rest: c.url.pathname }));

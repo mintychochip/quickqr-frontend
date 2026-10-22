@@ -1,3 +1,4 @@
+import type { Fetch } from '../http';
 import { createApp } from '../app';
 import type { Env } from '../env';
 import type { Router } from '../router';
@@ -19,13 +20,13 @@ export const configured = {
 export type NetworkHandler = (req: Request) => Response | Promise<Response>;
 
 /** A stand-in for the network: only the endpoints a test names, and a loud failure for anything else. */
-export function network(handlers: Record<string, NetworkHandler>): typeof fetch {
-  return (async (input: RequestInit | URL | string | Request, init?: RequestInit) => {
-    const req = new Request(input as RequestInfo | URL, init);
+export function network(handlers: Record<string, NetworkHandler>): Fetch {
+  return async (input, init) => {
+    const req = new Request(input, init);
     const handler = handlers[`${req.method} ${req.url}`];
     if (!handler) throw new Error(`unexpected request: ${req.method} ${req.url}`);
     return handler(req);
-  }) as typeof fetch;
+  };
 }
 
 export interface Rig {

@@ -356,9 +356,9 @@ describe('scans and analytics', () => {
     for (let i = 0; i < 25; i++) await scan('abc123', { timestamp: minutes(-i), userAgent: `UA-${i}` });
     const recent = (await getAnalytics(db, 'abc123', NOW)).recent_scans;
     expect(recent).toHaveLength(20);
-    expect(recent[0].user_agent).toBe('UA-0');
-    expect(recent[19].user_agent).toBe('UA-19');
-    expect(recent[0].timestamp).toBe(NOW.toISOString());
+    expect(recent[0]?.user_agent).toBe('UA-0');
+    expect(recent[19]?.user_agent).toBe('UA-19');
+    expect(recent[0]?.timestamp).toBe(NOW.toISOString());
   });
 
   test('an empty link has zeroed analytics with empty collections, not nulls', async () => {

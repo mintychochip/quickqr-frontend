@@ -1,3 +1,4 @@
+import type { Fetch } from './http';
 import { registerAuthRoutes } from './routes/auth';
 import { registerEmbedRoutes } from './routes/embed';
 import { registerHostedRoutes } from './routes/hosted';
@@ -10,7 +11,7 @@ import { userFromToken } from './store/users';
 
 /** What the app needs from outside itself. Tests replace both; production uses the platform's fetch and clock. */
 export interface AppDeps {
-  fetch: typeof fetch;
+  fetch: Fetch;
   now: () => Date;
 }
 
