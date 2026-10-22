@@ -1,55 +1,78 @@
 # quickqr frontend
 
-Svelte 5 + TypeScript + Vite + Tailwind CSS 4.
+Svelte 5 + TypeScript + Vite + Tailwind CSS 4, and the API that goes with it: a TypeScript port of the Go server that
+runs as a Cloudflare Pages Function on a D1 database (`edge/` and `functions/`; the design and limits are in
+`docs/content/docs/self-hosting.mdx` in the parent repository).
 
 ## Scripts
 
 - `bun run dev` — dev server (port 5186)
-- `bun run build` — `svelte-check` + production build to `dist/`
+- `bun run build` — `svelte-check`, `tsc` for the app and for `edge/`, then the production build to `dist/`
 - `bun run preview` — preview production build (port 5185)
 - `bun run check` — `svelte-check --tsgo` (Svelte + project `.ts` via tsconfig `include`)
 - `bun run check:ts` — `tsc --noEmit` (TypeScript 7 native; full `.ts` program in `tsconfig.app.json`)
-- `bun run build` runs both checks before Vite
+- `bun run check:edge` — `tsc --noEmit` for the API (`tsconfig.edge.json`: Workers types, strict, `noUncheckedIndexedAccess`)
+- `bun run test:edge` — the API's tests (`bun test edge`), including the access matrix and a check that the registered
+  routes and `docs/openapi.yaml` list the same operations (skipped when this directory is cloned without `docs/`)
+- `bun run test:e2e` — Playwright, against the dev server and whichever API is on port 8080
+- `bun run deploy:staging` — build and deploy to the staging project (below)
 - `bun run ui:add -- <component>` — add shadcn-svelte UI via `components.json` (installs `.svelte`, not React)
 
 **Do not** run `bunx shadcn@latest` (React). Use `bunx shadcn-svelte@latest add <name>` or `bun run ui:add -- <name>`.
 
-The Vite dev/preview servers proxy `/api` and `/r` to the Go backend on `localhost:8080`.
+The Vite dev/preview servers proxy `/api`, `/r`, `/qr.png`, and `/qr.svg` to port 8080. Put either backend there:
+
+```sh
+cd ../backend && PORT=8080 go run ./cmd/server        # the Go server, data in memory
+# or the Cloudflare one, with a local D1 (needs .dev.vars, see below):
+bun run build
+bunx wrangler d1 migrations apply quickqr-prod --local
+bunx wrangler pages dev dist --port 8080 --local
+```
+
+`.dev.vars` is git-ignored. For local sign-in it holds `OAUTH_REDIRECT_ORIGIN=http://localhost:5186`,
+`APP_PUBLIC_URL=http://localhost:5186`, and `SCAN_HASH_KEY=<anything>`; two loopback origins turn the sign-in stand-in on.
 
 ## Cloudflare Pages
 
-There are two Pages projects. `quickqr` is production (quickqr.app) and is connected to Git
-(`mintychochip/quickqr-frontend`), so do not upload to it by hand: pushing `master` is the production deploy, and any
-other branch builds a preview. `master` was the old Astro and Supabase app; the Svelte rebuild was merged in with
-`-s ours`, so that history is kept but the tree is the rebuild's. `quickqr-staging` is a direct-upload project;
-`staging.quickqr.app` reaches it through the proxy worker in `staging-worker/`.
+There are two Pages projects, each bound to its own D1 database.
 
-Git builds run `npm run build` on Cloudflare's image, whose bun (1.2.15) cannot read a `bun.lock` written by bun 1.4
-(`lockfileVersion: 2`). `wrangler.toml` is the source of truth for the build's env vars, so its `[vars]` pins
-`BUN_VERSION`. Keep it equal to `bun --version` whenever `bun.lock` is regenerated, or the install step fails before
-anything builds.
+| | Project | Database | Configured by | Deployed by |
+| - | ------- | -------- | ------------- | ----------- |
+| Production (`quickqr.app`) | `quickqr`, Git-connected | `quickqr-prod` | `wrangler.toml` | pushing `master` |
+| Staging | `quickqr-staging`, direct upload | `quickqr-staging` | `staging/wrangler.toml` | `bun run deploy:staging` |
 
-Deploy to staging with Wrangler:
+Pushing `master` is the production deploy, and any other branch builds a preview, so do not upload to `quickqr` by hand.
+`master` was the old Astro and Supabase app; the Svelte rebuild was merged in with `-s ours`, so that history is kept but
+the tree is the rebuild's. Git builds run `npm run build` on Cloudflare's image, whose bun (1.2.15) cannot read a
+`bun.lock` written by bun 1.4 (`lockfileVersion: 2`), so `wrangler.toml` pins `BUN_VERSION` in `[vars]`. Keep it equal to
+`bun --version` whenever `bun.lock` is regenerated, or the install step fails before anything builds.
 
-```sh
-bun run build
-wrangler pages deploy dist --project-name quickqr-staging --branch main
-```
+Pages does not take `--config`, which is why staging has its own directory. `bun run deploy:staging` builds, copies
+`dist/` to `staging/out/`, compiles the same `functions/` directory to `staging/out/_worker.js/`, and deploys that from
+`staging/` so `staging/wrangler.toml`, not the production file, decides the bindings. (Compiling `functions/` through a
+symlink in `staging/` fails inside Wrangler, which is why the build happens here and the result is uploaded.)
+`--branch main` matters: staging's production branch is `main`, and any other branch name is a preview deployment.
 
-`--branch main` matters. Staging's production branch is `main`, and Cloudflare treats any other branch name (this
-checkout is on `svelte-rebuild`) as a preview deployment, which `staging.quickqr.app` does not serve. When the working
-tree is ahead of the last commit, add `--commit-dirty=true --commit-message "..."` so the dashboard says what is there.
+Secrets are set on each project, never in a file: `GOOGLE_CLIENT_SECRET` and `SCAN_HASH_KEY` (required; scans are not
+recorded without it). `bunx wrangler pages secret put NAME --project-name quickqr` (or `quickqr-staging`). Run
+`bunx wrangler d1 migrations apply quickqr-prod --remote` (from `frontend/`; `quickqr-staging` from `staging/`) after a
+change to `edge/migrations/`, before the code that needs it is deployed. Pin the account when running Wrangler, because a
+stale one cached under `node_modules/.cache/wrangler` can send it to the wrong one: `CLOUDFLARE_ACCOUNT_ID=<the account
+that owns quickqr.app>`.
 
-The Pages deployment includes `_redirects` for SPA routing and `_worker.js`, which answers `/api/*` and `/r/*` with a JSON 404 because Pages cannot reach a backend. Nothing in front of production (`quickqr.app`) does either yet, so sign-in and dynamic links do not work there; the marketing page and static QR generator do.
+`public/_routes.json` sends only `/api/*`, `/r/*`, `/R/*`, `/qr`, `/qr.png`, `/qr.svg`, and `/healthz` to the Function;
+everything else is a static file, which costs nothing. Pages serves `index.html` for any other path.
 
-## Staging API
+### Staging hostname
 
-`staging-worker/worker.js` sends `/api/`, `/r/`, `/R/`, `/qr`, `/qr.png`, `/qr.svg`, and `/healthz` on `staging.quickqr.app` to the Go backend and every other path to the Pages project, so `_worker.js` never sees the API paths there. The backend call goes through a Workers VPC binding (`BACKEND` in `staging-worker/wrangler.toml`) to a Cloudflare Tunnel connector on the machine that runs the server, so the backend has no public hostname and no open port. The backend builds client addresses and absolute share URLs from `X-Forwarded-For`, `X-Forwarded-Proto`, and `X-Forwarded-Host`, and a visitor can send any of them, so the worker drops the visitor's own `X-Forwarded-*`, `X-Real-IP`, and `Forwarded` headers and sets those three itself (`X-Forwarded-For` from `CF-Connecting-IP`). The backend must therefore trust only the connector (`TRUSTED_PROXIES=127.0.0.1`) and have `OAUTH_REDIRECT_ORIGIN` and `APP_PUBLIC_URL` set to `https://staging.quickqr.app`. A failed backend call answers `502 {"error":"The staging API is unreachable."}`. `bun test staging-worker` covers the header rebuild and the path split.
+The new backend answers at `https://quickqr-staging.pages.dev`. `staging.quickqr.app` is still the proxy Worker in
+`staging-worker/`, which sends the API paths to the Go server on odin through a Workers VPC service and everything else to
+this Pages project, so the hostname does not show the new backend yet. Pointing it at the Pages project means removing the
+Worker's custom domain and adding the hostname to the project with a proxied CNAME to `quickqr-staging.pages.dev`; the
+Wrangler login used so far can attach the domain but cannot write DNS, so that step is made in the dashboard. Once it is
+done, `staging-worker/` can be deleted.
 
-The worker also refuses `/api/qr/context` with `503` (`isBlocked` in `staging-worker/worker.js`, compared after percent-decoding). The backend's site reader fetches whatever address the caller names, from the machine the backend runs on, and its check for a public address accepts routable addresses that only answer from inside that machine's network. Do not forward that route from a host on such a network until the backend can deny those addresses.
-
-Deploy it from `staging-worker/` with the account pinned, because a stale account cached under `node_modules/.cache/wrangler` can send Wrangler to the wrong one:
-
-```sh
-CLOUDFLARE_ACCOUNT_ID=<the account that owns quickqr.app> wrangler deploy
-```
+The Worker (deployed from `staging-worker/` with `wrangler deploy`) also refuses `/api/qr/context` with `503`, because the
+Go server's site reader fetches whatever address the caller names from the machine it runs on. The Pages backend does not
+need that: Workers cannot reach private networks, every redirect hop is checked, and the reader has an 8 second timeout.

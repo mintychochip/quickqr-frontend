@@ -36,3 +36,7 @@ dist-ssr
 # Local Workers state and secrets
 .wrangler/
 .dev.vars
+
+# The staging deploy folder (see staging/wrangler.toml)
+/staging/out/
+/staging/.wrangler/

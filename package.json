@@ -9,6 +9,7 @@
     "check:ts": "tsc --noEmit -p tsconfig.app.json",
     "check:edge": "tsc --noEmit -p tsconfig.edge.json",
     "test:edge": "bun test edge",
+    "deploy:staging": "bun run build && rm -rf staging/out && cp -r dist staging/out && bunx wrangler pages functions build functions --outdir staging/out/_worker.js && cd staging && bunx wrangler pages deploy out --project-name quickqr-staging --branch main",
     "lint": "oxlint",
     "ui:add": "shadcn-svelte add",
     "preview": "vite preview --port 5185 --host 0.0.0.0 --strictPort",

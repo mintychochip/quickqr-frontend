@@ -1,14 +1,12 @@
 name = "quickqr-staging"
-# Pages does not take --config, so staging has its own directory: run the commands below from here and this file,
-# not the production one in the parent directory, decides which database the deployment is bound to.
-#
-#   cd frontend && bun run build
-#   cd staging && bunx wrangler pages deploy ../dist --project-name quickqr-staging --branch main
+# Pages does not take --config, so staging has its own directory: deploying from here, with this file and not the
+# production one in the parent directory, decides which database the deployment is bound to. `bun run deploy:staging`
+# (in frontend/) builds, compiles the same functions/ directory to out/_worker.js/, and deploys out/.
 #
 # Secrets are set on the project:
 #   bunx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name quickqr-staging
 #   bunx wrangler pages secret put SCAN_HASH_KEY --project-name quickqr-staging
-pages_build_output_dir = "../dist"
+pages_build_output_dir = "out"
 compatibility_date = "2026-10-13"
 
 [vars]
