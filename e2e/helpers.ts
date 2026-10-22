@@ -23,8 +23,8 @@ export async function decodedCode(card: Locator): Promise<string | null> {
   return jsQR(new Uint8ClampedArray(data), width, height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
 }
 
-/** Sign in via the OAuth dev stand-in provider. */
-export async function signInViaOAuth(page: Page, returnTo = '/'): Promise<void> {
+/** Sign in via the OAuth dev stand-in provider, as the fixture user unless another email is given. */
+export async function signInViaOAuth(page: Page, returnTo = '/', email = 'ada@example.com'): Promise<void> {
   const base = new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:5186');
   const target = new URL(returnTo, base);
 
@@ -33,7 +33,7 @@ export async function signInViaOAuth(page: Page, returnTo = '/'): Promise<void> 
   start.searchParams.set('return_to', target.toString());
 
   await page.goto(start.toString());
-  await page.getByRole('textbox', { name: 'Email' }).fill('ada@example.com');
+  await page.getByRole('textbox', { name: 'Email' }).fill(email);
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.waitForURL((url) => url.pathname === target.pathname, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Log out' }).waitFor({ state: 'visible', timeout: 15_000 });

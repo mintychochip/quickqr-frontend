@@ -67,6 +67,8 @@
     const initial: Record<string, ScanTrend> = {};
     for (const link of items) initial[link.code] = pendingScanTrend(link.total_scans || 0);
     rowStats = initial;
+    // Nothing to draw, so nothing to ask for. The generation is already bumped, so an answer still on its way is dropped.
+    if (items.length === 0) return;
 
     // One request for every row. A call per link would read every scan each link has ever had.
     try {

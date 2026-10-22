@@ -81,3 +81,19 @@ test("one request draws every row's trend, however many links there are", async 
   await expect(row.getByTestId('scan-sparkline')).toBeVisible();
   expect(analytics).toEqual(['/api/analytics/trends']);
 });
+
+test('a person with no dynamic links makes no analytics request at all', async ({ page }) => {
+  // With nothing to draw there is nothing to ask for. A trends call here would cost a Function request and a database
+  // query on every dashboard load of every new account.
+  const analytics: string[] = [];
+  page.on('request', (request) => {
+    const { pathname } = new URL(request.url());
+    if (pathname.startsWith('/api/') && pathname.includes('analytics')) analytics.push(pathname);
+  });
+  await signInViaOAuth(page, '/', 'no-links@example.com');
+  await page.goto('/dashboard');
+
+  await expect(page.getByText('No dynamic links found.')).toBeVisible({ timeout: 15_000 });
+  await page.waitForLoadState('networkidle');
+  expect(analytics).toEqual([]);
+});

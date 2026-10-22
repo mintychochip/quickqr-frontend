@@ -10,10 +10,11 @@ export class UnreadableImage extends Error {}
 
 /**
  * Reading a photo has to fit the free plan's 10 ms of CPU for the whole request. These caps are sized from CPU measured
- * on Cloudflare itself, which ran about seven times what the same code costs warm on a laptop: a cold isolate runs a
- * decode loop in the interpreter. A 165 KB JPEG took 22 to 40 ms; reading a 128 by 128 PNG took about 6 ms, of which the
- * inflate was one. A photo over a cap is accepted and listed, but its colors are not read (the response says
- * `used: false`). The app shrinks a photo to fit before it sends it, so the studio's photos are always under these.
+ * on Cloudflare itself, which ran about seven times what the same code costs warm on a laptop (the cause is a guess, not
+ * verified: a cold isolate runs a decode loop in the interpreter). A 165 KB JPEG took 22 to 40 ms; reading a 128 by 128
+ * PNG took about 6 ms, of which the inflate was one. A photo over a cap is accepted and listed, but its colors are not
+ * read (the response says `used: false`). The app shrinks a photo to fit before it sends it, so the studio's photos are
+ * always under these.
  */
 export const LIMITS = {
   /** Largest PNG, in bytes of decoded scanlines: a 96 by 96 RGBA picture is 36,960. */
