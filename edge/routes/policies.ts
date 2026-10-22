@@ -11,6 +11,7 @@ export const SCOPES = {
 
 export const publicNone: Policy = { auth: 'public', class: 'none' };
 export const publicRead: Policy = { auth: 'public', class: 'read' };
+export const publicEmbed: Policy = { auth: 'public', class: 'embed' };
 export const publicAuth: Policy = { auth: 'public', class: 'auth' };
 export const optionalAuth: Policy = { auth: 'optional', class: 'auth' };
 export const optionalCostly: Policy = { auth: 'optional', class: 'expensive' };
