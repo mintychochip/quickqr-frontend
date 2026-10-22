@@ -144,4 +144,28 @@ describe('fetch', () => {
     await worker.fetch(new Request('https://staging.quickqr.app/api/qr/style-parser'), env);
     expect(reached).toEqual(['http://staging.quickqr.app/api/qr/style-parser']);
   });
+
+  test('a malformed escape outside /api/ still goes to Pages, as a printed code with a stray percent sign would', async () => {
+    const seen = [];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (req) => {
+      seen.push(new URL(req.url).host + new URL(req.url).pathname);
+      return new Response('page');
+    };
+    try {
+      const env = {
+        BACKEND: {
+          fetch: async () => {
+            throw new Error('the backend is not for this path');
+          },
+        },
+      };
+      const res = await worker.fetch(new Request('https://staging.quickqr.app/3DDIN%zzF'), env);
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe('page');
+      expect(seen).toEqual(['quickqr-staging.pages.dev/3DDIN%zzF']);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
 });
