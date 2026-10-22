@@ -17,8 +17,8 @@ export interface Env {
   GITHUB_CLIENT_SECRET?: string;
   OAUTH_DEV?: string;
 
-  /** Keys the hash that stands in for a scanner's IP address. */
-  SCAN_HASH_KEY?: string;
+  /** Keys the hash that stands in for a scanner's IP address. A secret every deployment must set: without it scans are not recorded. */
+  SCAN_HASH_KEY: string;
   SCAN_RETENTION_DAYS?: string;
 
   TYPESAFE_API_KEY?: string;

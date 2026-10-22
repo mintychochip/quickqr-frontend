@@ -29,8 +29,9 @@ export function bearerToken(req: Request): string {
   return header.slice(scheme.length).trim();
 }
 
-async function readText(req: Request, cap: number | undefined): Promise<string> {
-  if (!req.body) return '';
+/** The request body, no larger than `cap` bytes when one is given. Too large is a 413. */
+export async function readBytes(req: Request, cap: number | undefined): Promise<Uint8Array> {
+  if (!req.body) return new Uint8Array(0);
   const declared = Number(req.headers.get('Content-Length'));
   if (cap !== undefined && Number.isFinite(declared) && declared > cap) throw new HttpError(413, 'Request body too large');
   const reader = req.body.getReader();
@@ -52,7 +53,11 @@ async function readText(req: Request, cap: number | undefined): Promise<string> 
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return new TextDecoder().decode(bytes);
+  return bytes;
+}
+
+async function readText(req: Request, cap: number | undefined): Promise<string> {
+  return new TextDecoder().decode(await readBytes(req, cap));
 }
 
 /** Reads a JSON body no larger than `cap` bytes. Too large is 413; empty or malformed is 400. */
