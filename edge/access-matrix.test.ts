@@ -140,7 +140,7 @@ describe('access matrix', () => {
 
         const got = await call(row, links, token);
         statuses.push(got);
-        if (!row.sameForAll) expect([row.pattern, caller, got]).toEqual([row.pattern, caller, row.want?.[index]]);
+        if (!row.sameForAll) expect(`${row.pattern} as ${caller}: ${got}`).toBe(`${row.pattern} as ${caller}: ${row.want?.[index]}`);
 
         if (caller === 'other' && row.untouched) {
           const settings = row.pattern.includes('/settings');
