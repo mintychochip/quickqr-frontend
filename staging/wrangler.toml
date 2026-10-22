@@ -1,0 +1,23 @@
+name = "quickqr-staging"
+# Pages does not take --config, so staging has its own directory: run the commands below from here and this file,
+# not the production one in the parent directory, decides which database the deployment is bound to.
+#
+#   cd frontend && bun run build
+#   cd staging && bunx wrangler pages deploy ../dist --project-name quickqr-staging --branch main
+#
+# Secrets are set on the project:
+#   bunx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name quickqr-staging
+#   bunx wrangler pages secret put SCAN_HASH_KEY --project-name quickqr-staging
+pages_build_output_dir = "../dist"
+compatibility_date = "2026-10-13"
+
+[vars]
+OAUTH_REDIRECT_ORIGIN = "https://staging.quickqr.app"
+APP_PUBLIC_URL = "https://staging.quickqr.app"
+GOOGLE_CLIENT_ID = "488834070117-krb6561gmj74nkbto5oel0b36klqvohf.apps.googleusercontent.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quickqr-staging"
+database_id = "619f58ec-9a6d-4ec9-a034-1ff192636164"
+migrations_dir = "../edge/migrations"

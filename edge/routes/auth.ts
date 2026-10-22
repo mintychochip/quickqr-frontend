@@ -145,14 +145,16 @@ export function registerAuthRoutes(router: Router, deps: AppDeps): void {
         throw err;
       }
     }
-    const state = posting ? (form.get('state') ?? '') : (c.url.searchParams.get('state') ?? '');
+    // Go read these with FormValue: the body first, then the query string.
+    const field = (name: string): string => (posting ? form.get(name) : null) ?? c.url.searchParams.get(name) ?? '';
+    const state = field('state');
 
     const st = await peekOAuthState(c.env.DB, state, deps.now());
     if (!st || st.provider !== 'dev') return oauthError(cfg.appPublicUrl, 'invalid oauth state');
 
     if (!posting) return html(200, renderDevConsent(state, st.as === 'github' ? 'github' : 'google'));
 
-    const email = (form.get('email') ?? '').trim();
+    const email = field('email').trim();
     if (!(await consumeOAuthState(c.env.DB, state, deps.now()))) return oauthError(cfg.appPublicUrl, 'invalid oauth state');
     try {
       const { token } = await loginOrRegisterOAuth(c.env.DB, 'dev', email.toLowerCase(), email, deps.now());

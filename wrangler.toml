@@ -1,10 +1,25 @@
-name = "quickqr-staging"
+name = "quickqr"
 pages_build_output_dir = "dist"
-compatibility_date = "2026-10-19"
+compatibility_date = "2026-10-13"
 
-# Git builds of the quickqr (production) Pages project read their build env vars from here.
+# Production: the Git-connected `quickqr` Pages project. Staging is wrangler.staging.toml.
+#
+# Secrets are set on the project, never here:
+#   bunx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name quickqr
+#   bunx wrangler pages secret put SCAN_HASH_KEY --project-name quickqr     (any long random string)
+
+[vars]
 # Cloudflare's image ships bun 1.2.15, which cannot parse bun.lock (lockfileVersion 2, written
 # by bun 1.4.x), so pin the version that wrote the lockfile. Keep it equal to `bun --version`
 # whenever the lockfile is regenerated.
-[vars]
 BUN_VERSION = "1.4.0"
+OAUTH_REDIRECT_ORIGIN = "https://quickqr.app"
+APP_PUBLIC_URL = "https://quickqr.app"
+# A client id is public: it appears in every sign-in URL.
+GOOGLE_CLIENT_ID = "488834070117-krb6561gmj74nkbto5oel0b36klqvohf.apps.googleusercontent.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quickqr-prod"
+database_id = "b83ff4c1-f4f1-4ccc-a1da-7ced89c5ab45"
+migrations_dir = "edge/migrations"

@@ -341,6 +341,20 @@ describe('the local stand-in when it is on', () => {
     expect((await sign('ada@example.com')).id).toBe(first.id);
   });
 
+  test('a form field may also arrive in the query string, and the body wins when both are there', async () => {
+    // Go reads the form with FormValue, which falls back to the query. The contract suite posts the state this way.
+    const r = rig(local);
+    const urlencoded = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const first = location(await go(r, '/api/auth/oauth/dev/start')).searchParams.get('state') ?? '';
+    const viaQuery = location(await go(r, `/api/auth/oauth/dev/consent?state=${first}`, { method: 'POST', headers: urlencoded, body: 'email=ada%40example.com' }));
+    expect(viaQuery.searchParams.get('auth_token')).not.toBeNull();
+
+    const second = location(await go(r, '/api/auth/oauth/dev/start')).searchParams.get('state') ?? '';
+    const bodyWins = location(await go(r, '/api/auth/oauth/dev/consent?state=bogus&email=other%40example.com', { method: 'POST', headers: urlencoded, body: `state=${second}&email=ada%40example.com` }));
+    const me = await go(r, '/api/auth/me', bearer(bodyWins.searchParams.get('auth_token') ?? ''));
+    expect(((await me.json()) as { user: { email: string } }).user.email).toBe('ada@example.com');
+  });
+
   test('a state can be submitted once, and an invalid email is refused', async () => {
     const r = rig(local);
     const state = location(await go(r, '/api/auth/oauth/dev/start')).searchParams.get('state') ?? '';
