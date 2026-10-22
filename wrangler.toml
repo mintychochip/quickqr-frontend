@@ -21,7 +21,7 @@ GOOGLE_CLIENT_ID = "488834070117-krb6561gmj74nkbto5oel0b36klqvohf.apps.googleuse
 [[d1_databases]]
 binding = "DB"
 database_name = "quickqr-prod"
-database_id = "d9ffd1e2-51b7-46e7-b844-3bc6f2c9f4b4"
+database_id = "b83ff4c1-f4f1-4ccc-a1da-7ced89c5ab45"
 migrations_dir = "edge/migrations"
 
 # Preview deployments (every branch but master) are built from this same file, and without this section they would use
@@ -36,5 +36,5 @@ APP_PUBLIC_URL = "https://staging.quickqr.app"
 [[env.preview.d1_databases]]
 binding = "DB"
 database_name = "quickqr-staging"
-database_id = "2d8ccc49-c968-4359-b742-2ebd7afd2bc7"
+database_id = "619f58ec-9a6d-4ec9-a034-1ff192636164"
 migrations_dir = "edge/migrations"
