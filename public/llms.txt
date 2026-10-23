@@ -6,7 +6,7 @@ Monorepo layout: `backend/` (Go 1.23+ redirect + REST API), `frontend/` (Vite, S
 
 ## Docs
 
-- [AGENTS.md](AGENTS.md): Vision, stack, compression reference, API routes, directory map — primary context for AI assistants
+- [AGENTS.md](AGENTS.md): Vision, stack, compression reference, API routes, directory map. Primary context for AI assistants
 - [frontend/README.md](frontend/README.md): Frontend scripts and typecheck
 - [backend/.env.example](backend/.env.example): OAuth and server environment variables
 
