@@ -174,19 +174,15 @@
     padding: 1.5rem;
   }
 
-  /* A pale lime card marks the entry paid tier; ink marks Pro. Free stays the plain card. */
+  /* Free is plain, Plus is a quiet secondary tint, and Pro is the ink card with the only lime edge. */
   :global(.plan-card.plan-plus) {
     --plan-muted: color-mix(in oklab, var(--foreground) 68%, var(--card));
-    --plan-rule: color-mix(in oklab, var(--punch) 34%, var(--border));
-    border-color: color-mix(in oklab, var(--punch) 40%, var(--border));
-    background-color: color-mix(in oklab, var(--punch) 16%, var(--card));
+    background-color: color-mix(in oklab, var(--secondary) 55%, var(--card));
   }
 
   :global(.dark .plan-card.plan-plus) {
-    --plan-muted: color-mix(in oklab, var(--foreground) 62%, var(--card));
-    --plan-rule: color-mix(in oklab, var(--punch) 26%, var(--border));
-    border-color: color-mix(in oklab, var(--punch) 32%, var(--border));
-    background-color: color-mix(in oklab, var(--punch) 10%, var(--card));
+    --plan-muted: var(--muted-foreground);
+    background-color: var(--secondary);
   }
 
   :global(.plan-card.plan-pro) {
@@ -194,7 +190,7 @@
     --plan-muted: color-mix(in oklab, var(--on-ink) 64%, var(--ink));
     --plan-accent: var(--punch);
     --plan-rule: color-mix(in oklab, var(--on-ink) 16%, transparent);
-    border-color: color-mix(in oklab, var(--on-ink) 14%, transparent);
+    border-color: var(--punch);
     background-color: var(--ink);
     color: var(--on-ink);
   }
