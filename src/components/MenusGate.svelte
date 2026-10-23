@@ -1,13 +1,24 @@
 <script lang="ts">
-  import Badge from '@/lib/components/ui/badge.svelte';
+  import UtensilsCrossed from '@lucide/svelte/icons/utensils-crossed';
   import Button from '@/lib/components/ui/button.svelte';
   import Card from '@/lib/components/ui/card.svelte';
+
+  type Props = {
+    /** Inside a dialog: no page-height centering and no card chrome; the dialog is the surface. */
+    compact?: boolean;
+    /** The id the dialog names itself by; the page gate leaves it unset. */
+    titleId?: string;
+  };
+
+  let { compact = false, titleId = undefined }: Props = $props();
 </script>
 
-<section data-testid="menus-gate" class="menus-gate">
+<section data-testid="menus-gate" class="menus-gate" class:menus-gate-compact={compact}>
   <Card class="menus-gate-card">
-    <Badge variant="outline" class="menus-gate-badge">Pro</Badge>
-    <h1 class="menus-gate-title">Menus are a Pro feature</h1>
+    <span class="menus-gate-mark" aria-hidden="true">
+      <UtensilsCrossed class="menus-gate-mark-icon" />
+    </span>
+    <h1 id={titleId} class="menus-gate-title">Menus are a Pro feature</h1>
     <p class="menus-gate-copy">
       Build a hosted menu behind a printed code and change it whenever you like. The code on the table stays the same.
     </p>
@@ -28,6 +39,11 @@
       padding-block: 1rem;
     }
 
+    .menus-gate-compact {
+      min-height: 0;
+      padding-block: 0;
+    }
+
     :global(.menus-gate-card) {
       display: flex;
       width: 100%;
@@ -39,14 +55,31 @@
       text-align: center;
     }
 
-    :global(.menus-gate-badge) {
+    :global(.menus-gate-compact .menus-gate-card) {
+      border: 0;
+      background-color: transparent;
+      padding: 0;
+      box-shadow: none;
+    }
+
+    .menus-gate-mark {
+      display: grid;
+      width: 3rem;
+      height: 3rem;
+      place-items: center;
+      border-radius: 999px;
+      background-color: color-mix(in oklab, var(--punch) 24%, var(--card));
+      color: var(--ink);
+    }
+
+    :global(.dark) .menus-gate-mark {
+      background-color: color-mix(in oklab, var(--punch) 16%, var(--card));
+      color: var(--punch);
+    }
+
+    :global(.menus-gate-mark-icon) {
+      width: 1.25rem;
       height: 1.25rem;
-      border-color: var(--border);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted-foreground);
     }
 
     .menus-gate-title {

@@ -62,6 +62,7 @@
   let navOpen = $state(false);
   let createOpen = $state(false);
   let mobileCreateOpen = $state(false);
+  let proOpen = $state(false);
   let desktop = $state(window.matchMedia('(min-width: 1024px)').matches);
   let wide = $state(window.matchMedia('(min-width: 1360px)').matches);
   let selectedDetail = $state<DetailSelection | null>(null);
@@ -277,7 +278,13 @@
       </button>
       <a
         href="/dashboard/menus/new"
-        onclick={close}
+        onclick={(event) => {
+          close();
+          if (menusLocked) {
+            event.preventDefault();
+            proOpen = true;
+          }
+        }}
         class="dsh-create-link"
       >
         <UtensilsCrossed
@@ -674,9 +681,54 @@
   {/snippet}
 </Dialog>
 
+<Dialog
+  bind:open={proOpen}
+  class="dsh-pro-dialog"
+  labelledby="menus-gate-dialog-title"
+>
+  {#snippet children({ close })}
+    <button
+      type="button"
+      class="dsh-pro-close"
+      aria-label="Close"
+      onclick={close}
+    >
+      <X class="dsh-icon-x" />
+    </button>
+    <MenusGate compact titleId="menus-gate-dialog-title" />
+  {/snippet}
+</Dialog>
+
 <MenuScanner bind:open={scannerOpen} />
 
 <style>
+  :global(.dsh-pro-dialog) {
+    max-width: min(26rem, calc(100% - 2rem));
+    padding: 1.5rem;
+  }
+
+  .dsh-pro-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    background-color: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+  }
+  .dsh-pro-close:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .dsh-pro-close:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
   .dsh-root {
     min-height: 100dvh;
     background-color: var(--background);
