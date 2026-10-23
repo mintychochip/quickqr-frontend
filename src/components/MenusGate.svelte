@@ -22,7 +22,10 @@
   @layer components {
     .menus-gate {
       display: flex;
-      justify-content: flex-start;
+      min-height: calc(100dvh - 10rem);
+      align-items: center;
+      justify-content: center;
+      padding-block: 1rem;
     }
 
     :global(.menus-gate-card) {
@@ -30,9 +33,10 @@
       width: 100%;
       max-width: 34rem;
       flex-direction: column;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 1.5rem;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 1.75rem 1.5rem;
+      text-align: center;
     }
 
     :global(.menus-gate-badge) {
@@ -51,13 +55,15 @@
       font-weight: 600;
       letter-spacing: -0.03em;
       color: var(--foreground);
+      text-wrap: balance;
     }
 
     .menus-gate-copy {
-      max-width: 30rem;
+      max-width: 28rem;
       font-size: 0.9375rem;
       line-height: 1.6;
       color: var(--muted-foreground);
+      text-wrap: pretty;
     }
 
     .menus-gate-note {
@@ -67,7 +73,7 @@
     }
 
     :global(.menus-gate-cta) {
-      margin-top: 0.25rem;
+      margin-top: 0.5rem;
     }
   }
 </style>
