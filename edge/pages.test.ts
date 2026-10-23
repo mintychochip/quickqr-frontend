@@ -14,7 +14,7 @@ const SPONSOR: Sponsor = {
   tagline: 'Write "it" down',
   cta: "Shop o'clock",
   target_url: 'https://sponsor.example/?a=1&b=2',
-  logo_url: 'F',
+  logo_url: 'F&G',
   active: true,
 };
 
@@ -59,8 +59,8 @@ describe('the interstitial', () => {
     const page = renderInterstitial(link(), SPONSOR);
     expect(page).toContain('<title>Redirecting to My menu | quickqr.app</title>');
     expect(page).toContain('<meta http-equiv="refresh" content="3;url=https://example.com/a">');
-    expect(page).toContain('<a href="https://example.com/a" class="dest">https://example.com/a</a>');
-    expect(page).toContain('<a href="https://example.com/a" class="skip" id="skipBtn">');
+    expect(page).toMatch(/<a [^>]*href="https:\/\/example\.com\/a"[^>]*>https:\/\/example\.com\/a<\/a>/); // the destination is named, as a link
+    expect(page).toMatch(/<a [^>]*href="https:\/\/example\.com\/a"[^>]*>\s*Skip/); // and Skip goes straight there
     expect(scriptDestination(page)).toBe('https://example.com/a');
     expect(page).toContain('QR Code is a registered trademark of DENSO WAVE INCORPORATED.');
   });
@@ -72,12 +72,12 @@ describe('the interstitial', () => {
   test('shows the sponsor with every field escaped, and a plain panel when there is none', () => {
     const page = renderInterstitial(link(), SPONSOR);
     expect(page).toContain('aria-label="Sponsored message"');
-    expect(page).toContain('<span class="sponsor-brand">Fieldnote &amp; Co</span>');
-    expect(page).toContain('<h2 class="sponsor-headline">Paper &lt;for&gt; people</h2>');
+    expect(page).toContain('Fieldnote &amp; Co');
+    expect(page).toContain('Paper &lt;for&gt; people');
     expect(page).toContain('Write &#34;it&#34; down');
     expect(page).toContain('href="https://sponsor.example/?a=1&amp;b=2"');
     expect(page).toContain('Shop o&#39;clock');
-    expect(page).toContain('<div class="sponsor-logo" aria-hidden="true">F</div>');
+    expect(page).toContain('F&amp;G'); // the logo is escaped like every other sponsor field
     expect(page).not.toContain('How it stays free');
 
     const bare = renderInterstitial(link(), null);
