@@ -78,6 +78,8 @@
   const shown = $derived(forced ?? ready?.type ?? null);
   const Icon = $derived(shown ? ICONS[shown.id] : WandSparkles);
   const modeLabel = $derived(forced ? forced.label : shown ? `Auto-detect, ${shown.label}` : 'Auto-detect');
+  /** The visible label is the detection status: it names the type the bar found, or the chosen type. */
+  const fieldLabel = $derived(forced ? forced.bar.label : shown ? `Auto-detected: ${shown.label}` : 'Auto-detect');
   /** Echo the encoded form when it differs from what was typed, unless it spans lines (a calendar entry, a contact card): the card under the code shows it. */
   const encoded = $derived(ready && !ready.payload.includes('\n') && ready.payload !== value.trim() ? ready.payload : '');
   const unsure = $derived(!forced && (ready?.guessed ?? false));
@@ -94,7 +96,7 @@
 </script>
 
 <div class="source-field">
-  <Label for={id}>{forced ? forced.bar.label : 'Link, phone, email, or text'}</Label>
+  <Label for={id}>{fieldLabel}</Label>
   <div class="source-bar">
     <DropdownMenu bind:open={menuOpen}>
       <DropdownMenuTrigger>

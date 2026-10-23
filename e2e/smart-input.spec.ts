@@ -197,8 +197,12 @@ test('a chosen type relabels the bar and shows its own fields', async ({ page })
   }
 
   await chooseType(gen, 'Auto-detect');
-  await expect(gen.getByLabel('Link, phone, email, or text')).toBeVisible();
+  await expect(gen.getByLabel('Auto-detected: Link')).toBeVisible();
   await expect(gen.getByTestId('type-fields')).toHaveCount(0);
+
+  // The label follows the bar: a phone number relabels it.
+  await gen.locator('#destination-url').fill('+1 555 123 4567');
+  await expect(gen.getByLabel('Auto-detected: Phone number')).toBeVisible();
 });
 
 test('choosing Link keeps the redirect flow, and refuses what is not a web address', async ({ page }) => {
