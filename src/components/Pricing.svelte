@@ -42,49 +42,51 @@
       </div>
     </div>
 
-    <Card class="plans">
+    <div class="plans-grid">
       {#each PLANS as plan (plan.id)}
-        <article data-testid="plan-{plan.id}" aria-labelledby="plan-{plan.id}-name" class="plan">
-          <h3 id="plan-{plan.id}-name" class="plan-name">{plan.name}</h3>
-          <p class="plan-tagline">{plan.tagline}</p>
+        <Card class="plan-card" data-testid="plan-{plan.id}">
+          <article aria-labelledby="plan-{plan.id}-name" class="plan">
+            <h3 id="plan-{plan.id}-name" class="plan-name">{plan.name}</h3>
+            <p class="plan-tagline">{plan.tagline}</p>
 
-          <p class="plan-price">
-            <span class="amount" data-testid="plan-{plan.id}-price">
-              {plan.price ? money(period === 'yearly' ? plan.price.yearly : plan.price.monthly) : '$0'}
-            </span>
-            <span class="per">{plan.price ? (period === 'yearly' ? 'a year' : 'a month') : 'forever'}</span>
-          </p>
-          <p class="plan-period" data-testid="plan-{plan.id}-period">
-            {#if plan.price}
-              {#if period === 'yearly'}
-                {money(monthlyEquivalent(plan.price))} a month, billed yearly ({monthsFree(plan.price)} months free)
+            <p class="plan-price">
+              <span class="amount" data-testid="plan-{plan.id}-price">
+                {plan.price ? money(period === 'yearly' ? plan.price.yearly : plan.price.monthly) : '$0'}
+              </span>
+              <span class="per">{plan.price ? (period === 'yearly' ? 'a year' : 'a month') : 'forever'}</span>
+            </p>
+            <p class="plan-period" data-testid="plan-{plan.id}-period">
+              {#if plan.price}
+                {#if period === 'yearly'}
+                  {money(monthlyEquivalent(plan.price))} a month, billed yearly ({monthsFree(plan.price)} months free)
+                {:else}
+                  or {money(plan.price.yearly)} a year ({monthsFree(plan.price)} months free)
+                {/if}
               {:else}
-                or {money(plan.price.yearly)} a year ({monthsFree(plan.price)} months free)
+                No card, no trial clock.
               {/if}
-            {:else}
-              No card, no trial clock.
-            {/if}
-          </p>
+            </p>
 
-          <div class="plan-action">
-            {#if plan.live}
-              <Button href="#generator" size="lg" class="live-cta">Make a free code</Button>
-            {:else}
-              <span class="soon">Coming soon</span>
-            {/if}
-          </div>
+            <div class="plan-action">
+              {#if plan.live}
+                <Button href="#generator" size="lg" class="live-cta">Make a free code</Button>
+              {:else}
+                <span class="soon">Coming soon</span>
+              {/if}
+            </div>
 
-          <ul class="features">
-            {#each plan.features as feature (feature)}
-              <li class="feature">
-                <Check class="check" aria-hidden="true" />
-                <span>{feature}</span>
-              </li>
-            {/each}
-          </ul>
-        </article>
+            <ul class="features">
+              {#each plan.features as feature (feature)}
+                <li class="feature">
+                  <Check class="check" aria-hidden="true" />
+                  <span>{feature}</span>
+                </li>
+              {/each}
+            </ul>
+          </article>
+        </Card>
       {/each}
-    </Card>
+    </div>
 
     <p class="pledge">{PLEDGE}</p>
   </div>
@@ -157,33 +159,36 @@
     color: var(--foreground);
   }
 
-  :global(.plans) {
+  .plans-grid {
     display: grid;
-    gap: 0;
-    padding-block: 0;
     grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  :global(.plan-card) {
+    gap: 0;
+    padding: 1.5rem;
   }
 
   .plan {
     display: flex;
     flex-direction: column;
-    padding: 1.5rem;
-  }
-
-  .plan + .plan {
-    border-top: 1px solid var(--border);
+    height: 100%;
   }
 
   .plan-name {
-    font-size: 0.875rem;
-    line-height: calc(1.25 / 0.875);
-    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--foreground);
   }
 
   .plan-tagline {
-    margin-top: 0.25rem;
+    margin-top: 0.375rem;
     font-size: 13px;
+    line-height: 1.5;
     color: var(--muted-foreground);
   }
 
@@ -195,22 +200,24 @@
   }
 
   .amount {
-    font-size: 2.25rem;
-    line-height: calc(2.5 / 2.25);
-    font-weight: 500;
-    letter-spacing: -0.04em;
+    font-size: 2.5rem;
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.045em;
     color: var(--foreground);
   }
 
   .per {
     font-size: 0.875rem;
-    line-height: calc(1.25 / 0.875);
+    line-height: 1.25;
     color: var(--muted-foreground);
   }
 
   .plan-period {
-    margin-top: 0.25rem;
+    margin-top: 0.375rem;
+    min-height: 2.5rem;
     font-size: 13px;
+    line-height: 1.5;
     color: var(--muted-foreground);
   }
 
@@ -230,6 +237,8 @@
 
   .features {
     margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
     font-size: 13px;
     line-height: 1.375;
     color: var(--foreground);
@@ -257,7 +266,7 @@
 
   /* Classes handed to a primitive: global here, so they land on the primitive's element. */
   :global(.live-cta) {
-    padding-inline: 1rem;
+    width: 100%;
   }
 
   :global(.check) {
@@ -295,18 +304,15 @@
       margin-inline: 0;
     }
 
-    :global(.plans) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .plan + .plan {
-      border-top: 0;
-      border-left: 1px solid var(--border);
-    }
-
     .pledge {
       margin-inline: 0;
       text-align: left;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .plans-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 </style>
