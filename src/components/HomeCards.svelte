@@ -290,7 +290,7 @@
     }
 
     .qq-live .qq-pill {
-      animation: qq-pop 440ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      animation: qq-pop 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
       animation-delay: var(--d, 0ms);
     }
 
@@ -408,7 +408,13 @@
       margin-inline: auto;
       display: grid;
       max-width: 1120px;
-      gap: 0.75rem;
+      gap: 1rem;
+    }
+
+    /* The illustration sits in a white frame inside the card: 8px of card, then the gray plate. */
+    :global(.qq-card) {
+      gap: 1rem;
+      padding: 0.5rem;
     }
 
     .hc-svg {
@@ -419,21 +425,21 @@
     .hc-caption {
       padding-left: 0.75rem;
       padding-right: 0.75rem;
-      padding-top: 0.75rem;
-      padding-bottom: 0.5rem;
+      padding-top: 0.25rem;
+      padding-bottom: 0.75rem;
     }
 
     .hc-h2 {
-      font-size: 1rem;
+      font-size: 1.0625rem;
       line-height: 1.5rem;
-      font-weight: 500;
-      letter-spacing: -0.03em;
+      font-weight: 600;
+      letter-spacing: -0.025em;
     }
 
     .hc-p {
-      margin-top: 0.25rem;
+      margin-top: 0.375rem;
       font-size: 0.875rem;
-      line-height: 1.625;
+      line-height: 1.6;
       color: var(--muted-foreground);
     }
   }

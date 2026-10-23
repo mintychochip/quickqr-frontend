@@ -722,6 +722,7 @@
   @media (width < 48rem) {
     :global(.dash-table-card) {
       overflow: visible;
+      border: 0;
       background-color: transparent;
       box-shadow: none;
     }

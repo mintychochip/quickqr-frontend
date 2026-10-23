@@ -33,21 +33,23 @@
       gap: var(--card-spacing);
       overflow: hidden;
       padding-block: var(--card-spacing);
+      border: 1px solid var(--border);
       border-radius: calc(var(--radius) * 1.8);
       background-color: var(--card);
       color: var(--card-foreground);
       font-size: 0.875rem;
       line-height: calc(1.25 / 0.875);
       box-shadow:
-        0 0 0 1px color-mix(in oklab, black 5%, transparent),
-        0 18px 50px -32px rgb(17 17 19 / 0.55);
+        0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent),
+        0 14px 34px -26px color-mix(in oklab, var(--foreground) 30%, transparent);
     }
 
   }
 
   :global(.dark :where(.ui-card)) {
     box-shadow:
-      0 0 0 1px color-mix(in oklab, white 10%, transparent),
-      0 18px 50px -32px rgb(0 0 0 / 0.9);
+      inset 0 1px 0 rgb(255 255 255 / 0.045),
+      0 1px 2px rgb(0 0 0 / 0.5),
+      0 18px 40px -26px rgb(0 0 0 / 0.8);
   }
 </style>
