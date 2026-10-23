@@ -44,7 +44,7 @@
 
     <div class="plans-grid">
       {#each PLANS as plan (plan.id)}
-        <Card class="plan-card" data-testid="plan-{plan.id}">
+        <Card class="plan-card plan-{plan.id}" data-testid="plan-{plan.id}">
           <article aria-labelledby="plan-{plan.id}-name" class="plan">
             <h3 id="plan-{plan.id}-name" class="plan-name">{plan.name}</h3>
             <p class="plan-tagline">{plan.tagline}</p>
@@ -166,14 +166,44 @@
   }
 
   :global(.plan-card) {
+    --plan-ink: var(--foreground);
+    --plan-muted: var(--muted-foreground);
+    --plan-accent: var(--foreground);
+    --plan-rule: var(--border);
     gap: 0;
     padding: 1.5rem;
+  }
+
+  /* A pale lime card marks the entry paid tier; ink marks Pro. Free stays the plain card. */
+  :global(.plan-card.plan-plus) {
+    --plan-muted: color-mix(in oklab, var(--foreground) 68%, var(--card));
+    --plan-rule: color-mix(in oklab, var(--punch) 34%, var(--border));
+    border-color: color-mix(in oklab, var(--punch) 40%, var(--border));
+    background-color: color-mix(in oklab, var(--punch) 16%, var(--card));
+  }
+
+  :global(.dark .plan-card.plan-plus) {
+    --plan-muted: color-mix(in oklab, var(--foreground) 62%, var(--card));
+    --plan-rule: color-mix(in oklab, var(--punch) 26%, var(--border));
+    border-color: color-mix(in oklab, var(--punch) 32%, var(--border));
+    background-color: color-mix(in oklab, var(--punch) 10%, var(--card));
+  }
+
+  :global(.plan-card.plan-pro) {
+    --plan-ink: var(--on-ink);
+    --plan-muted: color-mix(in oklab, var(--on-ink) 64%, var(--ink));
+    --plan-accent: var(--punch);
+    --plan-rule: color-mix(in oklab, var(--on-ink) 16%, transparent);
+    border-color: color-mix(in oklab, var(--on-ink) 14%, transparent);
+    background-color: var(--ink);
+    color: var(--on-ink);
   }
 
   .plan {
     display: flex;
     flex-direction: column;
     height: 100%;
+    color: var(--plan-ink);
   }
 
   .plan-name {
@@ -182,14 +212,14 @@
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--foreground);
+    color: var(--plan-ink);
   }
 
   .plan-tagline {
     margin-top: 0.375rem;
     font-size: 13px;
     line-height: 1.5;
-    color: var(--muted-foreground);
+    color: var(--plan-muted);
   }
 
   .plan-price {
@@ -204,13 +234,13 @@
     line-height: 1.1;
     font-weight: 600;
     letter-spacing: -0.045em;
-    color: var(--foreground);
+    color: var(--plan-accent);
   }
 
   .per {
     font-size: 0.875rem;
     line-height: 1.25;
-    color: var(--muted-foreground);
+    color: var(--plan-muted);
   }
 
   .plan-period {
@@ -218,7 +248,7 @@
     min-height: 2.5rem;
     font-size: 13px;
     line-height: 1.5;
-    color: var(--muted-foreground);
+    color: var(--plan-muted);
   }
 
   .plan-action {
@@ -232,16 +262,16 @@
     font-size: 0.875rem;
     line-height: calc(1.25 / 0.875);
     font-weight: 500;
-    color: var(--muted-foreground);
+    color: var(--plan-muted);
   }
 
   .features {
     margin-top: 1.5rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--plan-rule);
     font-size: 13px;
     line-height: 1.375;
-    color: var(--foreground);
+    color: var(--plan-ink);
   }
 
   .feature {
@@ -274,7 +304,7 @@
     width: 0.875rem;
     height: 0.875rem;
     margin-top: 1px;
-    color: var(--muted-foreground);
+    color: var(--plan-muted);
   }
 
   @media (min-width: 40rem) {

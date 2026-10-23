@@ -31,6 +31,8 @@
   --ring: #111113;
   --punch: #d7ff3c;
   --ink: #111113;
+  /* Text on an ink surface, in either theme. */
+  --on-ink: #f7f7f5;
   --radius: 0.9rem;
   --chart-1: #d7ff3c;
   --chart-2: #111113;
@@ -70,6 +72,7 @@
   --ring: #b9b9c1;
   --punch: #d7ff3c;
   --ink: #1b1b1f;
+  --on-ink: #f4f4f2;
   --chart-1: #d7ff3c;
   --chart-2: #3a3a42;
   --chart-3: #55555d;
