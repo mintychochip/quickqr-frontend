@@ -17,6 +17,9 @@ export interface Env {
   GITHUB_CLIENT_SECRET?: string;
   OAUTH_DEV?: string;
 
+  /** Who may use the admin routes: addresses separated by commas. A secret, never in a file. Unset means nobody. */
+  ADMIN_EMAILS?: string;
+
   /** Keys the hash that stands in for a scanner's IP address. A secret every deployment must set: without it scans are not recorded. */
   SCAN_HASH_KEY: string;
   SCAN_RETENTION_DAYS?: string;

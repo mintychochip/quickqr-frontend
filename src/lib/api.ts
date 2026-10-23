@@ -1,4 +1,5 @@
 import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, Sponsor, TrendsSummary } from '../types';
+import type { Gift, GiftClaimed, GiftCreated, NewGift } from '../types/gift';
 import { getAuthToken, setAuthToken } from './auth';
 
 const BASE_URL = '';
@@ -266,4 +267,52 @@ export async function fetchActiveSponsor(): Promise<Sponsor | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Claims a gift link for the signed-in person. Null is the server's one answer for a link that does not work (never
+ * made, expired, revoked, or used up), so there is nothing to retry; any other failure throws. The token travels in
+ * the body only, never in an address.
+ */
+export async function redeemGift(token: string): Promise<GiftClaimed | null> {
+  const res = await request('/api/gifts/redeem', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to claim the gift');
+  }
+  return parseJsonResponse<GiftClaimed>(res, 'Failed to claim the gift');
+}
+
+export async function fetchGifts(): Promise<Gift[]> {
+  const res = await request('/api/admin/gifts');
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load gifts');
+  }
+  const data = await parseJsonResponse<{ gifts?: Gift[] }>(res, 'Failed to load gifts');
+  return data.gifts || [];
+}
+
+/** The answer holds the link and its token, which the server cannot show again. */
+export async function createGift(payload: NewGift): Promise<GiftCreated> {
+  const res = await request('/api/admin/gifts', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to make the gift');
+  }
+  return parseJsonResponse<GiftCreated>(res, 'Failed to make the gift');
+}
+
+export async function revokeGift(id: string): Promise<Gift> {
+  const res = await request(`/api/admin/gifts/${encodeURIComponent(id)}/revoke`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to revoke the gift');
+  }
+  return parseJsonResponse<Gift>(res, 'Failed to revoke the gift');
 }

@@ -15,43 +15,109 @@
   };
 
   let { link, statsOpen, onToggleStats, onSaved, flush = false }: Props = $props();
-
-  const outer = $derived(flush ? 'divide-y divide-border border-t border-border' : 'grid gap-3 @[900px]:grid-cols-2');
-  const panel = $derived(flush ? '' : 'rounded-xl bg-card ring-1 ring-black/5 dark:ring-white/10');
-  const label = $derived(
-    flush
-      ? 'px-4 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70 dark:text-muted-foreground'
-      : 'px-3 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70 dark:text-muted-foreground',
-  );
-  const body = $derived(flush ? 'border-t border-border px-4 py-4' : 'border-t border-border px-3 py-3');
 </script>
 
-<div class={outer}>
-  <div data-testid="qr-dropdown" class={panel}>
-    <div class={label}>Style</div>
-    <div class={body}>
+<div class="link-drop" class:link-drop-flush={flush}>
+  <div data-testid="qr-dropdown" class="link-drop-panel">
+    <div class="link-drop-label">Style</div>
+    <div class="link-drop-body">
       <QrSettingsPanel code={link.code} {onSaved} />
     </div>
   </div>
 
-  <div data-testid="analytics-dropdown" class={panel}>
+  <div data-testid="analytics-dropdown" class="link-drop-panel">
     <button
       type="button"
       aria-expanded={statsOpen}
       onclick={onToggleStats}
-      class="flex w-full cursor-pointer items-center justify-between text-left {label}"
+      class="link-drop-toggle link-drop-label"
     >
       <span>Statistics</span>
-      <ChevronDown class="size-3.5 transition-transform {statsOpen ? 'rotate-180' : ''}" />
+      <ChevronDown class="link-drop-chevron {statsOpen ? 'link-drop-chevron-open' : ''}" />
     </button>
     {#if statsOpen}
-      <div
-        class={body}
-        in:slide={{ duration: flush ? 180 : 0 }}
-        out:slide={{ duration: flush ? 120 : 0 }}
-      >
+      <div class="link-drop-body" in:slide={{ duration: flush ? 180 : 0 }} out:slide={{ duration: flush ? 120 : 0 }}>
         <AnalyticsPanel {link} />
       </div>
     {/if}
   </div>
 </div>
+
+<style>
+  @layer components {
+    .link-drop {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .link-drop-flush {
+      display: block;
+      border-top: 1px solid var(--border);
+    }
+
+    .link-drop-flush > .link-drop-panel + .link-drop-panel {
+      border-top: 1px solid var(--border);
+    }
+
+    .link-drop:not(.link-drop-flush) > .link-drop-panel {
+      border-radius: calc(var(--radius) * 1.4);
+      background-color: var(--card);
+      box-shadow: 0 0 0 1px rgb(0 0 0 / 0.05);
+    }
+
+    .link-drop-label {
+      padding: 0.5rem 0.75rem;
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+    }
+
+    .link-drop-flush .link-drop-label {
+      padding: 0.75rem 1rem;
+    }
+
+    .link-drop-body {
+      border-top: 1px solid var(--border);
+      padding: 0.75rem;
+    }
+
+    .link-drop-flush .link-drop-body {
+      padding: 1rem;
+    }
+
+    .link-drop-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      cursor: pointer;
+      text-align: left;
+    }
+  }
+
+  @container (min-width: 900px) {
+    .link-drop:not(.link-drop-flush) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  :global(.dark) .link-drop:not(.link-drop-flush) > .link-drop-panel {
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
+  }
+
+  :global(.dark) .link-drop-label {
+    color: var(--muted-foreground);
+  }
+
+  :global(.link-drop-chevron) {
+    width: 0.875rem;
+    height: 0.875rem;
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :global(.link-drop-chevron-open) {
+    transform: rotate(180deg);
+  }
+</style>

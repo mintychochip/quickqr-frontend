@@ -7,15 +7,15 @@
   });
 </script>
 
-<div class="flex min-h-screen flex-col bg-background text-foreground">
-  <header class="mx-auto flex h-14 w-full max-w-[1120px] items-center px-6 md:px-10">
-    <a href="/" class="inline-flex items-center rounded-xl py-1" aria-label="quickqr.app home">
+<div class="page">
+  <header class="page-header">
+    <a href="/" class="home-link" aria-label="quickqr.app home">
       <Logo />
     </a>
   </header>
 
-  <main class="mx-auto flex w-full max-w-[760px] flex-1 flex-col items-center justify-center px-6 pb-20">
-    <svg viewBox="0 0 640 360" class="h-auto w-full max-w-[560px]" role="img" aria-label="A QR symbol with one finder pattern missing">
+  <main class="page-main">
+    <svg viewBox="0 0 640 360" class="missing-mark" role="img" aria-label="A QR symbol with one finder pattern missing">
       <rect x="70" y="28" width="500" height="304" rx="40" fill="#111113" />
       <g fill="#f7f7f5">
         <rect x="118" y="68" width="22" height="22" rx="5" />
@@ -58,11 +58,92 @@
       <rect x="454" y="214" width="28" height="28" rx="8" fill="#f7f7f5" transform="rotate(12 468 228)" />
     </svg>
 
-    <p class="mt-8 text-[12px] font-medium uppercase tracking-[0.16em] text-muted-foreground">404</p>
-    <h1 class="qq-section-title mt-2 text-center">This page isn’t a code.</h1>
-    <p class="qq-lede mt-3 max-w-[420px] text-center text-muted-foreground">
+    <p class="status-code">404</p>
+    <h1 class="qq-section-title page-title">This page isn’t a code.</h1>
+    <p class="qq-lede page-lede">
       Nothing on quickqr.app lives at this address. The studio is still on the home page.
     </p>
-    <Button href="/" class="mt-6 h-10 bg-punch px-4 text-ink hover:bg-punch/80">Back to the studio</Button>
+    <Button href="/" variant="punch" class="page-cta">Back to the studio</Button>
   </main>
 </div>
+
+<style>
+  .page {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    height: 3.5rem;
+    width: 100%;
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  .home-link {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 0.25rem;
+    border-radius: calc(var(--radius) * 1.4);
+  }
+
+  .page-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+    padding-bottom: 5rem;
+  }
+
+  .missing-mark {
+    height: auto;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .status-code {
+    margin-top: 2rem;
+    font-size: 12px;
+    line-height: calc(1.5 / 1);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted-foreground);
+  }
+
+  .page-title {
+    margin-top: 0.5rem;
+    text-align: center;
+  }
+
+  .page-lede {
+    margin-top: 0.75rem;
+    max-width: 420px;
+    text-align: center;
+    color: var(--muted-foreground);
+  }
+
+  /* A class handed to the Button: global here, prefixed with this component's name. */
+  :global(.page-cta) {
+    margin-top: 1.5rem;
+    height: 2.5rem;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 48rem) {
+    .page-header {
+      padding-inline: 2.5rem;
+    }
+  }
+</style>

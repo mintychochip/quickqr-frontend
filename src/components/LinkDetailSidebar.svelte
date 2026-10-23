@@ -50,18 +50,18 @@
   });
 </script>
 
-<section data-testid="link-detail-sidebar" class="min-h-full">
-  <div class="p-4">
-    <div class="flex items-start gap-2">
-      <div class="min-w-0 flex-1">
-        <p class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+<section data-testid="link-detail-sidebar" class="ld-root">
+  <div class="ld-wrap">
+    <div class="ld-top">
+      <div class="ld-title-area">
+        <p class="ld-label">
           Link details
         </p>
-        <h2 class="mt-1 truncate text-base font-semibold tracking-[-0.02em] text-foreground">
+        <h2 class="ld-title">
           {link.title || 'Untitled'}
         </h2>
         <span
-          class="mt-1 inline-block rounded-md bg-muted px-1.5 py-px font-mono text-[10px] text-muted-foreground"
+          class="ld-code font-mono"
         >
           /r/{link.code}
         </span>
@@ -69,21 +69,21 @@
       <button
         type="button"
         aria-label="Close link details"
-        class="grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+        class="ld-close-btn"
         onclick={onClose}
       >
-        <X class="size-4" />
+        <X class="ld-icon-ext" />
       </button>
     </div>
 
-    <div class="mt-4 flex items-end justify-between gap-3">
+    <div class="ld-scans-row">
       <div>
-        <p class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        <p class="ld-label">
           Scans
         </p>
-        <p class="mt-1 text-2xl font-medium tracking-[-0.04em] text-foreground">
+        <p class="ld-scans-num">
           {#if trend.loading}
-            <span class="inline-block h-6 w-12 animate-pulse rounded bg-muted"></span>
+            <span class="ld-pulse6"></span>
           {:else if trend.error}
             {(link.total_scans || 0).toLocaleString()}
           {:else}
@@ -91,16 +91,16 @@
           {/if}
         </p>
       </div>
-      <div class={trend.error ? 'text-muted-foreground' : scanRateTone(trend.rate, trend.lastHour)}>
+      <div class={trend.error ? 'ld-tone-muted' : scanRateTone(trend.rate, trend.lastHour)}>
         {#if trend.loading}
-          <span class="block h-8 w-24 animate-pulse rounded bg-muted"></span>
+          <span class="ld-pulse8"></span>
         {:else if trend.error}
-          <span class="text-[11px]">Trend unavailable</span>
+          <span class="ld-text11">Trend unavailable</span>
         {:else}
           <div data-testid="scan-sparkline" in:fade={{ duration: 160 }} title="Hourly scans over the last six hours">
             <Sparkline
               points={trend.points}
-              class="h-8 w-24"
+              class="ld-spark-h8w24"
               label="Scan trend for this link over the last six hours"
             />
           </div>
@@ -112,8 +112,8 @@
       <p
         data-testid="scan-rate"
         in:fade={{ duration: 160 }}
-        class="mt-1 text-[11px] font-medium {trend.error
-          ? 'text-muted-foreground'
+        class="ld-rate-text {trend.error
+          ? 'ld-tone-muted'
           : scanRateTone(trend.rate, trend.lastHour)}"
       >
         {trend.error ? 'Scans this hour are unavailable.' : formatScanRate(trend.rate, trend.lastHour)}
@@ -124,15 +124,15 @@
       href={`/r/${link.code}`}
       target="_blank"
       rel="noopener noreferrer"
-      class="mt-3 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+      class="ld-open-link"
     >
       Open live link
-      <ExternalLink class="size-3.5" />
+      <ExternalLink class="ld-icon-ext" />
     </a>
   </div>
 
-  <div class="border-t border-border p-4">
-    <div class="flex items-center gap-4">
+  <div class="ld-qr-wrap">
+    <div class="ld-qr-row">
       <QRCanvas
         value={qrValue}
         label={link.title}
@@ -144,19 +144,19 @@
         size={96}
         inline
       />
-      <div class="min-w-0 flex-1">
-        <p class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <div class="ld-qr-info">
+        <p class="ld-label">
           Destination
         </p>
         <a
           href={link.destination_url}
           target="_blank"
           rel="noreferrer"
-          class="mt-1 block truncate font-mono text-[11px] text-muted-foreground hover:text-foreground"
+          class="ld-dest-link font-mono"
         >
           {link.destination_url}
         </a>
-        <p class="mt-2 text-[11px] text-muted-foreground">
+        <p class="ld-total">
           {(link.total_scans || 0).toLocaleString()} total scans
         </p>
       </div>
@@ -171,3 +171,195 @@
     flush
   />
 </section>
+
+<style>
+  .ld-root {
+    min-height: 100%;
+  }
+
+  .ld-wrap {
+    padding: 1rem;
+  }
+
+  .ld-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .ld-title-area {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .ld-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted-foreground);
+  }
+
+  .ld-title {
+    margin-top: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+
+  .ld-code {
+    margin-top: 0.25rem;
+    display: inline-block;
+    border-radius: calc(var(--radius) * 0.8);
+    background-color: var(--muted);
+    padding-left: 0.375rem;
+    padding-right: 0.375rem;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    font-size: 10px;
+    color: var(--muted-foreground);
+  }
+
+  .ld-close-btn {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    place-items: center;
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .ld-close-btn:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .ld-close-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  .ld-scans-row {
+    margin-top: 1rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .ld-scans-num {
+    margin-top: 0.25rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--foreground);
+  }
+
+  .ld-pulse6,
+  .ld-pulse8 {
+    animation: ld-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 0.25rem;
+    background-color: var(--muted);
+  }
+  .ld-pulse6 {
+    display: inline-block;
+    height: 1.5rem;
+    width: 3rem;
+  }
+  .ld-pulse8 {
+    display: block;
+    height: 2rem;
+    width: 6rem;
+  }
+
+  @keyframes ld-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .ld-tone-muted {
+    color: var(--muted-foreground);
+  }
+
+  .ld-rate-text {
+    margin-top: 0.25rem;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .ld-open-link {
+    margin-top: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: calc(var(--radius) * 0.6);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    color: var(--foreground);
+    outline-style: none;
+  }
+  .ld-open-link:hover {
+    text-decoration: underline;
+  }
+  .ld-open-link:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  .ld-qr-wrap {
+    border-top: 1px solid var(--border);
+    padding: 1rem;
+  }
+
+  .ld-qr-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .ld-qr-info {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .ld-dest-link {
+    margin-top: 0.25rem;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+  .ld-dest-link:hover {
+    color: var(--foreground);
+  }
+
+  .ld-total {
+    margin-top: 0.5rem;
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+
+  :global(.ld-icon-ext) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  :global(.ld-spark-h8w24) {
+    height: 2rem;
+    width: 6rem;
+  }
+
+  .ld-text11 {
+    font-size: 11px;
+  }
+</style>

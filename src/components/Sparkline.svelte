@@ -42,7 +42,7 @@
 
 <svg
   viewBox={`0 0 ${width} ${height}`}
-  class={cn('h-4 w-14 overflow-visible', className)}
+  class={cn('sparkline', className)}
   role="img"
   aria-label={label}
 >
@@ -58,3 +58,14 @@
   />
   <circle cx={geometry.last.x} cy={geometry.last.y} r="1.8" fill="currentColor" />
 </svg>
+
+<style>
+  /* In `@layer components` so a caller's `h-6 w-20` utility wins over this default. */
+  @layer components {
+    .sparkline {
+      height: 1rem;
+      width: 3.5rem;
+      overflow: visible;
+    }
+  }
+</style>

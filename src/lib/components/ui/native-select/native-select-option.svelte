@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from "@/lib/utils.js";
+	import { type WithElementRef } from "@/lib/utils.js";
 	import type { HTMLOptionAttributes } from "svelte/elements";
 
 	let {
@@ -13,8 +13,17 @@
 <option
 	bind:this={ref}
 	data-slot="native-select-option"
-	class={cn("bg-[Canvas] text-[CanvasText]", className)}
+	class={["ui-native-select-option", className].filter(Boolean).join(" ")}
 	{...restProps}
 >
 	{@render children?.()}
 </option>
+
+<style>
+  @layer components {
+    :global(:where(.ui-native-select-option)) {
+      background-color: Canvas;
+      color: CanvasText;
+    }
+  }
+</style>

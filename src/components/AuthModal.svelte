@@ -26,11 +26,26 @@
   bind:open
   {onOpenChange}
   labelledby="auth-dialog-title"
-  class="max-w-[min(440px,calc(100%-2rem))] gap-0 overflow-hidden p-0 sm:max-w-[min(440px,calc(100%-2rem))]"
+  class="auth-modal-dialog"
 >
   {#snippet children({ close })}
-    <div use:trapFocus tabindex="-1" class="outline-none">
+    <div use:trapFocus tabindex="-1" class="auth-modal-trap">
       <AuthSignInPanel {headline} {externalError} {onBeforeOAuth} onCancel={close} />
     </div>
   {/snippet}
 </Dialog>
+
+<style>
+  @layer components {
+    :global(.auth-modal-dialog) {
+      max-width: min(440px, calc(100% - 2rem));
+      gap: 0;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .auth-modal-trap {
+      outline-style: none;
+    }
+  }
+</style>

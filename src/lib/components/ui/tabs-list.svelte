@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { cn } from '@/lib/utils';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
 
@@ -13,10 +12,7 @@
 
 <div
   data-slot="tabs-list"
-  class={cn(
-    'inline-flex w-fit items-center justify-center rounded-xl bg-muted p-[3px] text-muted-foreground',
-    className,
-  )}
+  class={['ui-tabs-list', className].filter(Boolean).join(' ')}
   {...restProps}
   role="tablist"
 >
@@ -24,3 +20,18 @@
     {@render children()}
   {/if}
 </div>
+
+<style>
+  @layer components {
+    :global(:where(.ui-tabs-list)) {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+      border-radius: calc(var(--radius) * 1.4);
+      background-color: var(--muted);
+      color: var(--muted-foreground);
+    }
+  }
+</style>

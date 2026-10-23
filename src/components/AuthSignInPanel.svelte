@@ -51,44 +51,44 @@
   const showSocial = $derived(realOAuth || oauthProviders.dev);
 </script>
 
-<div class="relative px-6 py-6 sm:px-7 sm:py-7">
+<div class="auth-signin-root">
   {#if onCancel}
     <button
       type="button"
-      class="absolute top-4 right-4 grid size-8 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+      class="auth-signin-close"
       aria-label="Close"
       onclick={onCancel}
     >
-      <X class="size-4" />
+      <X class="auth-signin-close-icon" />
     </button>
   {/if}
 
-  <div class="mb-6 pr-8">
-    <Logo wordmark={false} markClass="size-9" class="mb-4" />
-    <h2 id="auth-dialog-title" class="text-[28px] font-semibold leading-none tracking-[-0.045em] text-balance">
+  <div class="auth-signin-header">
+    <Logo wordmark={false} markClass="auth-signin-mark" class="auth-signin-logo" />
+    <h2 id="auth-dialog-title" class="auth-signin-title">
       {headline}
     </h2>
-    <p class="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
+    <p class="auth-signin-lede">
       Free QR codes forever. An account lets you change the destination after you print.
     </p>
   </div>
 
   {#if externalError}
-    <Alert variant="destructive" class="mb-4">
+    <Alert variant="destructive" class="auth-signin-alert">
       <AlertDescription>{externalError}</AlertDescription>
     </Alert>
   {/if}
 
   {#if showSocial}
-    <div class="flex flex-col gap-2">
+    <div class="auth-signin-socials">
       {#if oauthProviders.google || oauthProviders.dev}
         <Button
           type="button"
           variant="outline"
-          class="h-11 w-full justify-center gap-2 rounded-xl bg-card font-medium"
+          class="auth-signin-oauth-btn"
           onclick={() => beginOAuth('google')}
         >
-          <svg class="size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="auth-signin-google-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -113,10 +113,10 @@
         <Button
           type="button"
           variant="outline"
-          class="h-11 w-full justify-center gap-2 rounded-xl bg-card font-medium"
+          class="auth-signin-oauth-btn"
           onclick={() => beginOAuth('github')}
         >
-          <svg class="size-4 shrink-0 text-foreground" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg class="auth-signin-github-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path
               d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.395-.135-.345-.72-1.395-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.855 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
             />
@@ -125,7 +125,7 @@
         </Button>
       {/if}
       {#if oauthProviders.dev && !realOAuth}
-        <p class="px-1 text-center text-[12px] leading-relaxed text-muted-foreground">
+        <p class="auth-signin-dev-note">
           Local sign-in until Google and GitHub keys are added.
         </p>
       {/if}
@@ -133,6 +133,126 @@
   {/if}
 
   {#if providersLoaded && !showSocial}
-    <p class="text-sm leading-relaxed text-muted-foreground">Sign-in isn't available on this server.</p>
+    <p class="auth-signin-unavailable">Sign-in isn't available on this server.</p>
   {/if}
 </div>
+
+<style>
+  @layer components {
+    .auth-signin-root {
+      position: relative;
+      padding: 1.5rem;
+    }
+
+    .auth-signin-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: grid;
+      width: 2rem;
+      height: 2rem;
+      cursor: pointer;
+      place-items: center;
+      border-radius: 9999px;
+      color: var(--muted-foreground);
+    }
+
+    :global(.auth-signin-close-icon) {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .auth-signin-header {
+      margin-bottom: 1.5rem;
+      padding-right: 2rem;
+    }
+
+    .auth-signin-title {
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+
+    .auth-signin-lede {
+      margin-top: 0.5rem;
+      max-width: 36ch;
+      font-size: 0.875rem;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    .auth-signin-socials {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .auth-signin-dev-note {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    .auth-signin-unavailable {
+      font-size: 0.875rem;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    :global(.auth-signin-logo) {
+      margin-bottom: 1rem;
+    }
+
+
+    :global(.auth-signin-alert) {
+      margin-bottom: 1rem;
+    }
+
+
+    :global(.auth-signin-google-icon) {
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+    }
+
+    :global(.auth-signin-github-icon) {
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+      color: var(--foreground);
+    }
+  }
+
+  /* Unlayered: the logo mark and the button variant are themselves layered, so a layered override never wins. */
+  :global(.auth-signin-mark) {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  :global(.auth-signin-oauth-btn) {
+    height: 2.75rem;
+    width: 100%;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: calc(var(--radius) * 1.4);
+    background-color: var(--card);
+    font-weight: 500;
+  }
+
+
+  .auth-signin-close:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  @media (min-width: 40rem) {
+    .auth-signin-root {
+      padding: 1.75rem;
+    }
+  }
+</style>

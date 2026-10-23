@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { signInViaOAuth } from './helpers';
 
 async function openCafeAnalytics(page: Page) {
@@ -7,8 +7,21 @@ async function openCafeAnalytics(page: Page) {
   const dropdown = page.getByTestId('analytics-dropdown');
   await expect(dropdown).toBeVisible();
   await expect(dropdown.getByTestId('device-mix-chart')).toBeVisible();
-  await expect(dropdown.getByTestId('scan-volume-chart')).toHaveCount(0);
   return { row, dropdown };
+}
+
+/** Each hour under the scan chart is read on its own, so the six labels must not run together. */
+async function expectHourLabelsApart(chart: Locator) {
+  const labels = chart.getByTestId('scan-volume-hour');
+  await expect(labels).toHaveCount(6);
+  const edges = await labels.evaluateAll((els) =>
+    els.map((el) => {
+      const { left, right } = el.getBoundingClientRect();
+      return { left, right };
+    }),
+  );
+  const gaps = edges.slice(1).map((edge, i) => edge.left - (edges[i]?.right ?? 0));
+  expect(Math.min(...gaps)).toBeGreaterThanOrEqual(4);
 }
 
 test('dashboard analytics drops open under the whole row', async ({ page }) => {
@@ -19,13 +32,9 @@ test('dashboard analytics drops open under the whole row', async ({ page }) => {
   const { row, dropdown } = await openCafeAnalytics(page);
   await expect(dropdown.getByText('Device mix')).toBeVisible();
   await expect(dropdown.getByText('Referrers')).toBeVisible();
-  await expect(dropdown.getByText('Scan volume')).toHaveCount(0);
-  await dropdown.getByRole('button', { name: 'Scans' }).click();
-  await expect(dropdown.getByTestId('scan-volume-chart')).toBeVisible();
+  await expect(dropdown.getByText('Scan volume')).toBeVisible();
   await expect(dropdown.getByText('Recent scans')).toBeVisible();
-  await dropdown.getByRole('button', { name: 'Scans' }).click();
-  await expect(dropdown.getByTestId('scan-volume-chart')).toHaveCount(0);
-  await expect(dropdown.getByTestId('device-mix-chart')).toBeVisible();
+  await expectHourLabelsApart(dropdown.getByTestId('scan-volume-chart'));
   await expect(page.locator('.fixed.inset-0')).toHaveCount(0);
 
   const rowDropdown = page.getByTestId('row-dropdown');
@@ -72,8 +81,8 @@ test('dashboard analytics row stays on a phone screen', async ({ page }) => {
   const rowDropdown = page.getByTestId('row-dropdown');
   const box = await rowDropdown.boundingBox();
   const mix = await dropdown.getByTestId('device-mix-chart').boundingBox();
-  await dropdown.getByRole('button', { name: 'Scans' }).click();
   const chart = await dropdown.getByTestId('scan-volume-chart').boundingBox();
+  await expectHourLabelsApart(dropdown.getByTestId('scan-volume-chart'));
   const viewport = page.viewportSize();
   expect(box).not.toBeNull();
   expect(mix).not.toBeNull();

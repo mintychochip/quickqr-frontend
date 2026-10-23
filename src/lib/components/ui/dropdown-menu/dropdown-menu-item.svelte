@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn } from "@/lib/utils.js";
 
 	let {
 		ref = $bindable(null),
@@ -19,9 +18,71 @@
 	data-slot="dropdown-menu-item"
 	data-inset={inset}
 	data-variant={variant}
-	class={cn(
-		"focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive not-data-[variant=destructive]:focus:**:text-accent-foreground gap-1.5 rounded-md px-1.5 py-1 text-sm data-inset:pl-7 [&_svg:not([class*='size-'])]:size-4 group/dropdown-menu-item relative flex cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-		className
-	)}
+	class={["ui-dropdown-menu-item", className].filter(Boolean).join(" ")}
 	{...restProps}
 />
+
+<style>
+  @layer components {
+    :global(:where(.ui-dropdown-menu-item)) {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.375rem;
+      border-radius: calc(var(--radius) * 0.8);
+      font-size: 0.875rem;
+      line-height: calc(1.25 / 0.875);
+      cursor: default;
+      user-select: none;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+    }
+
+    :global(:where(.ui-dropdown-menu-item)[data-inset]:not([data-inset='false'])) {
+      padding-left: 1.75rem;
+    }
+
+    :global(.ui-dropdown-menu-item svg) {
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+
+    :global(.ui-dropdown-menu-item svg:not([class*='size-'])) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  :global(:where(.ui-dropdown-menu-item):focus) {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  :global(:where(.ui-dropdown-menu-item):not([data-variant='destructive']):focus *) {
+    color: var(--accent-foreground);
+  }
+
+  /* bits-ui sets `data-disabled`, never the `:disabled` pseudo-class. */
+  :global(:where(.ui-dropdown-menu-item)[data-disabled]) {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  :global(:where(.ui-dropdown-menu-item)[data-variant='destructive']) {
+    color: var(--destructive);
+  }
+
+  :global(.ui-dropdown-menu-item[data-variant='destructive'] svg) {
+    color: var(--destructive);
+  }
+
+  :global(:where(.ui-dropdown-menu-item)[data-variant='destructive']:focus) {
+    background-color: color-mix(in oklab, var(--destructive) 10%, transparent);
+    color: var(--destructive);
+  }
+
+  :global(.dark :where(.ui-dropdown-menu-item)[data-variant='destructive']:focus) {
+    background-color: color-mix(in oklab, var(--destructive) 20%, transparent);
+  }
+</style>

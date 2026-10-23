@@ -4,31 +4,33 @@
     type QrStylePresetId,
     type QrStyleResult,
   } from '@/lib/qrStylePresets';
+  import { cn } from '@/lib/utils';
 
   type Props = {
     activePresetId?: QrStylePresetId | null;
     onApply: (result: QrStyleResult, meta: { presetId: QrStylePresetId; label: string }) => void;
+    class?: string;
   };
 
-  let { activePresetId = null, onApply }: Props = $props();
+  let { activePresetId = null, onApply, class: className = '' }: Props = $props();
 </script>
 
 <div
-  class="flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  class={cn('qr-presets', className)}
   aria-label="QR styles"
 >
   {#each QR_STYLE_PRESETS as preset (preset.id)}
     <button
       type="button"
       data-testid={`style-preset-${preset.id}`}
-      class="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full px-3 text-sm transition-colors {activePresetId ===
-      preset.id
-        ? 'bg-punch font-medium text-ink'
-        : 'bg-white text-ink hover:bg-white/85 dark:bg-white/10 dark:text-white dark:hover:bg-white/15'}"
+      class={cn(
+        'qr-presets-btn',
+        activePresetId === preset.id ? 'qr-presets-btn--active' : 'qr-presets-btn--idle'
+      )}
       onclick={() => onApply({ ...preset.style }, { presetId: preset.id, label: preset.label })}
     >
       <span
-        class="size-3.5 shrink-0 rounded-full border border-black/15 dark:border-white/25"
+        class="qr-presets-swatch"
         style:background-color={preset.style.fgColor}
         aria-hidden="true"
       ></span>
@@ -36,3 +38,73 @@
     </button>
   {/each}
 </div>
+
+<style>
+  @layer components {
+    .qr-presets {
+      display: flex;
+      gap: 0.375rem;
+      overflow-x: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .qr-presets-btn {
+      display: inline-flex;
+      height: 2.25rem;
+      flex-shrink: 0;
+      cursor: pointer;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: 9999px;
+      padding-inline: 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.25;
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .qr-presets-btn--active {
+      background-color: var(--punch);
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .qr-presets-btn--idle {
+      background-color: #fff;
+      color: var(--ink);
+    }
+
+    .qr-presets-swatch {
+      width: 0.875rem;
+      height: 0.875rem;
+      flex-shrink: 0;
+      border-radius: 9999px;
+      border: 1px solid rgb(0 0 0 / 0.15);
+    }
+  }
+
+  .qr-presets-btn--idle:hover {
+    background-color: color-mix(in oklab, #fff 85%, transparent);
+  }
+
+  :global(.dark) .qr-presets-btn--idle {
+    background-color: color-mix(in oklab, #fff 10%, transparent);
+    color: #fff;
+  }
+
+  :global(.dark) .qr-presets-btn--idle:hover {
+    background-color: color-mix(in oklab, #fff 15%, transparent);
+  }
+
+  .qr-presets-swatch {
+    border-color: rgb(0 0 0 / 0.15);
+  }
+
+  :global(.dark) .qr-presets-swatch {
+    border-color: rgb(255 255 255 / 0.25);
+  }
+
+  .qr-presets::-webkit-scrollbar {
+    display: none;
+  }
+</style>

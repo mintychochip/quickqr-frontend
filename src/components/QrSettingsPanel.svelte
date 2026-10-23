@@ -4,6 +4,7 @@
   import { fileToBase64, readImageForAgent } from '@/lib/agentImage';
   import Button from '@/lib/components/ui/button.svelte';
   import Input from '@/lib/components/ui/input.svelte';
+  import { cn } from '@/lib/utils';
   import { fetchQrSettings, fetchSiteContext, patchQrSettings, type QrSettingsDocument } from '../lib/api';
   import {
     parseQrStylePrompt,
@@ -20,7 +21,11 @@
   type Props = {
     code: string;
     onSaved: (link: Pick<Link, 'code' | 'title' | 'destination_url' | 'ad_style' | 'style'>) => void;
+    class?: string;
   };
+
+  let { code, onSaved, class: className = '' }: Props = $props();
+
 
   type ContextMaterial = {
     id: string;
@@ -31,8 +36,6 @@
     preview?: string;
     text?: string;
   };
-
-  let { code, onSaved }: Props = $props();
 
   const maxMaterials = 4;
   const maxImageBytes = 1_200_000;
@@ -227,34 +230,34 @@
   }
 </script>
 
-<div data-testid="qr-settings" class="space-y-3">
-  <p class="font-mono text-[11px] text-muted-foreground">PATCH /api/qr/{code}/settings</p>
+<div data-testid="qr-settings" class={cn('qr-settings', className)}>
+  <p class="font-mono qr-settings-patch">PATCH /api/qr/{code}/settings</p>
 
   {#if loading}
-    <p class="text-sm text-muted-foreground">Loading settings…</p>
+    <p class="qr-settings-loading">Loading settings…</p>
   {:else}
     {#if materials.length > 0}
-      <ul data-testid="settings-context-list" class="flex gap-1.5 overflow-x-auto">
+      <ul data-testid="settings-context-list" class="qr-settings-materials">
         {#each materials as item (item.id)}
-          <li class="flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted py-0.5 pr-1 pl-1 text-[11px] text-foreground">
+          <li class="qr-settings-material">
             {#if item.preview}
-              <img src={item.preview} alt="" class="size-5 rounded-full object-cover" />
+              <img src={item.preview} alt="" class="qr-settings-material-preview" />
             {/if}
-            <span class="max-w-[8rem] truncate">{item.name}</span>
+            <span class="qr-settings-material-name">{item.name}</span>
             <button
               type="button"
-              class="cursor-pointer rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+              class="qr-settings-remove-btn"
               aria-label={`Remove ${item.name}`}
               onclick={() => (materials = materials.filter((entry) => entry.id !== item.id))}
             >
-              <X class="size-3" />
+              <X class="qr-settings-x-icon" />
             </button>
           </li>
         {/each}
       </ul>
     {/if}
     <form
-      class="flex gap-2"
+      class="qr-settings-form"
       onsubmit={(event) => {
         event.preventDefault();
         void applyQuery();
@@ -263,7 +266,7 @@
       <input
         bind:this={fileInput}
         type="file"
-        class="sr-only"
+        class="qr-settings-file"
         accept="image/png,image/jpeg,image/gif,.txt,.md,text/plain"
         multiple
         data-testid="settings-context-file"
@@ -273,12 +276,12 @@
         type="button"
         variant="outline"
         size="icon"
-        class="shrink-0"
+        class="qr-settings-attach-btn"
         aria-label="Attach photo or campaign doc"
         disabled={saving}
         onclick={() => fileInput?.click()}
       >
-        <Paperclip class="size-4" />
+        <Paperclip class="qr-settings-paperclip-icon" />
       </Button>
       <Input
         bind:value={query}
@@ -292,13 +295,13 @@
       </Button>
     </form>
 
-    <div class="flex flex-wrap gap-1.5">
+    <div class="qr-settings-chips">
       {#each STYLE_PROMPT_CHIPS as chip (chip)}
         <button
           type="button"
           disabled={saving}
           onclick={() => void applyQuery(chip)}
-          class="cursor-pointer rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50"
+          class="qr-settings-chip"
         >
           {chip}
         </button>
@@ -306,14 +309,151 @@
     </div>
 
     {#if saved}
-      <p class="text-sm text-muted-foreground">
+      <p class="qr-settings-saved">
         Saved on this code.{#if appliedSummary}
-          <span class="font-medium text-foreground">{appliedSummary}</span>
+          <span class="qr-settings-applied">{appliedSummary}</span>
         {/if}
       </p>
     {/if}
     {#if error}
-      <p class="text-sm text-destructive">{error}</p>
+      <p class="qr-settings-error">{error}</p>
     {/if}
   {/if}
 </div>
+
+<style>
+  @layer components {
+    .qr-settings {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .qr-settings-patch {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+
+    .qr-settings-loading,
+    .qr-settings-saved,
+    .qr-settings-error {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: var(--muted-foreground);
+    }
+
+    .qr-settings-error {
+      color: var(--destructive);
+    }
+
+    .qr-settings-materials {
+      display: flex;
+      gap: 0.375rem;
+      overflow-x: auto;
+    }
+
+    .qr-settings-material {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 0.25rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background-color: var(--muted);
+      padding-block: 0.125rem;
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+      font-size: 11px;
+      color: var(--foreground);
+    }
+
+    .qr-settings-material-preview {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 9999px;
+      object-fit: cover;
+    }
+
+    .qr-settings-material-name {
+      max-width: 8rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .qr-settings-remove-btn {
+      cursor: pointer;
+      border-radius: 9999px;
+      padding: 0.125rem;
+      color: var(--muted-foreground);
+    }
+
+    .qr-settings-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .qr-settings-file {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    :global(.qr-settings-attach-btn) {
+      flex-shrink: 0;
+    }
+
+    .qr-settings-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .qr-settings-chip {
+      cursor: pointer;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background-color: var(--background);
+      padding-inline: 0.625rem;
+      padding-block: 0.25rem;
+      font-size: 11px;
+      color: var(--muted-foreground);
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .qr-settings-applied {
+      font-weight: 500;
+      color: var(--foreground);
+    }
+  }
+
+  .qr-settings-remove-btn:hover {
+    color: var(--foreground);
+  }
+
+  .qr-settings-chip:hover {
+    border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+    color: var(--foreground);
+  }
+
+  .qr-settings-chip:disabled {
+    opacity: 0.5;
+  }
+
+  :global(.qr-settings-x-icon) {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  :global(.qr-settings-paperclip-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+</style>
+

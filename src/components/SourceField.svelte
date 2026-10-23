@@ -93,9 +93,9 @@
   }
 </script>
 
-<div class="space-y-2">
+<div class="source-field">
   <Label for={id}>{forced ? forced.bar.label : 'Link, phone, email, or text'}</Label>
-  <div class="relative">
+  <div class="source-bar">
     <DropdownMenu bind:open={menuOpen}>
       <DropdownMenuTrigger>
         {#snippet child({ props })}
@@ -105,14 +105,14 @@
             data-testid="type-menu"
             aria-label="Code type: {modeLabel}"
             title="Choose the kind of code"
-            class="absolute inset-y-0 left-0 z-10 flex w-14 cursor-pointer items-center justify-center gap-0.5 rounded-l-lg border-r border-input text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            class="source-type-button"
           >
-            <Icon class="size-4" />
-            <ChevronDown class="size-3" />
+            <Icon class="source-type-icon" />
+            <ChevronDown class="source-chevron" />
           </button>
         {/snippet}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" class="w-64" data-testid="type-menu-content">
+      <DropdownMenuContent align="start" class="source-type-menu" data-testid="type-menu-content">
         <DropdownMenuRadioGroup aria-label="Detection" value={forcedType ?? 'auto'} onValueChange={choose}>
           <DropdownMenuRadioItem value="auto" closeOnSelect>
             <WandSparkles />
@@ -147,43 +147,34 @@
       spellcheck={false}
       aria-describedby="{id}-hint"
       aria-invalid={refused || undefined}
-      class="h-11 pl-16 text-base aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-base"
+      class="source-input"
     />
   </div>
-  <p
-    id="{id}-hint"
-    data-testid="detected-kind"
-    class="flex min-h-5 min-w-0 items-center gap-x-2 text-xs text-muted-foreground"
-  >
+  <p id="{id}-hint" data-testid="detected-kind" class="source-hint">
     {#if resolved.status === 'too-long'}
-      <span class="text-destructive">
+      <span class="source-error">
         Too long for a QR code. Keep it under {resolved.limit.toLocaleString()} bytes.
       </span>
     {:else if resolved.status === 'invalid'}
-      <span class="shrink-0 font-medium text-foreground">{resolved.type.label}</span>
-      <span class="min-w-0 text-destructive">{resolved.problem}</span>
+      <span class="source-kind">{resolved.type.label}</span>
+      <span class="source-problem">{resolved.problem}</span>
     {:else if ready}
-      <span class="shrink-0 font-medium text-foreground">{ready.type.label}</span>
+      <span class="source-kind">{ready.type.label}</span>
       {#if encoded}
-        <span class="min-w-0 truncate font-mono">{encoded}</span>
+        <span class="source-encoded font-mono">{encoded}</span>
       {/if}
     {/if}
     {#if forced}
       <button
         type="button"
         data-testid="auto-detect"
-        class="ml-auto shrink-0 cursor-pointer rounded-sm underline underline-offset-2 transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+        class="source-reset"
         onclick={() => (forcedType = null)}
       >
         Auto-detect
       </button>
     {:else if unsure}
-      <button
-        type="button"
-        data-testid="not-right"
-        class="ml-auto shrink-0 cursor-pointer rounded-sm underline underline-offset-2 transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
-        onclick={() => (menuOpen = true)}
-      >
+      <button type="button" data-testid="not-right" class="source-reset" onclick={() => (menuOpen = true)}>
         Not right?
       </button>
     {/if}
@@ -192,3 +183,133 @@
     <TypeFields {id} type={forced} values={fieldValues[forced.id] ?? {}} onChange={setField} />
   {/if}
 </div>
+
+<style>
+  @layer components {
+    .source-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .source-bar {
+      position: relative;
+    }
+
+    .source-type-button {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.125rem;
+      width: 3.5rem;
+      cursor: pointer;
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+      border-right: 1px solid var(--input);
+      color: var(--muted-foreground);
+      outline-style: none;
+      transition:
+        color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .source-hint {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      min-height: 1.25rem;
+      column-gap: 0.5rem;
+      font-size: 0.75rem;
+      line-height: 1rem;
+      color: var(--muted-foreground);
+    }
+
+    .source-error {
+      color: var(--destructive);
+    }
+
+    .source-kind {
+      flex-shrink: 0;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .source-problem {
+      min-width: 0;
+      color: var(--destructive);
+    }
+
+    .source-encoded {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .source-reset {
+      margin-left: auto;
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: calc(var(--radius) * 0.6);
+      text-decoration-line: underline;
+      text-underline-offset: 2px;
+      outline-style: none;
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  .source-type-button:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  .source-type-button:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+
+  .source-reset:hover {
+    color: var(--foreground);
+  }
+
+  .source-reset:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  /* Handed to a child (the icons, the menu, the input), so global and prefixed. */
+  :global(.source-type-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  :global(.source-chevron) {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  :global(.source-type-menu) {
+    width: 16rem;
+  }
+
+  /* Unlayered so it beats the input primitive's own height, padding, and the md font-size shrink. */
+  :global(.source-input) {
+    height: 2.75rem;
+    padding-left: 4rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  :global(.source-input[aria-invalid='true']) {
+    border-color: var(--destructive);
+  }
+
+  :global(.source-input[aria-invalid='true']:focus-visible) {
+    border-color: var(--destructive);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent);
+  }
+</style>

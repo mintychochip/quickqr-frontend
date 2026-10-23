@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn, type WithoutChildrenOrChild } from "@/lib/utils.js";
+	import { type WithoutChildrenOrChild } from "@/lib/utils.js";
 	import DropdownMenuPortal from "./dropdown-menu-portal.svelte";
 	import type { ComponentProps } from "svelte";
 
@@ -22,10 +22,72 @@
 		data-slot="dropdown-menu-content"
 		{sideOffset}
 		{align}
-		class={cn(
-			"data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 ring-foreground/10 bg-popover text-popover-foreground min-w-32 rounded-lg p-1 shadow-md ring-1 duration-100 z-50 max-h-(--bits-dropdown-menu-content-available-height) w-(--bits-dropdown-menu-anchor-width) origin-(--bits-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto data-closed:overflow-hidden",
-			className
-		)}
+		class={["ui-dropdown-menu-content", className].filter(Boolean).join(" ")}
 		{...restProps}
 	/>
 </DropdownMenuPortal>
+
+<style>
+  @layer components {
+    :global(:where(.ui-dropdown-menu-content)) {
+      z-index: 50;
+      min-width: 8rem;
+      width: var(--bits-dropdown-menu-anchor-width, auto);
+      max-height: var(--bits-dropdown-menu-content-available-height, none);
+      padding: 0.25rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      border-radius: var(--radius);
+      background-color: var(--popover);
+      color: var(--popover-foreground);
+      transform-origin: var(--bits-dropdown-menu-content-transform-origin, center);
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, var(--foreground) 10%, transparent),
+        0 4px 6px -1px rgb(0 0 0 / 0.1),
+        0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+  }
+
+  /* The Tailwind version composed `animate-in fade-in-0 zoom-in-95 slide-in-from-*` from `tw-animate-css`,
+     which read four custom properties into one `enter` keyframe. Same idea, one keyframe each way. */
+  :global(:where(.ui-dropdown-menu-content)[data-state='open']),
+  :global(:where(.ui-dropdown-menu-content)[data-open]:not([data-open='false'])) {
+    animation: ui-dropdown-in 100ms ease;
+  }
+
+  :global(:where(.ui-dropdown-menu-content)[data-side='bottom'][data-state='open']) {
+    --ui-dropdown-from-y: -0.5rem;
+  }
+
+  :global(:where(.ui-dropdown-menu-content)[data-side='top'][data-state='open']) {
+    --ui-dropdown-from-y: 0.5rem;
+  }
+
+  :global(:where(.ui-dropdown-menu-content)[data-side='left'][data-state='open']) {
+    --ui-dropdown-from-x: 0.5rem;
+  }
+
+  :global(:where(.ui-dropdown-menu-content)[data-side='right'][data-state='open']) {
+    --ui-dropdown-from-x: -0.5rem;
+  }
+
+  :global(:where(.ui-dropdown-menu-content)[data-state='closed']),
+  :global(:where(.ui-dropdown-menu-content)[data-closed]:not([data-closed='false'])) {
+    animation: ui-dropdown-out 100ms ease;
+    overflow: hidden;
+  }
+
+  @keyframes ui-dropdown-in {
+    from {
+      opacity: 0;
+      transform: translate(var(--ui-dropdown-from-x, 0), var(--ui-dropdown-from-y, 0)) scale(0.95);
+    }
+  }
+
+  @keyframes ui-dropdown-out {
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+</style>

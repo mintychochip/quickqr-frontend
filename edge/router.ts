@@ -1,3 +1,4 @@
+import { isAdmin } from './admin';
 import type { Env } from './env';
 import { HttpError, bearerToken, errorJson, readJson } from './http';
 
@@ -8,8 +9,10 @@ export const SIGN_IN_REQUIRED = 'Sign in to continue.';
  * optional: a valid session is used, anything else is anonymous (never 401).
  * any: a valid session is required (401 otherwise).
  * session: like `any`; kept as its own value so a future credential type (API keys) can be refused here.
+ * admin: a session whose email is in ADMIN_EMAILS. No session is 401; any other person gets the 404 an unregistered
+ *   path gets, so the route cannot be probed. Like `session`, an API key can never satisfy it.
  */
-export type AuthMode = 'public' | 'optional' | 'any' | 'session';
+export type AuthMode = 'public' | 'optional' | 'any' | 'session' | 'admin';
 
 /** Which rate-limit bucket a route belongs to. Declared on every route; nothing limits yet (roadmap M1). */
 export type RouteClass = 'none' | 'read' | 'write' | 'expensive' | 'embed' | 'auth' | 'keys';
@@ -24,6 +27,7 @@ export interface Policy {
 
 export interface Principal {
   userId: string;
+  email: string;
   kind: 'session';
 }
 
@@ -60,7 +64,7 @@ interface Entry {
   handler: Handler;
 }
 
-const AUTH_MODES: AuthMode[] = ['public', 'optional', 'any', 'session'];
+const AUTH_MODES: AuthMode[] = ['public', 'optional', 'any', 'session', 'admin'];
 const CLASSES: RouteClass[] = ['none', 'read', 'write', 'expensive', 'embed', 'auth', 'keys'];
 
 /** Go's http.NotFound: the answer for a path nothing is registered at. */
@@ -154,7 +158,9 @@ export class Router {
     let principal: Principal | null = null;
     if (policy.auth !== 'public') {
       principal = await this.resolve(req, env);
-      if ((policy.auth === 'any' || policy.auth === 'session') && !principal) return errorJson(401, SIGN_IN_REQUIRED);
+      const needsSession = policy.auth === 'any' || policy.auth === 'session' || policy.auth === 'admin';
+      if (needsSession && !principal) return errorJson(401, SIGN_IN_REQUIRED);
+      if (policy.auth === 'admin' && principal && !isAdmin(env, principal.email)) return notFound();
     }
 
     const ctx: Ctx = { req, url, env, exec, param: (name) => params[name] ?? '', principal, policy, json: <T>() => readJson<T>(req, policy.maxBody) };

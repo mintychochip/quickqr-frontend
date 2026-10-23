@@ -34,34 +34,74 @@
         type="button"
         aria-label="More actions"
         title="More actions"
-        class="inline-flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[state=open]:bg-ink data-[state=open]:text-punch {className}"
+        class="link-menu-trigger {className}"
       >
-        <MoreHorizontal class="size-4" />
+        <MoreHorizontal class="link-menu-icon" />
       </button>
     {/snippet}
   </DropdownMenuTrigger>
 
-  <DropdownMenuContent align="end" class="w-44 text-[13px]">
+  <DropdownMenuContent align="end" class="link-menu-content">
     <DropdownMenuItem onclick={onCopy}>
       {#if copied}
-        <Check class="size-4" />
+        <Check class="link-menu-icon" />
       {:else}
-        <Copy class="size-4" />
+        <Copy class="link-menu-icon" />
       {/if}
       {copied ? 'Copied' : 'Copy link'}
     </DropdownMenuItem>
     <DropdownMenuItem onclick={onEdit}>
-      <Pencil class="size-4" />
+      <Pencil class="link-menu-icon" />
       Edit destination
     </DropdownMenuItem>
     <DropdownMenuItem aria-label="Open /r/{code} in a new tab" onclick={onOpenLink}>
-      <ExternalLink class="size-4" />
+      <ExternalLink class="link-menu-icon" />
       Open in new tab
     </DropdownMenuItem>
     <DropdownMenuSeparator />
     <DropdownMenuItem variant="destructive" onclick={onDelete}>
-      <Trash2 class="size-4" />
+      <Trash2 class="link-menu-icon" />
       Delete
     </DropdownMenuItem>
   </DropdownMenuContent>
 </DropdownMenu>
+
+<style>
+  /* Layered so a caller's `class` utility still overrides the default look. */
+  @layer components {
+    .link-menu-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      cursor: pointer;
+      border-radius: var(--radius);
+      color: var(--muted-foreground);
+      transition:
+        color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  .link-menu-trigger:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  .link-menu-trigger[data-state='open'] {
+    background-color: var(--ink);
+    color: var(--punch);
+  }
+
+  /* Handed to a child (the icons, the menu), so global and prefixed. */
+  :global(.link-menu-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  :global(.link-menu-content) {
+    width: 11rem;
+    font-size: 13px;
+  }
+</style>

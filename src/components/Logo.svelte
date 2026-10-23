@@ -16,10 +16,10 @@
   }: Props = $props();
 </script>
 
-<span class={cn('inline-flex min-w-0 items-center gap-2', className)}>
+<span class={cn('logo', className)}>
   <svg
     viewBox="0 0 32 32"
-    class={cn('size-7 shrink-0', markClass)}
+    class={cn('logo-mark', markClass)}
     aria-hidden="true"
   >
     <rect width="32" height="32" rx="9" fill="var(--punch)" />
@@ -43,12 +43,46 @@
   </svg>
   {#if wordmark}
     <span
-      class={cn(
-        'truncate text-[17px] font-medium tracking-[-0.045em] text-foreground',
-        wordmarkClass,
-      )}
+      class={cn('logo-wordmark', wordmarkClass)}
     >
-      quickqr<span class="text-muted-foreground">.app</span>
+      quickqr<span class="logo-domain">.app</span>
     </span>
   {/if}
 </span>
+
+<style>
+  /*
+   * In `@layer components` so a caller's utility (`size-5`, `text-[18px]`, `mb-4`) wins: the
+   * utilities layer is ordered after components. An unlayered rule here would beat every utility
+   * and ignore `markClass` / `wordmarkClass`.
+   */
+  @layer components {
+    .logo {
+      display: inline-flex;
+      min-width: 0;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-mark {
+      width: 1.75rem;
+      height: 1.75rem;
+      flex-shrink: 0;
+    }
+
+    .logo-wordmark {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 17px;
+      line-height: calc(1.5 / 1);
+      font-weight: 500;
+      letter-spacing: -0.045em;
+      color: var(--foreground);
+    }
+
+    .logo-domain {
+      color: var(--muted-foreground);
+    }
+  }
+</style>

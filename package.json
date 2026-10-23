@@ -11,7 +11,6 @@
     "test:edge": "bun test edge",
     "deploy:staging": "bun run build && rm -rf staging/out && cp -r dist staging/out && bunx wrangler pages functions build functions --outdir staging/out/_worker.js && cd staging && bunx wrangler pages deploy out --project-name quickqr-staging --branch main",
     "lint": "oxlint",
-    "ui:add": "shadcn-svelte add",
     "preview": "vite preview --port 5185 --host 0.0.0.0 --strictPort",
     "start": "vite preview --port 5185 --host 0.0.0.0 --strictPort",
     "check": "svelte-check --tsgo --tsconfig ./tsconfig.app.json",
@@ -24,15 +23,9 @@
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
     "@lucide/svelte": "^1.54.0",
-    "@tailwindcss/vite": "^4.3.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "jsqr": "^1.4.0",
     "pdfjs-dist": "^6.4.299",
-    "qrcode": "^1.5.4",
-    "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.3.3",
-    "tw-animate-css": "^1.4.0"
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261022.1",
@@ -49,7 +42,6 @@
     "bits-ui": "^2.18.0",
     "oxlint": "^1.81.0",
     "pngjs": "^7.0.0",
-    "shadcn-svelte": "^1.7.0",
     "svelte": "^5.39.0",
     "svelte-check": "^4.3.0",
     "typescript": "~6",

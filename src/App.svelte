@@ -3,8 +3,11 @@
   import AdSpace from './components/AdSpace.svelte';
   import Generator from './components/Generator.svelte';
   import InterstitialPreview from './components/InterstitialPreview.svelte';
+  import Pricing from './components/Pricing.svelte';
   import DashboardShell from './components/DashboardShell.svelte';
+  import DashboardPreview from './components/DashboardPreview.svelte';
   import Footer from './components/Footer.svelte';
+  import GiftPage from './components/GiftPage.svelte';
   import HomeCards from './components/HomeCards.svelte';
   import Logo from './components/Logo.svelte';
   import NotFound from './components/NotFound.svelte';
@@ -26,9 +29,10 @@
   const isHome = path === '/';
   const isDashboard = path === '/dashboard' || path.startsWith('/dashboard/');
   const isQrPage = path === '/qr';
-  const compressedCode = !isHome && !isDashboard && !isQrPage ? dynamicCodeFromQrPayload(window.location.href) : null;
+  const isGift = path === '/gift';
+  const compressedCode = !isHome && !isDashboard && !isQrPage && !isGift ? dynamicCodeFromQrPayload(window.location.href) : null;
   const staticDestination =
-    !isHome && !isDashboard && !isQrPage && !compressedCode
+    !isHome && !isDashboard && !isQrPage && !isGift && !compressedCode
       ? staticDestinationFromQrPayload(window.location.href)
       : null;
   if (compressedCode) {
@@ -88,51 +92,48 @@
 </script>
 
 {#if compressedCode || staticDestination}
-  <p class="px-6 py-16 text-sm text-muted-foreground">Opening link…</p>
+  <p class="app-opening">Opening link…</p>
 {:else if isQrPage}
   <QrEmbedPage />
+{:else if isGift}
+  <GiftPage {user} {userResolved} onSignIn={openAuth} onLogout={handleLogout} />
+
+  <AuthModal
+    bind:open={authOpen}
+    headline="Sign in to claim your gift"
+    externalError={authError}
+  />
 {:else if !isHome && !isDashboard}
   <NotFound />
 {:else if isDashboard}
   {#if !userResolved}
-    <div class="grid min-h-dvh place-items-center bg-background px-6">
-      <div class="w-full max-w-sm space-y-3">
-        <div class="h-3 w-24 animate-pulse rounded bg-muted"></div>
-        <div class="h-8 w-48 animate-pulse rounded bg-muted"></div>
-        <div class="h-3 w-full animate-pulse rounded bg-muted"></div>
-        <div class="h-3 w-3/4 animate-pulse rounded bg-muted"></div>
+    <div class="app-gate">
+      <div class="app-gate-stack">
+        <div class="app-skel app-skel-title"></div>
+        <div class="app-skel app-skel-heading"></div>
+        <div class="app-skel app-skel-line"></div>
+        <div class="app-skel app-skel-short"></div>
       </div>
     </div>
   {:else if user}
     <DashboardShell {user} sponsor={activeSponsor} onLogout={handleLogout} />
   {:else}
-    <div class="flex min-h-dvh flex-col bg-background">
-      <header class="flex h-16 items-center justify-between px-6 sm:px-10">
-        <a
-          href="/"
-          class="inline-flex items-center rounded-lg text-foreground transition-opacity hover:opacity-80"
-          aria-label="quickqr.app home"
-        >
+    <div class="app-signin">
+      <header class="app-signin-bar">
+        <a href="/" class="app-signin-home" aria-label="quickqr.app home">
           <Logo />
         </a>
-        <span class="text-[13px] text-muted-foreground">Dashboard</span>
+        <span class="app-signin-kicker">Dashboard</span>
       </header>
-      <main class="grid flex-1 place-items-center px-6 pb-20">
-        <div class="w-full max-w-sm">
-          <Logo wordmark={false} markClass="size-11" />
-          <h1 class="mt-5 text-[26px] font-semibold tracking-[-0.035em]">
-            Sign in to your dashboard
-          </h1>
-          <p class="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+      <main class="app-signin-main">
+        <div class="app-signin-card">
+          <Logo wordmark={false} markClass="app-signin-mark" />
+          <h1 class="app-signin-title">Sign in to your dashboard</h1>
+          <p class="app-signin-lede">
             Manage destinations, menus, and link pages behind your printed codes.
           </p>
-          <Button class="mt-6 h-10 w-full" onclick={openAuth}>Sign in</Button>
-          <a
-            href="/"
-            class="mt-4 inline-flex w-full items-center justify-center text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Back to quickqr.app
-          </a>
+          <Button class="app-signin-submit" onclick={openAuth}>Sign in</Button>
+          <a href="/" class="app-signin-back">Back to quickqr.app</a>
         </div>
       </main>
     </div>
@@ -143,7 +144,7 @@
     externalError={authError}
   />
 {:else}
-<div class="flex min-h-screen flex-col">
+<div class="app-home">
   <AdSpace variant="top-bar" sponsor={activeSponsor} />
   <Navbar
     {user}
@@ -156,20 +157,189 @@
     externalError={authError}
   />
 
-  <main class="flex-1">
+  <main class="app-main">
     <Generator isAuthenticated={user !== null} />
 
     <HomeCards />
 
+    <DashboardPreview />
+
     {#if activeSponsor}
-      <div class="qq-shell my-4">
+      <div class="qq-shell app-banner">
         <AdSpace variant="leaderboard" sponsor={activeSponsor} slotId="homepage-middle-banner" />
       </div>
     {/if}
 
     <InterstitialPreview />
+
+    <Pricing />
   </main>
 
   <Footer />
 </div>
 {/if}
+
+<style>
+  .app-opening {
+    padding: 4rem 1.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--muted-foreground);
+  }
+
+  .app-gate {
+    display: grid;
+    min-height: 100dvh;
+    place-items: center;
+    background-color: var(--background);
+    padding-inline: 1.5rem;
+  }
+
+  .app-gate-stack {
+    display: flex;
+    width: 100%;
+    max-width: 24rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .app-skel {
+    border-radius: 4px;
+    background-color: var(--muted);
+    animation: app-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .app-skel-title {
+    height: 0.75rem;
+    width: 6rem;
+  }
+
+  .app-skel-heading {
+    height: 2rem;
+    width: 12rem;
+  }
+
+  .app-skel-line {
+    height: 0.75rem;
+    width: 100%;
+  }
+
+  .app-skel-short {
+    height: 0.75rem;
+    width: 75%;
+  }
+
+  .app-signin {
+    display: flex;
+    min-height: 100dvh;
+    flex-direction: column;
+    background-color: var(--background);
+  }
+
+  .app-signin-bar {
+    display: flex;
+    height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: 1.5rem;
+  }
+
+  .app-signin-home {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius);
+    color: var(--foreground);
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .app-signin-home:hover {
+    opacity: 0.8;
+  }
+
+  .app-signin-kicker {
+    font-size: 13px;
+    color: var(--muted-foreground);
+  }
+
+  .app-signin-main {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding-inline: 1.5rem;
+    padding-bottom: 5rem;
+  }
+
+  .app-signin-card {
+    width: 100%;
+    max-width: 24rem;
+  }
+
+  .app-signin-title {
+    margin-top: 1.25rem;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+  }
+
+  .app-signin-lede {
+    margin-top: 0.5rem;
+    max-width: 20rem;
+    font-size: 0.875rem;
+    line-height: 1.625;
+    color: var(--muted-foreground);
+  }
+
+  .app-signin-back {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--muted-foreground);
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .app-signin-back:hover {
+    color: var(--foreground);
+  }
+
+  .app-home {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  .app-main {
+    flex: 1;
+  }
+
+  .app-banner {
+    margin-block: 1rem;
+  }
+
+  :global(.app-signin-mark) {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  :global(.app-signin-submit) {
+    margin-top: 1.5rem;
+    height: 2.5rem;
+    width: 100%;
+  }
+
+  @media (min-width: 40rem) {
+    .app-signin-bar {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  @keyframes app-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+</style>
+

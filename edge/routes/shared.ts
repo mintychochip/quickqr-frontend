@@ -9,6 +9,12 @@ export function userId(c: Ctx): string {
   return c.principal.userId;
 }
 
+/** The signed-in person's email. Like `userId`, a guard for routes whose policy already requires a session. */
+export function signedInEmail(c: Ctx): string {
+  if (!c.principal) throw new HttpError(401, SIGN_IN_REQUIRED);
+  return c.principal.email;
+}
+
 /**
  * The caller's own link. Someone else's code and a code that does not exist are the same 404, so codes cannot be
  * probed. Routes call this before they read the request body for the same reason.

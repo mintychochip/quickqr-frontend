@@ -39,6 +39,21 @@ export async function signInViaOAuth(page: Page, returnTo = '/', email = 'ada@ex
   await page.getByRole('button', { name: 'Log out' }).waitFor({ state: 'visible', timeout: 15_000 });
 }
 
+/**
+ * With real Google credentials configured, "Continue with Google" goes to Google. Send that request to the local
+ * stand-in instead, so a spec does not depend on which providers a developer has set up. Without credentials the app
+ * already goes straight to the stand-in and this route never fires.
+ */
+export async function routeGoogleToStandIn(page: Page): Promise<void> {
+  await page.route(/\/api\/auth\/oauth\/google\/start(\?|$)/, (route) => {
+    const from = new URL(route.request().url());
+    const standIn = new URL('/api/auth/oauth/dev/start', from.origin);
+    standIn.searchParams.set('as', 'google');
+    standIn.searchParams.set('return_to', from.searchParams.get('return_to') ?? new URL('/', from.origin).toString());
+    return route.fulfill({ status: 302, headers: { location: standIn.toString() } });
+  });
+}
+
 /** Authenticate through the OAuth dev stand-in and return the API token. */
 export async function signInToken(email = 'ada@example.com'): Promise<string> {
   const base = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:5186';
@@ -70,4 +85,52 @@ export async function signInToken(email = 'ada@example.com'): Promise<string> {
     throw new Error('no auth_token in dev consent redirect');
   }
   return token;
+}
+
+/** WCAG contrast of an element's text over whatever is actually painted behind it. */
+export async function contrastOf(el: Locator): Promise<number> {
+  return el.evaluate((node) => {
+    type Rgba = [number, number, number, number];
+    const probe = document.createElement('canvas');
+    probe.width = 1;
+    probe.height = 1;
+    const ctx = probe.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error('2d canvas is unavailable');
+
+    // Painting resolves any CSS colour (oklch, color-mix, ...) to plain sRGB.
+    const paint = (css: string): Rgba => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = '#000';
+      ctx.fillStyle = css;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r = 0, g = 0, b = 0, a = 0] = ctx.getImageData(0, 0, 1, 1).data;
+      return [r, g, b, a / 255];
+    };
+    const over = (top: Rgba, below: Rgba): Rgba => {
+      const a = top[3];
+      return [
+        top[0] * a + below[0] * (1 - a),
+        top[1] * a + below[1] * (1 - a),
+        top[2] * a + below[2] * (1 - a),
+        1,
+      ];
+    };
+    const luminance = ([r, g, b]: Rgba): number => {
+      const lin = (c: number) => {
+        const s = c / 255;
+        return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    };
+
+    const chain: Element[] = [];
+    for (let n: Element | null = node; n; n = n.parentElement) chain.push(n);
+    let backdrop: Rgba = [255, 255, 255, 1];
+    for (const n of chain.reverse()) {
+      backdrop = over(paint(getComputedStyle(n).backgroundColor), backdrop);
+    }
+    const text = over(paint(getComputedStyle(node).color), backdrop);
+    const [hi = 0, lo = 0] = [luminance(text), luminance(backdrop)].sort((a, b) => b - a);
+    return (hi + 0.05) / (lo + 0.05);
+  });
 }

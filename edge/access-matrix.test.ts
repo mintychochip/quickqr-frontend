@@ -43,6 +43,10 @@ const matrix: Row[] = [
   { pattern: 'GET /api/auth/oauth/dev/start', want: everyone(302) },
   { pattern: 'GET /api/auth/oauth/dev/consent', path: '/api/auth/oauth/dev/consent?state=bogus', want: everyone(302) },
   { pattern: 'POST /api/auth/oauth/dev/consent', path: '/api/auth/oauth/dev/consent?state=bogus', form: 'email=x%40example.com', want: everyone(302) },
+  { pattern: 'POST /api/gifts/redeem', body: { token: 'x' }, want: [401, 401, 404, 404] },
+  { pattern: 'POST /api/admin/gifts', body: { plan: 'plus', days: 30 }, want: [401, 401, 404, 201] },
+  { pattern: 'GET /api/admin/gifts', want: [401, 401, 404, 200] },
+  { pattern: 'POST /api/admin/gifts/{id}/revoke', path: '/api/admin/gifts/gft-matrix/revoke', body: {}, want: [401, 401, 404, 404] },
   { pattern: 'GET /api/qr', want: everyone(200) },
   { pattern: 'GET /api/qr/style-parser', want: everyone(200) },
   { pattern: 'POST /api/qr/style-parse', body: { prompt: 'navy' }, want: everyone(503) },
@@ -74,7 +78,7 @@ const matrix: Row[] = [
 
 /** No sign-in provider is configured, and the local stand-in is on, as it is in the Go matrix stack. */
 const stack = (): Rig =>
-  rig({ GOOGLE_CLIENT_ID: undefined, GOOGLE_CLIENT_SECRET: undefined, GITHUB_CLIENT_ID: undefined, GITHUB_CLIENT_SECRET: undefined, OAUTH_DEV: '1' });
+  rig({ GOOGLE_CLIENT_ID: undefined, GOOGLE_CLIENT_SECRET: undefined, GITHUB_CLIENT_ID: undefined, GITHUB_CLIENT_SECRET: undefined, OAUTH_DEV: '1', ADMIN_EMAILS: 'matrix-owner@example.com' });
 
 const r = stack();
 let owner = '';

@@ -6,7 +6,7 @@ import { renderMenu } from '../pages/menu';
 import { renderNotFound } from '../pages/notFound';
 import { notFound, type Ctx, type Router } from '../router';
 import { getLink } from '../store/links';
-import { getActiveSponsor, recordScan } from '../store/scans';
+import { readPause, recordScan } from '../store/scans';
 import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU } from '../types';
 import { detectBrowser, detectDevice } from '../useragent';
 import { publicNone } from './policies';
@@ -62,10 +62,14 @@ export function registerRedirectRoutes(router: Router, deps: AppDeps): void {
 
     if (link.kind === LINK_KIND_MENU) return html(200, renderMenu(link), NO_CACHE);
     if (link.kind === LINK_KIND_LINK_PAGE) return html(200, renderLinkPage(link), NO_CACHE);
-    if (c.url.searchParams.get('direct') === '1' || link.ad_style === 'direct') {
+    // The pause is for owners on the free plan, and a plan (a gift, today) takes it away. Only a scan that would show
+    // the pause asks for the owner's plan, and it rides in the same round trip as the sponsor.
+    const wantsDirect = c.url.searchParams.get('direct') === '1' || link.ad_style === 'direct';
+    const pause = wantsDirect ? null : await readPause(c.env.DB, link.owner_id, deps.now());
+    if (!pause || pause.plan !== 'free') {
       return new Response(null, { status: 302, headers: { Location: locationHeader(link.destination_url) } });
     }
-    return html(200, renderInterstitial(link, await getActiveSponsor(c.env.DB)), NO_CACHE);
+    return html(200, renderInterstitial(link, pause.sponsor), NO_CACHE);
   };
 
   router.handle('/r/', publicNone, gateway);

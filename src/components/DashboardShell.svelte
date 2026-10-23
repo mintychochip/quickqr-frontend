@@ -3,6 +3,7 @@
   import Check from '@lucide/svelte/icons/check';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import Files from '@lucide/svelte/icons/files';
+  import Gift from '@lucide/svelte/icons/gift';
   import House from '@lucide/svelte/icons/house';
   import Link2 from '@lucide/svelte/icons/link-2';
   import LogOut from '@lucide/svelte/icons/log-out';
@@ -25,6 +26,7 @@
     DropdownMenuTrigger,
   } from '@/lib/components/ui/dropdown-menu';
   import { fetchLinks } from '../lib/api';
+  import { describePlan } from '../lib/plan';
   import { fly } from 'svelte/transition';
   import type { Link, Sponsor } from '../types';
   import type { User } from '../types/auth';
@@ -32,6 +34,7 @@
   import AdSpace from './AdSpace.svelte';
   import CreateDynamicCodePanel from './CreateDynamicCodePanel.svelte';
   import Dashboard from './Dashboard.svelte';
+  import GiftsSection from './GiftsSection.svelte';
   import LinkPageEditor from './LinkPageEditor.svelte';
   import LinkPagesSection from './LinkPagesSection.svelte';
   import LinkDetailSidebar from './LinkDetailSidebar.svelte';
@@ -123,8 +126,11 @@
   }
 
   const initial = $derived(user.email.slice(0, 1).toUpperCase());
+  const plan = $derived(describePlan(user));
+  /** The gift admin page. For anyone who is not an administrator its path is like any other the dashboard does not know. */
+  const showGifts = $derived(path.startsWith('/dashboard/gifts') && user.is_admin === true);
 
-  const title =
+  const title = $derived(
     path === '/dashboard/menus/new'
       ? 'New menu'
       : path.startsWith('/dashboard/menus/')
@@ -137,9 +143,14 @@
               ? 'Edit link page'
               : path.startsWith('/dashboard/pages')
                 ? 'Link pages'
-                : 'Dynamic links';
+                : showGifts
+                  ? 'Gifts'
+                  : 'Dynamic links',
+  );
 
-  const items = [
+  type NavItem = { label: string; href: string; icon: typeof Link2; testId: string; active: boolean };
+
+  const items: NavItem[] = [
     {
       label: 'Dynamic links',
       href: '/dashboard',
@@ -162,6 +173,14 @@
       active: path.startsWith('/dashboard/pages'),
     },
   ];
+
+  const giftsItem: NavItem = {
+    label: 'Gifts',
+    href: '/dashboard/gifts',
+    icon: Gift,
+    testId: 'nav-gifts',
+    active: path.startsWith('/dashboard/gifts'),
+  };
 
   let overview = $state<{ links: number; menus: number; pages: number; scans: number } | null>(
     null,
@@ -202,131 +221,148 @@
   ]);
 </script>
 
+{#snippet navLink(item: NavItem, close: () => void)}
+  <a
+    href={item.href}
+    data-testid={item.testId}
+    aria-current={item.active ? 'page' : undefined}
+    onclick={close}
+    class={cn(
+      'dsh-nav-link',
+      item.active
+        ? 'dsh-nav-active'
+        : 'dsh-nav-idle',
+    )}
+  >
+    <item.icon
+      class={cn(
+        'dsh-nav-icon',
+        item.active ? 'dsh-nav-icon-punch' : 'dsh-nav-icon-idle',
+      )}
+    />
+    {item.label}
+  </a>
+{/snippet}
+
 {#snippet navigation(close: () => void)}
   <p
-    class="px-2.5 pb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70 dark:text-muted-foreground"
+    class="dsh-section-label"
   >
     Manage
   </p>
-  <nav class="space-y-0.5" aria-label="Dashboard">
+  <nav class="dsh-nav" aria-label="Dashboard">
     {#each items as item (item.href)}
-      <a
-        href={item.href}
-        data-testid={item.testId}
-        aria-current={item.active ? 'page' : undefined}
-        onclick={close}
-        class={cn(
-          'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-lg:py-2.5',
-          item.active
-            ? 'bg-ink text-white'
-            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
-        )}
-      >
-        <item.icon
-          class={cn(
-            'size-4 shrink-0',
-            item.active ? 'text-punch' : 'text-muted-foreground group-hover:text-foreground',
-          )}
-        />
-        {item.label}
-      </a>
+      {@render navLink(item, close)}
     {/each}
   </nav>
 
-  <div class="mt-6">
+  <div class="dsh-create-sec">
     <p
-      class="px-2.5 pb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70 dark:text-muted-foreground"
+      class="dsh-section-label"
     >
       Create
     </p>
-    <div class="space-y-0.5">
+    <div class="dsh-create-list">
       <button
         type="button"
         onclick={() => {
           close();
           openCreate();
         }}
-        class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-muted-foreground transition-colors outline-none hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+        class="dsh-create-btn"
       >
-        <Plus class="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
+        <Plus class="dsh-create-icon" />
         Dynamic code
       </button>
       <a
         href="/dashboard/menus/new"
         onclick={close}
-        class="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors outline-none hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 max-lg:py-2.5"
+        class="dsh-create-link"
       >
         <UtensilsCrossed
-          class="size-4 shrink-0 text-muted-foreground group-hover:text-foreground"
+          class="dsh-create-icon"
         />
         Menu
       </a>
       <a
         href="/dashboard/pages/new"
         onclick={close}
-        class="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors outline-none hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 max-lg:py-2.5"
+        class="dsh-create-link"
       >
-        <Files class="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
+        <Files class="dsh-create-icon" />
         Link page
       </a>
     </div>
   </div>
 
-  <div class="mt-6 border-t border-border pt-4">
+  {#if user.is_admin}
+    <div class="dsh-admin-sec">
+      <p
+        class="dsh-section-label"
+      >
+        Admin
+      </p>
+      <nav class="dsh-nav" aria-label="Admin">
+        {@render navLink(giftsItem, close)}
+      </nav>
+    </div>
+  {/if}
+
+  <div class="dsh-footer-link">
     <a
       href="/"
       onclick={close}
-      class="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors outline-none hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 max-lg:py-2.5"
+      class="dsh-footer-link-a"
     >
-      <House class="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
+      <House class="dsh-create-icon" />
       Back to quickqr.app
     </a>
   </div>
 {/snippet}
 
-<div class="min-h-dvh bg-background">
+<div class="dsh-root">
   <aside
     class={cn(
-      'fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-border bg-card transition-[width] duration-200 lg:flex',
-      createOpen ? 'w-[22rem]' : 'w-60',
+      'dsh-aside',
+      createOpen ? 'dsh-aside-wide' : 'dsh-aside-narrow',
     )}
     aria-label={createOpen ? 'Create dynamic code' : 'Dashboard navigation'}
   >
-    <div class="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
+    <div class="dsh-aside-head">
       <a
         href="/"
-        class="inline-flex min-w-0 items-center rounded-lg py-1 text-left text-foreground transition-opacity outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring/40"
+        class="dsh-logo-link"
         aria-label="quickqr.app home"
       >
         <Logo />
       </a>
       <Badge
         variant="secondary"
-        class="ml-auto h-5 bg-muted px-2 text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground"
+        class="dsh-plan-badge"
       >
-        Free
+        {plan.name}
       </Badge>
     </div>
 
     {#if createOpen}
-      <div class="min-h-0 flex-1 overflow-hidden">
+      <div class="dsh-panel-wrap">
         <CreateDynamicCodePanel
           onClose={closeCreate}
           onCreated={() => (dashboardRefresh += 1)}
         />
       </div>
     {:else}
-      <div class="flex-1 overflow-y-auto px-3 py-4">
+      <div class="dsh-nav-wrap">
         {@render navigation(() => {})}
       </div>
 
-      <div class="shrink-0 border-t border-border p-3">
-        <div class="rounded-xl bg-muted/60 p-3.5">
-          <div class="flex items-center gap-2 text-[13px] font-medium text-foreground">
-            <ShieldCheck class="size-4 shrink-0" />
+      <div class="dsh-aside-foot">
+        <div class="dsh-free-box">
+          <div class="dsh-free-head">
+            <ShieldCheck class="dsh-free-icon" />
             Always free
           </div>
-          <p class="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          <p class="dsh-free-text">
             No trial timer on printed codes. Sponsor placements fund redirects.
           </p>
         </div>
@@ -334,49 +370,49 @@
     {/if}
   </aside>
 
-  <div class={cn('transition-[padding] duration-200', createOpen ? 'lg:pl-[22rem]' : 'lg:pl-60')}>
+  <div class={cn('dsh-main-shift', createOpen ? 'dsh-main-wide' : 'dsh-main-narrow')}>
     <header
-      class="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card/95 px-4 backdrop-blur-md sm:px-6 lg:px-8"
+      class="dsh-header"
     >
       <button
         type="button"
-        class="grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-9 lg:hidden"
+        class="dsh-menu-btn"
         aria-label="Open navigation"
         onclick={() => (navOpen = true)}
       >
-        <MenuIcon class="size-5" />
+        <MenuIcon class="dsh-menu-icon" />
       </button>
 
       <a
         href="/"
-        class="inline-flex shrink-0 items-center rounded-lg text-foreground transition-opacity outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden"
+        class="dsh-logo-link-sm"
         aria-label="quickqr.app home"
       >
         <Logo wordmark={false} />
       </a>
 
-      <div class="hidden min-w-0 items-center gap-1.5 text-[13px] sm:flex">
+      <div class="dsh-breadcrumb">
         <a
           href="/dashboard"
-          class="shrink-0 rounded-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+          class="dsh-crumb"
         >
           Dashboard
         </a>
-        <ChevronRight class="size-3.5 shrink-0 text-muted-foreground/60" />
-        <span class="truncate font-medium text-foreground">{title}</span>
+        <ChevronRight class="dsh-crumb-sep" />
+        <span class="dsh-crumb-current">{title}</span>
       </div>
 
-      <div class="ml-auto flex shrink-0 items-center gap-2">
+      <div class="dsh-header-actions">
         <Button
           variant="outline"
           size="sm"
           data-testid="scan-open"
           aria-label="Scan"
-          class="h-8 gap-1.5 border-border bg-card px-2.5 text-[13px] max-sm:h-9"
+          class="dsh-header-btn"
           onclick={() => (scannerOpen = true)}
         >
-          <ScanLine class="size-4" />
-          <span class="hidden sm:inline">Scan</span>
+          <ScanLine class="dsh-header-icon" />
+          <span class="dsh-header-btn-text">Scan</span>
         </Button>
 
         <Button
@@ -384,11 +420,11 @@
           size="sm"
           aria-label="Create code"
           aria-pressed={desktop ? createOpen : mobileCreateOpen}
-          class="h-8 gap-1.5 border-border bg-card px-2.5 text-[13px] max-sm:h-9"
+          class="dsh-header-btn"
           onclick={openCreate}
         >
-          <Plus class="size-4" />
-          <span class="hidden sm:inline">Create code</span>
+          <Plus class="dsh-header-icon" />
+          <span class="dsh-header-btn-text">Create code</span>
         </Button>
 
         <ThemeToggle />
@@ -400,28 +436,28 @@
                 {...props}
                 type="button"
                 aria-label="Account menu"
-                class="grid size-8 cursor-pointer place-items-center rounded-full border border-border bg-muted text-[12px] font-semibold text-foreground transition-colors outline-none hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-9"
+                class="dsh-account-btn"
               >
                 {initial}
               </button>
             {/snippet}
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-60">
-            <DropdownMenuLabel class="px-2 py-1.5">
-              <span class="block truncate text-[13px] font-medium text-foreground">
+          <DropdownMenuContent align="end" class="dsh-menu-content">
+            <DropdownMenuLabel class="dsh-menu-label">
+              <span class="dsh-menu-email">
                 {user.email}
               </span>
-              <span class="mt-0.5 block text-[11px] font-normal text-muted-foreground">
-                Free plan
+              <span class="dsh-menu-plan">
+                {plan.line}
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onclick={() => (window.location.href = '/')}>
-              <House class="size-4" />
+              <House class="dsh-menu-item-icon" />
               Back to quickqr.app
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onclick={onLogout}>
-              <LogOut class="size-4" />
+              <LogOut class="dsh-menu-item-icon" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -429,21 +465,21 @@
       </div>
     </header>
 
-    <div class="flex min-h-[calc(100dvh-3.5rem)]">
+    <div class="dsh-content-row">
       {#if !createOpen}
         <div
           class={cn(
-            'hidden shrink-0 overflow-x-clip border-border bg-card transition-[width] duration-200 min-[1360px]:block',
+            'dsh-detail-slot',
             selectedDetail
-              ? 'w-[320px] border-r min-[1900px]:w-[360px] min-[2300px]:w-[400px]'
-              : 'w-0 border-r-0',
+              ? 'dsh-detail-on'
+              : 'dsh-detail-off',
           )}
         >
           {#if selectedDetail}
             <aside
               in:fly={{ x: -12, duration: 180 }}
               out:fly={{ x: -12, duration: 140 }}
-              class="sticky top-14 h-[calc(100dvh-3.5rem)] w-[320px] overflow-y-auto bg-card min-[1900px]:w-[360px] min-[2300px]:w-[400px]"
+              class="dsh-detail-aside"
               aria-label="Link details"
             >
               <LinkDetailSidebar
@@ -456,8 +492,8 @@
         </div>
       {/if}
 
-      <main class="min-w-0 flex-1">
-        <div class="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <main class="dsh-main">
+        <div class="dsh-main-inner">
         {#if menuEditCode}
           <MenuEditor code={menuEditCode} />
         {:else if pageEditCode}
@@ -466,6 +502,8 @@
           <MenusSection />
         {:else if path.startsWith('/dashboard/pages')}
           <LinkPagesSection />
+        {:else if showGifts}
+          <GiftsSection />
         {:else}
           <Dashboard
             {sponsor}
@@ -482,97 +520,98 @@
 
       {#if !createOpen}
         <aside
-          class="hidden w-[280px] shrink-0 border-l border-border bg-card min-[1360px]:block min-[1900px]:w-[320px] min-[2300px]:w-[360px]"
+          class="dsh-rail"
           aria-label="Workspace overview"
         >
-          <div class="sticky top-14 h-[calc(100dvh-3.5rem)] overflow-y-auto">
-            <div class="border-b border-border p-4">
-              <div class="flex items-center justify-between gap-2">
-                <h2 class="text-[13px] font-semibold tracking-[-0.01em] text-foreground">
+          <div class="dsh-rail-inner">
+            <div class="dsh-rail-head">
+              <div class="dsh-rail-title-row">
+                <h2 class="dsh-rail-title">
                   Workspace
                 </h2>
                 <Badge
                   variant="secondary"
-                  class="h-5 bg-muted px-2 text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground"
+                  class="dsh-rail-badge"
                 >
-                  Free
+                  {plan.name}
                 </Badge>
               </div>
-              <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
+              <p class="dsh-rail-sub">
                 Live counts behind your printed codes.
               </p>
             </div>
-            <dl class="divide-y divide-border">
+            <dl class="dsh-rail-dl">
               {#each overviewRows as row (row.label)}
-                <div class="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <dt class="text-xs text-muted-foreground">{row.label}</dt>
-                  <dd class="font-mono text-[13px] font-medium tabular-nums text-foreground">
+                <div class="dsh-rail-row">
+                  <dt class="dsh-rail-dt">{row.label}</dt>
+                  <dd class="dsh-rail-dd">
                     {#if row.value !== null}
                       {row.value.toLocaleString()}
                     {:else if overviewState === 'error'}
-                      <span class="text-muted-foreground">—</span>
+                      <span class="dsh-rail-empty">—</span>
                     {:else}
                       <span
-                        class="inline-block h-3 w-8 animate-pulse rounded bg-muted align-middle"
+                        class="dsh-pulse-small"
                       ></span>
                     {/if}
                   </dd>
                 </div>
               {/each}
             </dl>
-            <div class="border-t border-border p-3">
+            <div class="dsh-rail-create">
               <Button
                 onclick={openCreate}
                 variant="outline"
-                class="h-8 w-full border-border bg-card text-[13px]"
+                class="dsh-rail-create-btn"
               >
                 Create a code
               </Button>
             </div>
 
-            <section class="border-t border-border">
-              <div class="flex items-start gap-2.5 px-4 py-3.5">
+            <section class="dsh-free-design">
+              <div class="dsh-free-row">
                 <span
-                  class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-punch/40 text-ink"
+                  class="dsh-shield"
                 >
-                  <ShieldCheck class="size-4" />
+                  <ShieldCheck class="dsh-shield-icon" />
                 </span>
-                <div class="min-w-0">
-                  <h2 class="text-[13px] font-semibold tracking-[-0.01em] text-foreground">
+                <div class="dsh-free-col">
+                  <h2 class="dsh-free-title">
                     Free by design
                   </h2>
-                  <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  <p class="dsh-free-desc">
                     Sponsor placements fund dynamic redirects, not subscriptions.
                   </p>
                 </div>
               </div>
-              <ul class="space-y-2 px-4 pb-3 text-xs text-muted-foreground">
-                <li class="flex items-start gap-2">
-                  <Check class="mt-px size-3.5 shrink-0 text-foreground" />
+              <ul class="dsh-free-list">
+                <li class="dsh-free-li">
+                  <Check class="dsh-check-icon" />
                   No trial timer on printed codes
                 </li>
-                <li class="flex items-start gap-2">
-                  <Check class="mt-px size-3.5 shrink-0 text-foreground" />
+                <li class="dsh-free-li">
+                  <Check class="dsh-check-icon" />
                   Edit a destination after printing
                 </li>
-                <li class="flex items-start gap-2">
-                  <Check class="mt-px size-3.5 shrink-0 text-foreground" />
+                <li class="dsh-free-li">
+                  <Check class="dsh-check-icon" />
                   Scan counts stay visible
                 </li>
               </ul>
-              <div class="border-t border-border px-4 py-2.5">
+
+              <div class="dsh-preview-link">
                 <a
                   href="/#preview"
-                  class="inline-flex items-center gap-1 rounded-sm text-xs font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+                  class="dsh-preview-a"
                 >
                   See the redirect preview
-                  <ArrowUpRight class="size-3.5" />
+                  <ArrowUpRight class="dsh-preview-icon" />
                 </a>
               </div>
             </section>
 
             {#if sponsor}
-              <div class="border-t border-border p-4">
+              <div class="dsh-rail-ad">
                 <AdSpace variant="native-card" {sponsor} slotId="dashboard-rail" />
               </div>
             {/if}
@@ -585,14 +624,14 @@
 
 <Dialog
   bind:open={navOpen}
-  class="left-0 top-0 h-dvh max-h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 gap-0 rounded-none p-0 ring-0 sm:max-w-[85vw]"
+  class="dsh-mobile-nav"
 >
   {#snippet children({ close })}
-    <div class="flex h-full flex-col bg-card">
-      <div class="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+    <div class="dsh-nav-sheet">
+      <div class="dsh-nav-sheet-head">
         <a
           href="/"
-          class="inline-flex items-center rounded-lg text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          class="dsh-logo-link"
           aria-label="quickqr.app home"
           onclick={close}
         >
@@ -600,34 +639,34 @@
         </a>
         <button
           type="button"
-          class="grid size-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+          class="dsh-close-btn"
           aria-label="Close navigation"
           onclick={close}
         >
-          <X class="size-4" />
+          <X class="dsh-icon-x" />
         </button>
       </div>
-      <div class="flex-1 overflow-y-auto px-3 py-4">
+      <div class="dsh-nav-sheet-body">
         {@render navigation(close)}
       </div>
-      <div class="shrink-0 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div class="flex items-center gap-2.5 rounded-xl bg-muted/60 p-3">
+      <div class="dsh-nav-sheet-foot">
+        <div class="dsh-user-box">
           <span
-            class="grid size-8 shrink-0 place-items-center rounded-full bg-ink text-[12px] font-semibold text-punch"
+            class="dsh-user-avatar"
           >
             {initial}
           </span>
-          <div class="min-w-0 flex-1">
-            <p class="truncate text-[13px] font-medium text-foreground">{user.email}</p>
-            <p class="text-[11px] text-muted-foreground">Free plan</p>
+          <div class="dsh-user-info">
+            <p class="dsh-user-email">{user.email}</p>
+            <p class="dsh-user-plan">{plan.line}</p>
           </div>
           <button
             type="button"
-            class="grid size-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+            class="dsh-logout-btn"
             aria-label="Log out"
             onclick={onLogout}
           >
-            <LogOut class="size-4" />
+            <LogOut class="dsh-icon-x" />
           </button>
         </div>
       </div>
@@ -637,7 +676,7 @@
 
 <Dialog
   bind:open={mobileCreateOpen}
-  class="left-0 top-0 h-dvh max-h-dvh w-full max-w-[92vw] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none p-0 ring-0 motion-safe:animate-in motion-safe:slide-in-from-left-4 motion-safe:duration-200 sm:max-w-[360px]"
+  class="dsh-mobile-create"
 >
   {#snippet children({ close })}
     <CreateDynamicCodePanel
@@ -648,3 +687,1034 @@
 </Dialog>
 
 <MenuScanner bind:open={scannerOpen} />
+
+<style>
+  .dsh-root {
+    min-height: 100dvh;
+    background-color: var(--background);
+  }
+
+  :global(.dsh-aside) {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 40;
+    display: none;
+    flex-direction: column;
+    border-inline-end: 1px solid var(--border);
+    background-color: var(--card);
+    transition: width 200ms;
+  }
+  @media (min-width: 64rem) {
+    :global(.dsh-aside) {
+      display: flex;
+    }
+  }
+  :global(.dsh-aside-wide) {
+    width: 22rem;
+  }
+  :global(.dsh-aside-narrow) {
+    width: 15rem;
+  }
+
+  .dsh-aside-head {
+    display: flex;
+    height: 3.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .dsh-logo-link {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    border-radius: var(--radius);
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    text-align: left;
+    color: var(--foreground);
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-logo-link:hover {
+    opacity: 0.8;
+  }
+  .dsh-logo-link:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.dsh-plan-badge) {
+    margin-left: auto;
+    height: 1.25rem;
+    background-color: var(--muted);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-panel-wrap {
+    min-height: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+  }
+
+  .dsh-nav-wrap {
+    flex: 1 1 0%;
+    overflow-y: auto;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .dsh-aside-foot {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding: 0.75rem;
+  }
+
+  .dsh-free-box {
+    border-radius: calc(var(--radius) * 1.4);
+    background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+    padding: 0.875rem;
+  }
+
+  .dsh-free-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  :global(.dsh-free-icon) {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
+
+  .dsh-free-text {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.625;
+    color: var(--muted-foreground);
+  }
+
+  :global(.dsh-main-shift) {
+    transition: padding 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @media (min-width: 64rem) {
+    :global(.dsh-main-narrow) {
+      padding-left: 15rem;
+    }
+    :global(.dsh-main-wide) {
+      padding-left: 22rem;
+    }
+  }
+
+  .dsh-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    height: 3.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    background-color: color-mix(in oklab, var(--card) 95%, transparent);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  @media (min-width: 40rem) {
+    .dsh-header {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .dsh-header {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  .dsh-menu-btn {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    place-items: center;
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-menu-btn:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .dsh-menu-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  @media (width < 40rem) {
+    .dsh-menu-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .dsh-menu-btn {
+      display: none;
+    }
+  }
+
+  :global(.dsh-menu-icon) {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .dsh-logo-link-sm {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    border-radius: var(--radius);
+    color: var(--foreground);
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-logo-link-sm:hover {
+    opacity: 0.8;
+  }
+  .dsh-logo-link-sm:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  @media (min-width: 64rem) {
+    .dsh-logo-link-sm {
+      display: none;
+    }
+  }
+
+  .dsh-breadcrumb {
+    display: none;
+    min-width: 0;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 13px;
+  }
+  @media (min-width: 40rem) {
+    .dsh-breadcrumb {
+      display: flex;
+    }
+  }
+
+  .dsh-crumb {
+    flex-shrink: 0;
+    border-radius: calc(var(--radius) * 0.6);
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-crumb:hover {
+    color: var(--foreground);
+  }
+  .dsh-crumb:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.dsh-crumb-sep) {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+
+  .dsh-crumb-current {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  .dsh-header-actions {
+    margin-left: auto;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  :global(.dsh-header-btn) {
+    height: 2rem;
+    gap: 0.375rem;
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    font-size: 13px;
+  }
+  @media (width < 40rem) {
+    :global(.dsh-header-btn) {
+      height: 2.25rem;
+    }
+  }
+
+  :global(.dsh-header-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .dsh-header-btn-text {
+    display: none;
+  }
+  @media (min-width: 40rem) {
+    .dsh-header-btn-text {
+      display: inline;
+    }
+  }
+
+  .dsh-account-btn {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    place-items: center;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    background-color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-account-btn:hover {
+    background-color: var(--secondary);
+  }
+  .dsh-account-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  @media (width < 40rem) {
+    .dsh-account-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+
+  :global(.dsh-menu-content) {
+    width: 15rem;
+  }
+
+  :global(.dsh-menu-label) {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
+  .dsh-menu-email {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  .dsh-menu-plan {
+    margin-top: 0.125rem;
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted-foreground);
+  }
+
+  :global(.dsh-menu-item-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .dsh-content-row {
+    display: flex;
+    min-height: calc(100dvh - 3.5rem);
+  }
+
+  :global(.dsh-detail-slot) {
+    display: none;
+    flex-shrink: 0;
+    overflow-x: clip;
+    border-inline-end: 1px solid var(--border);
+    background-color: var(--card);
+    transition: width 200ms;
+  }
+  @media (min-width: 1360px) {
+    :global(.dsh-detail-slot) {
+      display: block;
+    }
+  }
+  :global(.dsh-detail-on) {
+    width: 320px;
+    border-inline-end: 1px solid var(--border);
+  }
+  @media (min-width: 1900px) {
+    :global(.dsh-detail-on) {
+      width: 360px;
+    }
+  }
+  @media (min-width: 2300px) {
+    :global(.dsh-detail-on) {
+      width: 400px;
+    }
+  }
+  :global(.dsh-detail-off) {
+    width: 0;
+    border-inline-end-width: 0;
+  }
+
+  .dsh-detail-aside {
+    position: sticky;
+    top: 3.5rem;
+    height: calc(100dvh - 3.5rem);
+    width: 320px;
+    overflow-y: auto;
+    background-color: var(--card);
+  }
+  @media (min-width: 1900px) {
+    .dsh-detail-aside {
+      width: 360px;
+    }
+  }
+  @media (min-width: 2300px) {
+    .dsh-detail-aside {
+      width: 400px;
+    }
+  }
+
+  .dsh-main {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .dsh-main-inner {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 1200px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  @media (min-width: 40rem) {
+    .dsh-main-inner {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .dsh-main-inner {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+  }
+
+  .dsh-rail {
+    display: none;
+    width: 280px;
+    flex-shrink: 0;
+    border-inline-start: 1px solid var(--border);
+    background-color: var(--card);
+  }
+  @media (min-width: 1360px) {
+    .dsh-rail {
+      display: block;
+    }
+  }
+  @media (min-width: 1900px) {
+    .dsh-rail {
+      width: 320px;
+    }
+  }
+  @media (min-width: 2300px) {
+    .dsh-rail {
+      width: 360px;
+    }
+  }
+
+  .dsh-rail-inner {
+    position: sticky;
+    top: 3.5rem;
+    height: calc(100dvh - 3.5rem);
+    overflow-y: auto;
+  }
+
+  .dsh-rail-head {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem;
+  }
+
+  .dsh-rail-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .dsh-rail-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+
+  :global(.dsh-rail-badge) {
+    height: 1.25rem;
+    background-color: var(--muted);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-rail-sub {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.625;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-rail-dl {
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-color: var(--border);
+  }
+
+  .dsh-rail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .dsh-rail-dt {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-rail-dd {
+    font-size: 13px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground);
+  }
+
+  .dsh-rail-empty {
+    color: var(--muted-foreground);
+  }
+
+  .dsh-pulse-small {
+    display: inline-block;
+    height: 0.75rem;
+    width: 2rem;
+    animation: dsh-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 0.25rem;
+    background-color: var(--muted);
+    vertical-align: middle;
+  }
+
+  @keyframes dsh-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .dsh-rail-create {
+    border-top: 1px solid var(--border);
+    padding: 0.75rem;
+  }
+
+  :global(.dsh-rail-create-btn) {
+    height: 2rem;
+    width: 100%;
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    font-size: 13px;
+  }
+
+  .dsh-free-design {
+    border-top: 1px solid var(--border);
+  }
+
+  .dsh-free-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+  }
+
+  .dsh-shield {
+    margin-top: 0.125rem;
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: var(--radius);
+    background-color: color-mix(in oklab, var(--punch) 40%, transparent);
+    color: var(--ink);
+  }
+
+  :global(.dsh-shield-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .dsh-free-col {
+    min-width: 0;
+  }
+
+  .dsh-free-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+
+  .dsh-free-desc {
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.625;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-free-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-free-li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  :global(.dsh-check-icon) {
+    margin-top: 1px;
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    color: var(--foreground);
+  }
+
+  .dsh-preview-link {
+    border-top: 1px solid var(--border);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .dsh-preview-a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: calc(var(--radius) * 0.6);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--foreground);
+    outline-style: none;
+  }
+  .dsh-preview-a:hover {
+    text-decoration: underline;
+  }
+  .dsh-preview-a:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.dsh-preview-icon) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .dsh-rail-ad {
+    border-top: 1px solid var(--border);
+    padding: 1rem;
+  }
+
+  :global(.dsh-mobile-nav) {
+    left: 0;
+    top: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 18rem;
+    max-width: 85vw;
+    translate: 0 0;
+    gap: 0;
+    border-radius: 0;
+    padding: 0;
+
+  }
+  @media (min-width: 40rem) {
+    :global(.dsh-mobile-nav) {
+      max-width: 85vw;
+    }
+  }
+
+  .dsh-nav-sheet {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    background-color: var(--card);
+  }
+
+  .dsh-nav-sheet-head {
+    display: flex;
+    height: 3.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .dsh-close-btn {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    place-items: center;
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-close-btn:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .dsh-close-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.dsh-icon-x) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .dsh-nav-sheet-body {
+    flex: 1 1 0%;
+    overflow-y: auto;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .dsh-nav-sheet-foot {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding: 0.75rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .dsh-user-box {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    border-radius: calc(var(--radius) * 1.4);
+    background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+    padding: 0.75rem;
+  }
+
+  .dsh-user-avatar {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 9999px;
+    background-color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--punch);
+  }
+
+  .dsh-user-info {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .dsh-user-email {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  .dsh-user-plan {
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+
+  .dsh-logout-btn {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    place-items: center;
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-logout-btn:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .dsh-logout-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.dsh-mobile-create) {
+    left: 0;
+    top: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100%;
+    max-width: 92vw;
+    translate: 0 0;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 0;
+    padding: 0;
+
+  }
+  @media (min-width: 40rem) {
+    :global(.dsh-mobile-create) {
+      max-width: 360px;
+    }
+  }
+
+  .dsh-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    border-radius: var(--radius);
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-nav-link:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  @media (width < 64rem) {
+    .dsh-nav-link {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+    }
+  }
+
+  .dsh-nav-active {
+    background-color: var(--ink);
+    color: white;
+  }
+
+  .dsh-nav-idle {
+    color: var(--muted-foreground);
+  }
+  .dsh-nav-idle:hover {
+    background-color: color-mix(in oklab, var(--muted) 70%, transparent);
+    color: var(--foreground);
+  }
+
+  :global(.dsh-nav-icon) {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
+
+  .dsh-nav-icon-punch {
+    color: var(--punch);
+  }
+
+  .dsh-nav-icon-idle {
+    color: var(--muted-foreground);
+  }
+  :global(.dsh-nav-link:hover) :global(.dsh-nav-icon-idle) {
+    color: var(--foreground);
+  }
+
+  .dsh-section-label {
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    padding-bottom: 0.5rem;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+  }
+  :global(.dark) .dsh-section-label {
+    color: var(--muted-foreground);
+  }
+
+  .dsh-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .dsh-create-sec {
+    margin-top: 1.5rem;
+  }
+
+  .dsh-create-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .dsh-create-btn {
+    display: flex;
+    width: 100%;
+    cursor: pointer;
+    align-items: center;
+    gap: 0.625rem;
+    border-radius: var(--radius);
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-create-btn:hover {
+    background-color: color-mix(in oklab, var(--muted) 70%, transparent);
+    color: var(--foreground);
+  }
+  .dsh-create-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.dsh-create-icon) {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--muted-foreground);
+  }
+  :global(.dsh-create-btn:hover) :global(.dsh-create-icon),
+  :global(.dsh-create-link:hover) :global(.dsh-create-icon) {
+    color: var(--foreground);
+  }
+
+  .dsh-create-link {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    border-radius: var(--radius);
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-create-link:hover {
+    background-color: color-mix(in oklab, var(--muted) 70%, transparent);
+    color: var(--foreground);
+  }
+  .dsh-create-link:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  @media (width < 64rem) {
+    .dsh-create-link {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+    }
+  }
+
+  .dsh-admin-sec {
+    margin-top: 1.5rem;
+  }
+
+  .dsh-footer-link {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  .dsh-footer-link-a {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    border-radius: var(--radius);
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline-style: none;
+  }
+  .dsh-footer-link-a:hover {
+    background-color: color-mix(in oklab, var(--muted) 70%, transparent);
+    color: var(--foreground);
+  }
+  .dsh-footer-link-a:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+  @media (width < 64rem) {
+    .dsh-footer-link-a {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+    }
+  }
+</style>

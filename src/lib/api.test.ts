@@ -1,11 +1,15 @@
 import {
+  createGift,
   deleteLink,
+  fetchGifts,
   fetchGlobalAnalytics,
   fetchLinkAnalytics,
   fetchLinks,
   fetchQrSettings,
   fetchTrends,
   patchQrSettings,
+  redeemGift,
+  revokeGift,
   updateLink,
 } from './api';
 import { getAuthToken, setAuthToken } from './auth';
@@ -179,5 +183,72 @@ describe('fetchTrends', () => {
     );
     expect(thrown).toBeInstanceOf(Error);
     expect(thrown instanceof Error ? thrown.message : thrown).toBe('boom');
+  });
+});
+
+describe('gift calls', () => {
+  const TOKEN_IN_LINK = 'q3Vn0b8sT2xYw5LrC1dKpHjMfZa';
+
+  test('claiming sends the token in the body of a POST, never in the address', async () => {
+    setAuthToken(TOKEN);
+    const answer = { plan: 'plus', until: '2026-11-22T00:00:00.000Z', granted: true };
+    responder = () => json(200, answer);
+
+    expect(await redeemGift(TOKEN_IN_LINK)).toEqual(answer);
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0]?.url).toBe('/api/gifts/redeem');
+    expect(captured[0]?.init?.method).toBe('POST');
+    expect(JSON.parse(String(captured[0]?.init?.body))).toEqual({ token: TOKEN_IN_LINK });
+    expect(new Headers(captured[0]?.init?.headers).get('Authorization')).toBe(`Bearer ${TOKEN}`);
+  });
+
+  test('a link the server refuses is null, not an error: it is an answer, and there is nothing to retry', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(404, { error: 'This gift link is not valid.' });
+
+    expect(await redeemGift(TOKEN_IN_LINK)).toBeNull();
+  });
+
+  test('a server fault is an error, so the page can offer another try', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(500, { error: 'boom' });
+
+    const thrown = await redeemGift(TOKEN_IN_LINK).then(
+      () => null,
+      (err: unknown) => err,
+    );
+    expect(thrown instanceof Error ? thrown.message : thrown).toBe('boom');
+  });
+
+  test('making a gift sends the fields as given and returns the link that exists only in that answer', async () => {
+    setAuthToken(TOKEN);
+    const made = { id: 'gft-abc12345', link: `https://quickqr.app/gift#${TOKEN_IN_LINK}`, token: TOKEN_IN_LINK };
+    responder = () => json(201, made);
+
+    expect(await createGift({ plan: 'pro', days: 14, uses: 3, link_days: 7, note: 'for Sam' })).toEqual(made);
+
+    expect(captured[0]?.url).toBe('/api/admin/gifts');
+    expect(captured[0]?.init?.method).toBe('POST');
+    expect(JSON.parse(String(captured[0]?.init?.body))).toEqual({ plan: 'pro', days: 14, uses: 3, link_days: 7, note: 'for Sam' });
+  });
+
+  test('the list is the gifts the server sent, and none when it sent none', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(200, { gifts: [{ id: 'gft-abc12345' }] });
+    expect(await fetchGifts()).toEqual([{ id: 'gft-abc12345' }]);
+
+    responder = () => json(200, {});
+    expect(await fetchGifts()).toEqual([]);
+  });
+
+  test('revoking posts to the gift by its id', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(200, { id: 'gft-abc12345', status: 'revoked' });
+
+    expect((await revokeGift('gft-abc12345')).status).toBe('revoked');
+
+    expect(captured[0]?.url).toBe('/api/admin/gifts/gft-abc12345/revoke');
+    expect(captured[0]?.init?.method).toBe('POST');
   });
 });

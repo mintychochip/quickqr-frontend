@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { cn } from '@/lib/utils';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
 
@@ -15,13 +14,40 @@
 <div
   data-slot="card"
   data-size={size}
-  class={cn(
-    'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl bg-card py-(--card-spacing) text-sm text-card-foreground shadow-[0_18px_50px_-32px_rgba(17,17,19,0.55)] ring-1 ring-black/5 dark:shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] dark:ring-white/10 [--card-spacing:--spacing(4)]',
-    className,
-  )}
+  class={['ui-card', className].filter(Boolean).join(' ')}
   {...restProps}
 >
   {#if children}
     {@render children()}
   {/if}
 </div>
+
+<style>
+  /* See docs/superpowers/specs/2026-10-23-tailwind-exit-design.md §3 and §3.1: primitives live in the
+     `components` layer, wrapped in `:global(:where(…))`, so a class handed in through `class` always wins. */
+  @layer components {
+    :global(:where(.ui-card)) {
+      --card-spacing: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: var(--card-spacing);
+      overflow: hidden;
+      padding-block: var(--card-spacing);
+      border-radius: calc(var(--radius) * 1.8);
+      background-color: var(--card);
+      color: var(--card-foreground);
+      font-size: 0.875rem;
+      line-height: calc(1.25 / 0.875);
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, black 5%, transparent),
+        0 18px 50px -32px rgb(17 17 19 / 0.55);
+    }
+
+  }
+
+  :global(.dark :where(.ui-card)) {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, white 10%, transparent),
+      0 18px 50px -32px rgb(0 0 0 / 0.9);
+  }
+</style>

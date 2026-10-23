@@ -35,6 +35,7 @@
     displayValue?: string;
     /** Copy, share, and open only after the address is real. */
     showLinkActions?: boolean;
+    class?: string;
   };
 
   let {
@@ -50,7 +51,9 @@
     inline = false,
     displayValue,
     showLinkActions = true,
+    class: className = '',
   }: Props = $props();
+
 
   const resolvedStyle = $derived(
     style ??
@@ -140,7 +143,7 @@
   <canvas
     bind:this={canvasEl}
     data-testid="qr-canvas"
-    class="block shrink-0 rounded-sm [image-rendering:pixelated]"
+    class={cn('qr-canvas-inline', className)}
     style:width="{size}px"
     style:height="{size}px"
   ></canvas>
@@ -148,26 +151,21 @@
   <!-- The card is as wide as the code plus the plain frame's padding and border, so the rows line up with the tile. -->
   <div
     data-testid="qr-card"
-    class="mx-auto flex w-full flex-col gap-2"
+    class={cn('qr-canvas', className)}
     style:max-width="{size + 34}px"
   >
     <div
-      class={cn('flex w-full items-center justify-center', frameClass)}
+      class={cn('qr-canvas-frame', frameClass)}
       style:background-color={resolvedStyle.bgColor}
     >
       <canvas
         bind:this={canvasEl}
         data-testid="qr-canvas"
-        class="mx-auto block aspect-square h-auto w-full rounded-lg"
+        class="qr-canvas-symbol"
       ></canvas>
     </div>
 
-    <div
-      class={cn(
-        'flex h-9 min-w-0 items-center gap-0.5 rounded-lg border border-border bg-muted/50 pl-3',
-        showLinkActions ? 'pr-1' : 'pr-3',
-      )}
-    >
+    <div class={cn('qr-canvas-actions', showLinkActions ? 'qr-canvas-actions--with' : 'qr-canvas-actions--plain')}>
       {#if showLinkActions && webLink}
         <a
           data-testid="qr-encoded-value"
@@ -175,7 +173,7 @@
           target="_blank"
           rel="noopener noreferrer"
           title="Open {shownValue}"
-          class="min-w-0 flex-1 truncate rounded-sm font-mono text-[11px] text-muted-foreground underline-offset-2 outline-none transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+          class="qr-canvas-value-link"
         >
           {shownValue}
         </a>
@@ -183,7 +181,7 @@
         <span
           data-testid="qr-encoded-value"
           title={shownValue}
-          class="min-w-0 flex-1 truncate font-mono text-[11px] text-muted-foreground"
+          class="qr-canvas-value"
         >
           {shownValue}
         </span>
@@ -193,15 +191,15 @@
           type="button"
           variant="ghost"
           size="icon-sm"
-          class="text-muted-foreground"
+          class="qr-canvas-action-btn"
           aria-label={webLink ? 'Copy link' : 'Copy'}
           title={webLink ? 'Copy link' : 'Copy'}
           onclick={copyLink}
         >
           {#if copiedLink}
-            <Check class="size-3.5 text-green-600" />
+            <Check class="qr-canvas-check-icon" />
           {:else}
-            <Copy class="size-3.5" />
+            <Copy class="qr-canvas-action-icon" />
           {/if}
         </Button>
         {#if webLink}
@@ -209,33 +207,178 @@
             type="button"
             variant="ghost"
             size="icon-sm"
-            class="text-muted-foreground"
+            class="qr-canvas-action-btn"
             aria-label="Copy share link"
             title="Copy share link (unfurls in Discord, embeds in iframes)"
             data-testid="copy-qr-share"
             onclick={copySharePage}
           >
             {#if copiedShare}
-              <Check class="size-3.5 text-green-600" />
+              <Check class="qr-canvas-check-icon" />
             {:else}
-              <Code2 class="size-3.5" />
+              <Code2 class="qr-canvas-action-icon" />
             {/if}
           </Button>
         {/if}
       {/if}
     </div>
 
-    <div class="grid grid-cols-2 gap-2">
+    <div class="qr-canvas-buttons">
       <Button type="button" size="lg" aria-label="Download PNG" onclick={downloadPNG}>
-        <Download class="size-3.5" />
+        <Download class="qr-canvas-download-icon" />
         PNG
       </Button>
       <Button type="button" size="lg" variant="outline" aria-label="Download SVG" onclick={downloadSVG}>
-        <Download class="size-3.5" />
+        <Download class="qr-canvas-download-icon" />
         SVG
       </Button>
     </div>
 
-    <span class="sr-only" role="status">{copyStatus}</span>
+    <span class="qr-canvas-sr-only" role="status">{copyStatus}</span>
   </div>
 {/if}
+
+<style>
+  @layer components {
+    .qr-canvas-inline {
+      display: block;
+      flex-shrink: 0;
+      border-radius: calc(var(--radius) * 0.6);
+      image-rendering: pixelated;
+    }
+
+    .qr-canvas {
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .qr-canvas-frame {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-canvas-symbol {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      aspect-ratio: 1 / 1;
+      height: auto;
+      width: 100%;
+      border-radius: var(--radius);
+    }
+
+    .qr-canvas-actions {
+      display: flex;
+      height: 2.25rem;
+      min-width: 0;
+      align-items: center;
+      gap: 0.125rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+      padding-left: 0.75rem;
+    }
+
+    .qr-canvas-actions--with {
+      padding-right: 0.25rem;
+    }
+
+    .qr-canvas-actions--plain {
+      padding-right: 0.75rem;
+    }
+
+    .qr-canvas-value-link,
+    .qr-canvas-value {
+      min-width: 0;
+      flex: 1 1 0%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .qr-canvas-value-link {
+      border-radius: calc(var(--radius) * 0.6);
+      text-underline-offset: 2px;
+      outline-style: none;
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+
+    .qr-canvas-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+  }
+
+  :global(.qr-canvas-action-btn) {
+    color: var(--muted-foreground);
+  }
+
+
+  .qr-canvas-value-link:hover {
+    color: var(--foreground);
+    text-decoration-line: underline;
+  }
+
+  .qr-canvas-value-link:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.qr-canvas-check-icon) {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: #16a34a;
+  }
+
+  :global(.qr-canvas-action-icon),
+  :global(.qr-canvas-download-icon) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .qr-canvas-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .qr-frame-plain {
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 1.4);
+    padding: 1rem;
+  }
+
+  .qr-frame-soft {
+    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    border-radius: calc(var(--radius) * 1.8);
+    padding: 1.25rem;
+    box-shadow:
+      0 1px 3px 0 rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .qr-frame-ring {
+    border: 2px solid color-mix(in oklab, var(--primary) 25%, transparent);
+    border-radius: calc(var(--radius) * 1.8);
+    padding: 1.25rem;
+    box-shadow: 0 8px 30px -12px rgb(37 99 235 / 0.35);
+  }
+
+</style>
+

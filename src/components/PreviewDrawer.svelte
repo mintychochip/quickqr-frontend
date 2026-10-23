@@ -45,23 +45,23 @@
 
 <Dialog
   bind:open
-  class="left-auto right-0 top-0 h-dvh max-h-dvh w-full max-w-full translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none p-0 ring-0 motion-safe:animate-in motion-safe:slide-in-from-right-4 motion-safe:duration-200 sm:max-w-[560px]"
+  class="previewdrawer-dialog"
 >
   {#snippet children({ close })}
-    <div class="flex h-full min-h-0 flex-col bg-card" data-testid="preview-drawer">
-      <header class="flex shrink-0 items-start gap-3 border-b border-border px-5 py-4">
-        <div class="min-w-0 flex-1">
-          <p class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+    <div class="previewdrawer-content" data-testid="preview-drawer">
+      <header class="previewdrawer-header">
+        <div class="previewdrawer-header-main">
+          <p class="previewdrawer-label">
             {label}
           </p>
-          <h2 class="mt-1 truncate text-lg font-semibold tracking-[-0.02em] text-foreground">
+          <h2 class="previewdrawer-title">
             {title || fallback}
           </h2>
-          <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="rounded-md bg-muted px-1.5 py-px font-mono text-[10px] text-muted-foreground">
+          <div class="previewdrawer-meta">
+            <span class="previewdrawer-code font-mono">
               /r/{code}
             </span>
-            <span class="text-xs text-muted-foreground">
+            <span class="previewdrawer-scans">
               {scans.toLocaleString()} {scans === 1 ? 'scan' : 'scans'}
             </span>
           </div>
@@ -70,55 +70,327 @@
           type="button"
           bind:this={closeButton}
           aria-label="Close preview"
-          class="grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+          class="previewdrawer-close"
           onclick={close}
         >
-          <X class="size-4" />
+          <X class="previewdrawer-x-icon" />
         </button>
       </header>
 
-      <div class="flex min-h-0 flex-1 flex-col bg-muted/40">
-        <div class="flex shrink-0 items-center justify-between px-5 py-2 max-sm:hidden">
-          <span class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <div class="previewdrawer-body">
+        <div class="previewdrawer-toolbar">
+          <span class="previewdrawer-toolbar-label">
             Mobile preview
           </span>
-          <span class="font-mono text-[10px] text-muted-foreground">390 px</span>
+          <span class="previewdrawer-toolbar-size font-mono">390 px</span>
         </div>
-        <div class="flex min-h-0 flex-1 items-center justify-center px-4 pb-4 max-sm:px-0 max-sm:pb-0">
-          <div
-            class="relative h-full w-full max-w-[402px] overflow-hidden rounded-[2.25rem] border-[6px] border-ink bg-white shadow-[0_24px_50px_-24px_rgba(17,17,19,0.45)] max-sm:max-w-full max-sm:rounded-none max-sm:border-0 max-sm:shadow-none"
-          >
+        <div class="previewdrawer-viewport">
+          <div class="previewdrawer-phone">
             {#if loading}
-              <div class="absolute inset-0 z-10 animate-pulse bg-muted" aria-hidden="true"></div>
+              <div class="previewdrawer-loading" aria-hidden="true"></div>
             {/if}
             <iframe
               title={`${title || fallback} mobile preview`}
               src={href}
-              class="h-full w-full border-0 bg-white"
+              class="previewdrawer-iframe"
               onload={() => (loading = false)}
             ></iframe>
             <div
-              class="pointer-events-none absolute left-1/2 top-2 z-20 h-1.5 w-16 -translate-x-1/2 rounded-full bg-ink/15 max-sm:hidden"
+              class="previewdrawer-notch-top"
               aria-hidden="true"
             ></div>
             <div
-              class="pointer-events-none absolute bottom-2 left-1/2 z-20 h-1 w-20 -translate-x-1/2 rounded-full bg-ink/20 max-sm:hidden"
+              class="previewdrawer-notch-bottom"
               aria-hidden="true"
             ></div>
           </div>
         </div>
       </div>
 
-      <footer class="flex shrink-0 gap-2 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <Button href={editHref} variant="outline" class="h-10 flex-1 border-border bg-card">
-          <Pencil class="size-4" />
+      <footer class="previewdrawer-footer">
+        <Button href={editHref} variant="outline" class="previewdrawer-edit-btn">
+          <Pencil class="previewdrawer-btn-icon" />
           Edit {kind === 'menu' ? 'menu' : 'page'}
         </Button>
-        <Button href={href} target="_blank" rel="noopener noreferrer" class="h-10 flex-1">
-          <ExternalLink class="size-4" />
+        <Button href={href} target="_blank" rel="noopener noreferrer" class="previewdrawer-open-btn">
+          <ExternalLink class="previewdrawer-btn-icon" />
           Open in new tab
         </Button>
       </footer>
     </div>
   {/snippet}
 </Dialog>
+<style>
+
+  @layer components {
+    :global(.previewdrawer-dialog) {
+      left: auto;
+      right: 0;
+      top: 0;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 100%;
+      max-width: 100%;
+      translate: 0 0;
+      gap: 0;
+      overflow: hidden;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    .previewdrawer-content {
+      display: flex;
+      height: 100%;
+      min-height: 0;
+      flex-direction: column;
+      background-color: var(--card);
+    }
+
+    .previewdrawer-header {
+      display: flex;
+      flex-shrink: 0;
+      align-items: flex-start;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+    }
+
+    .previewdrawer-header-main {
+      min-width: 0;
+      flex: 1 1 0%;
+    }
+
+    .previewdrawer-label {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted-foreground);
+    }
+
+    .previewdrawer-title {
+      margin-top: 0.25rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--foreground);
+    }
+
+    .previewdrawer-meta {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .previewdrawer-code {
+      border-radius: calc(var(--radius) * 0.8);
+      background-color: var(--muted);
+      padding-left: 0.375rem;
+      padding-right: 0.375rem;
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    .previewdrawer-scans {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .previewdrawer-close {
+      display: grid;
+      width: 2rem;
+      height: 2rem;
+      flex-shrink: 0;
+      cursor: pointer;
+      place-items: center;
+      border-radius: calc(var(--radius) * 1.4);
+      color: var(--muted-foreground);
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      outline-style: none;
+    }
+
+    :global(.previewdrawer-x-icon) {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .previewdrawer-body {
+      display: flex;
+      min-height: 0;
+      flex: 1 1 0%;
+      flex-direction: column;
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+
+    .previewdrawer-toolbar {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1.25rem;
+    }
+
+    .previewdrawer-toolbar-label {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted-foreground);
+    }
+
+    .previewdrawer-toolbar-size {
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    .previewdrawer-viewport {
+      display: flex;
+      min-height: 0;
+      flex: 1 1 0%;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .previewdrawer-phone {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      max-width: 402px;
+      overflow: hidden;
+      border-radius: 2.25rem;
+      border: 6px solid var(--ink);
+      background-color: white;
+      box-shadow: 0 24px 50px -24px rgba(17, 17, 19, 0.45);
+    }
+
+    .previewdrawer-iframe {
+      height: 100%;
+      width: 100%;
+      border: 0;
+      background-color: white;
+    }
+
+    .previewdrawer-notch-top {
+      position: absolute;
+      left: 50%;
+      top: 0.5rem;
+      z-index: 20;
+      height: 0.375rem;
+      width: 4rem;
+      transform: translateX(-50%);
+      border-radius: 9999px;
+      background-color: rgb(17 17 19 / 0.15);
+      pointer-events: none;
+    }
+
+    .previewdrawer-notch-bottom {
+      position: absolute;
+      left: 50%;
+      bottom: 0.5rem;
+      z-index: 20;
+      height: 0.25rem;
+      width: 5rem;
+      transform: translateX(-50%);
+      border-radius: 9999px;
+      background-color: rgb(17 17 19 / 0.2);
+      pointer-events: none;
+    }
+
+    .previewdrawer-loading {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background-color: var(--muted);
+      animation: previewdrawer-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .previewdrawer-footer {
+      display: flex;
+      flex-shrink: 0;
+      gap: 0.5rem;
+      border-top: 1px solid var(--border);
+      padding: 0.75rem;
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    :global(.previewdrawer-edit-btn),
+    :global(.previewdrawer-open-btn) {
+      height: 2.5rem;
+      flex: 1 1 0%;
+    }
+
+    :global(.previewdrawer-edit-btn) {
+      border-color: var(--border);
+      background-color: var(--card);
+    }
+
+    :global(.previewdrawer-btn-icon) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  /* unlayered: hover, focus, media, keyframes */
+  .previewdrawer-close:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  .previewdrawer-close:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  @media (width < 40rem) {
+    .previewdrawer-phone {
+      max-width: 100%;
+      border-radius: 0;
+      border-width: 0;
+      box-shadow: none;
+    }
+
+    .previewdrawer-toolbar,
+    .previewdrawer-notch-top,
+    .previewdrawer-notch-bottom {
+      display: none;
+    }
+
+    .previewdrawer-viewport {
+      padding-left: 0;
+      padding-right: 0;
+      padding-bottom: 0;
+    }
+  }
+
+  @keyframes previewdrawer-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  :global(.previewdrawer-dialog) {
+    left: auto !important;
+    right: 0 !important;
+    top: 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    translate: 0 0 !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  @media (min-width: 40rem) {
+    :global(.previewdrawer-dialog) {
+      max-width: 560px !important;
+    }
+  }
+</style>

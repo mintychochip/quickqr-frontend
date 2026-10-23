@@ -233,33 +233,33 @@
   }
 </script>
 
-<div class="w-full space-y-2">
+<div class="qrsa-root">
   {#if materials.length > 0}
-    <ul data-testid="style-context-list" class="flex gap-1.5 overflow-x-auto">
+    <ul data-testid="style-context-list" class="qrsa-materials">
       {#each materials as item (item.id)}
         <li
           class={dock
-            ? 'flex shrink-0 items-center gap-1 rounded-full bg-white/10 py-0.5 pr-1 pl-1 text-[11px] text-white'
-            : 'flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted py-0.5 pr-1 pl-1 text-[11px] text-foreground'}
+            ? 'qrsa-material-item qrsa-material-item-dock'
+            : 'qrsa-material-item'}
         >
           {#if item.preview}
-            <img src={item.preview} alt="" class="size-5 rounded-full object-cover" />
+            <img src={item.preview} alt="" class="qrsa-material-thumb" />
           {/if}
-          <span class="max-w-[8rem] truncate">{item.name}</span>
+          <span class="qrsa-material-name qrsa-truncate">{item.name}</span>
           <button
             type="button"
-            class="cursor-pointer rounded-full p-0.5 text-white/70 hover:text-white"
+            class="qrsa-remove-btn"
             aria-label={`Remove ${item.name}`}
             onclick={() => (materials = materials.filter((entry) => entry.id !== item.id))}
           >
-            <X class="size-3" />
+            <X class="qrsa-icon-remove" />
           </button>
         </li>
       {/each}
     </ul>
   {/if}
   <form
-    class="flex gap-2"
+    class="qrsa-form"
     onsubmit={(e) => {
       e.preventDefault();
       applyPrompt(prompt);
@@ -268,7 +268,7 @@
     <input
       bind:this={fileInput}
       type="file"
-      class="sr-only"
+      class="qrsa-file-input"
       accept="image/png,image/jpeg,image/gif,application/pdf,.pdf,.txt,.md,text/plain"
       multiple
       data-testid="style-context-file"
@@ -278,16 +278,16 @@
       type="button"
       variant="outline"
       size="icon"
-      class={dock ? 'size-9 shrink-0 bg-white text-ink hover:bg-white/85' : ''}
+      class={dock ? 'qrsa-attach-btn' : ''}
       aria-label="Attach photo, note, or PDF"
       onclick={() => fileInput?.click()}
     >
-      <Paperclip class="size-4" />
+      <Paperclip class="qrsa-icon-attach" />
     </Button>
     <Input
       bind:value={prompt}
       placeholder="Describe a look or paste a public URL"
-      class={dock ? 'h-9 flex-1 bg-white text-ink placeholder:text-muted-foreground md:text-sm' : 'flex-1'}
+      class={dock ? 'qrsa-prompt-input qrsa-prompt-input-dock' : 'qrsa-prompt-input'}
       aria-label="QR style prompt"
       onfocus={() => (promptFocused = true)}
       onblur={() => (promptFocused = false)}
@@ -296,31 +296,31 @@
       type="button"
       variant={listening ? 'default' : 'outline'}
       size="icon"
-      class={dock && listening ? 'bg-punch text-ink hover:bg-punch/80' : ''}
+      class={dock && listening ? 'qrsa-mic-active' : ''}
       onclick={toggleListen}
       aria-label={listening ? 'Stop listening' : 'Speak style'}
       aria-pressed={listening}
     >
       {#if listening}
-        <MicOff class="size-4" />
+        <MicOff class="qrsa-icon-mic-off" />
       {:else}
-        <Mic class="size-4" />
+        <Mic class="qrsa-icon-mic" />
       {/if}
     </Button>
     <Button
       type="submit"
       disabled={parsing || (!prompt.trim() && materials.length === 0)}
-      class={dock ? 'h-9 bg-punch text-ink hover:bg-punch/80' : ''}
+      class={dock ? 'qrsa-submit-btn' : ''}
     >
       {parsing ? 'Thinking…' : 'Apply'}
     </Button>
   </form>
 
   {#if voiceError}
-    <p class="text-xs text-destructive">{voiceError}</p>
+    <p class="qrsa-error">{voiceError}</p>
   {/if}
   {#if prompted && lastSummary}
-    <p class={dock ? 'text-xs text-white/75' : 'text-xs text-muted-foreground'}>
+    <p class={dock ? 'qrsa-applied qrsa-applied-dock' : 'qrsa-applied'}>
       Applied ({engineLabel === 'agent'
         ? 'agent'
         : engineLabel === 'jev'
@@ -328,15 +328,15 @@
           : engineLabel === 'llm'
             ? 'LLM'
             : 'decision model'}):{' '}
-      <span class={dock ? 'font-medium text-punch' : 'font-medium text-foreground'}>{lastSummary}</span>
+      <span class={dock ? 'qrsa-applied-summary qrsa-applied-summary-dock' : 'qrsa-applied-summary'}>{lastSummary}</span>
     </p>
   {/if}
 
   {#if !dock || promptFocused || prompt.trim()}
   <div
     class={dock
-      ? 'flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-      : 'flex flex-wrap gap-1.5'}
+      ? 'qrsa-chips qrsa-chips-dock'
+      : 'qrsa-chips qrsa-chips-wrap'}
   >
     {#each STYLE_PROMPT_CHIPS as chip (chip)}
       <button
@@ -347,8 +347,8 @@
           applyPrompt(chip);
         }}
         class={dock
-          ? 'shrink-0 cursor-pointer rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] text-white/85 transition-colors hover:bg-white/20 hover:text-white'
-          : 'cursor-pointer rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground'}
+          ? 'qrsa-chip qrsa-chip-dock'
+          : 'qrsa-chip'}
       >
         {chip}
       </button>
@@ -356,3 +356,224 @@
   </div>
   {/if}
 </div>
+
+<style>
+@layer components {
+	.qrsa-root {
+		width: 100%;
+	}
+
+	.qrsa-root > * + * {
+		margin-top: 0.5rem;
+	}
+
+	.qrsa-materials {
+		display: flex;
+		gap: 0.375rem;
+		overflow-x: auto;
+	}
+
+	.qrsa-material-item {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.25rem;
+		border-radius: 9999px;
+		padding-block: 0.125rem;
+		padding-inline: 0.25rem;
+		font-size: 11px;
+	}
+
+	.qrsa-material-item-dock {
+		background-color: rgb(255 255 255 / 0.1);
+		color: white;
+	}
+
+	.qrsa-material-item:not(.qrsa-material-item-dock) {
+		border: 1px solid var(--border);
+		background-color: var(--muted);
+		color: var(--foreground);
+	}
+
+	.qrsa-material-thumb {
+		width: 1.25rem;
+		height: 1.25rem;
+		border-radius: 9999px;
+		object-fit: cover;
+	}
+
+	.qrsa-material-name {
+		max-width: 8rem;
+	}
+
+	.qrsa-truncate {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.qrsa-form {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.qrsa-file-input {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	.qrsa-error {
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: var(--destructive);
+	}
+
+	.qrsa-applied {
+		font-size: 0.75rem;
+		line-height: 1rem;
+	}
+
+	.qrsa-applied-dock {
+		color: rgb(255 255 255 / 0.75);
+	}
+
+	.qrsa-applied:not(.qrsa-applied-dock) {
+		color: var(--muted-foreground);
+	}
+
+	.qrsa-applied-summary {
+		font-weight: 500;
+	}
+
+	.qrsa-applied-summary-dock {
+		color: var(--punch);
+	}
+
+	.qrsa-applied-summary:not(.qrsa-applied-summary-dock) {
+		color: var(--foreground);
+	}
+
+	.qrsa-chips {
+		display: flex;
+		gap: 0.375rem;
+	}
+
+	.qrsa-chips-wrap {
+		flex-wrap: wrap;
+	}
+
+	.qrsa-chip {
+		cursor: pointer;
+		border-radius: 9999px;
+		padding-inline: 0.625rem;
+		padding-block: 0.25rem;
+		font-size: 11px;
+		transition: color, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.qrsa-chip-dock {
+		flex-shrink: 0;
+		border: 1px solid rgb(255 255 255 / 0.15);
+		background-color: rgb(255 255 255 / 0.1);
+		color: rgb(255 255 255 / 0.85);
+	}
+
+	.qrsa-chip:not(.qrsa-chip-dock) {
+		border: 1px solid var(--border);
+		background-color: var(--background);
+		color: var(--muted-foreground);
+	}
+}
+
+:global(.qrsa-prompt-input) {
+	flex: 1;
+}
+
+:global(.qrsa-attach-btn) {
+	width: 2.25rem;
+	height: 2.25rem;
+	flex-shrink: 0;
+	background-color: white;
+	color: var(--ink);
+}
+
+:global(.qrsa-attach-btn):hover {
+	background-color: rgb(255 255 255 / 0.85);
+}
+
+:global(.qrsa-prompt-input-dock) {
+	height: 2.25rem;
+	background-color: white;
+	color: var(--ink);
+}
+
+:global(.qrsa-prompt-input-dock)::placeholder {
+	color: var(--muted-foreground);
+}
+
+@media (min-width: 48rem) {
+	:global(.qrsa-prompt-input-dock) {
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+	}
+}
+
+:global(.qrsa-mic-active) {
+	background-color: var(--punch);
+	color: var(--ink);
+}
+
+:global(.qrsa-mic-active):hover {
+	background-color: color-mix(in oklab, var(--punch) 80%, transparent);
+}
+
+:global(.qrsa-submit-btn) {
+	height: 2.25rem;
+	background-color: var(--punch);
+	color: var(--ink);
+}
+
+:global(.qrsa-submit-btn):hover {
+	background-color: color-mix(in oklab, var(--punch) 80%, transparent);
+}
+
+:global(.qrsa-icon-attach),
+:global(.qrsa-icon-mic),
+:global(.qrsa-icon-mic-off) {
+	width: 1rem;
+	height: 1rem;
+}
+
+:global(.qrsa-icon-remove) {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+
+:global(.qrsa-chips-dock) {
+	overflow-x: auto;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+:global(.qrsa-chips-dock)::-webkit-scrollbar {
+	display: none;
+}
+
+.qrsa-remove-btn {
+	cursor: pointer;
+	border-radius: 9999px;
+	padding: 0.125rem;
+	color: rgb(255 255 255 / 0.7);
+}
+
+.qrsa-remove-btn:hover {
+	color: white;
+}
+</style>

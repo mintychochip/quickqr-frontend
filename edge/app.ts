@@ -1,6 +1,7 @@
 import type { Fetch } from './http';
 import { registerAuthRoutes } from './routes/auth';
 import { registerEmbedRoutes } from './routes/embed';
+import { registerGiftRoutes } from './routes/gifts';
 import { registerHostedRoutes } from './routes/hosted';
 import { registerLinkRoutes } from './routes/links';
 import { registerQrRoutes } from './routes/qr';
@@ -21,10 +22,11 @@ const platform: AppDeps = { fetch: (input, init) => fetch(input, init), now: () 
 export function createApp(deps: AppDeps = platform): Router {
   const authenticate: Authenticator = async (env, token) => {
     const user = await userFromToken(env.DB, token, deps.now());
-    return user ? { userId: user.id, kind: 'session' } : null;
+    return user ? { userId: user.id, email: user.email, kind: 'session' } : null;
   };
   const router = new Router(authenticate);
   registerAuthRoutes(router, deps);
+  registerGiftRoutes(router, deps);
   registerLinkRoutes(router, deps);
   registerHostedRoutes(router, deps);
   registerQrRoutes(router, deps);

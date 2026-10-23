@@ -18,6 +18,7 @@
     { href: '/dashboard', label: 'Dashboard' },
     { href: docsHref, label: 'Docs' },
     { href: '/#preview', label: 'Redirect preview' },
+    { href: '/#pricing', label: 'Pricing' },
   ];
 
   const legalLinks: { key: LegalModalType; label: string }[] = [
@@ -40,29 +41,29 @@
   };
 </script>
 
-<footer class="px-6 pt-12 md:px-10">
-  <div class="mx-auto max-w-[1120px]">
-    <div class="flex flex-col gap-10 md:flex-row md:items-start md:justify-between md:gap-16">
-      <div class="max-w-xs">
-        <a href="/" class="inline-flex items-center gap-2 text-left text-foreground" aria-label="quickqr.app home">
-          <Logo wordmarkClass="text-[18px]" />
+<footer class="footer">
+  <div class="footer-shell">
+    <div class="footer-top">
+      <div class="footer-brand-col">
+        <a href="/" class="footer-logo-link" aria-label="quickqr.app home">
+          <Logo wordmarkClass="footer-wordmark-size" />
         </a>
-        <p class="mt-3 text-[15px] font-medium leading-relaxed text-muted-foreground">
+        <p class="footer-brand-desc">
           Free dynamic QR codes. No subscription cliffs on printed links.
         </p>
-        <div class="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium text-foreground">
-          <span class="size-1.5 rounded-full bg-punch" aria-hidden="true"></span>
+        <div class="footer-status">
+          <span class="footer-status-dot" aria-hidden="true"></span>
           Gateways operational
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-12 sm:gap-16">
+      <div class="footer-links-wrap">
         <div>
-          <p class="text-[12px] font-semibold uppercase tracking-wider text-foreground">Product</p>
-          <ul class="mt-3 space-y-2 text-[14px] text-muted-foreground">
+          <p class="footer-section-title">Product</p>
+          <ul class="footer-list">
             {#each productLinks as { href, label } (href)}
               <li>
-                <a href={href} class="transition-colors hover:text-foreground">
+                <a href={href} class="footer-list-item-link">
                   {label}
                 </a>
               </li>
@@ -71,14 +72,14 @@
         </div>
 
         <div>
-          <p class="text-[12px] font-semibold uppercase tracking-wider text-foreground">Legal</p>
-          <ul class="mt-3 space-y-2 text-[14px] text-muted-foreground">
+          <p class="footer-section-title">Legal</p>
+          <ul class="footer-list">
             {#each legalLinks as { key, label } (key)}
               <li>
                 <button
                   type="button"
                   onclick={() => openLegal(key)}
-                  class="cursor-pointer transition-colors hover:text-foreground"
+                  class="footer-list-item-btn"
                 >
                   {label}
                 </button>
@@ -88,21 +89,21 @@
         </div>
 
         <div>
-          <p class="text-[12px] font-semibold uppercase tracking-wider text-foreground">Engine</p>
-          <ul class="mt-3 space-y-2 text-[14px] text-muted-foreground">
+          <p class="footer-section-title">Engine</p>
+          <ul class="footer-list">
             <li>
               <a
                 href="/healthz"
                 target="_blank"
                 rel="noreferrer"
-                class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
+                class="footer-engine-link"
               >
                 Go gateway
-                <ArrowUpRight class="size-3.5" />
+                <ArrowUpRight class="footer-engine-icon" />
               </a>
             </li>
             <li>
-              <a href="mailto:sponsor@quickqr2.app" class="transition-colors hover:text-foreground">
+              <a href="mailto:sponsor@quickqr2.app" class="footer-list-item-link">
                 Sponsor a slot
               </a>
             </li>
@@ -111,30 +112,28 @@
       </div>
     </div>
 
-    <p class="mt-10 max-w-2xl text-[12px] leading-relaxed text-muted-foreground">
-      <strong class="font-medium text-foreground">QR Code</strong> is a registered trademark of
-      <strong class="font-medium text-foreground">DENSO WAVE INCORPORATED</strong>. quickqr.app is not affiliated
+    <p class="footer-trademark">
+      <strong class="footer-strong">QR Code</strong> is a registered trademark of
+      <strong class="footer-strong">DENSO WAVE INCORPORATED</strong>. quickqr.app is not affiliated
       with or endorsed by DENSO WAVE INCORPORATED.
     </p>
 
-    <div
-      class="mt-8 flex flex-col gap-5 border-t border-border py-6 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <p class="text-[13px] leading-snug text-muted-foreground">
+    <div class="footer-bottom">
+      <p class="footer-copyright">
         <span>© {year}</span>
-        <a href="/" class="font-medium text-primary transition-opacity hover:opacity-80">
+        <a href="/" class="footer-copyright-link">
           quickqr.app
         </a>
-        <span aria-hidden="true" class="mx-1.5">·</span>
+        <span aria-hidden="true" class="footer-sep">·</span>
         <span>Zero-paywall redirects</span>
       </p>
 
-      <div class="flex flex-wrap items-center gap-4 text-muted-foreground">
+      <div class="footer-small-legal">
         {#each legalLinks.slice(0, 2) as { key, label } (key)}
           <button
             type="button"
             onclick={() => openLegal(key)}
-            class="cursor-pointer text-[13px] transition-colors hover:text-primary"
+            class="footer-small-legal-btn"
           >
             {label}
           </button>
@@ -143,11 +142,11 @@
     </div>
   </div>
 
-  <Dialog bind:open={dialogOpen} class="max-h-[80vh] overflow-y-auto text-sm">
+  <Dialog bind:open={dialogOpen} class="footer-dialog">
     {#snippet children({ close })}
       {#if activeModal}
-        <h2 class="font-heading text-base leading-none font-medium">{legalTitles[activeModal]}</h2>
-        <div class="space-y-3 text-muted-foreground">
+        <h2 class="footer-modal-title">{legalTitles[activeModal]}</h2>
+        <div class="footer-modal-body">
           {#if activeModal === 'privacy'}
             <p>
               <strong>Zero personal data harvesting:</strong> quickqr.app does not deploy persistent cookies,
@@ -183,10 +182,240 @@
             <p>quickqr.app is independent and unaffiliated with DENSO WAVE INCORPORATED.</p>
           {/if}
         </div>
-        <div class="flex justify-end pt-2">
+        <div class="footer-modal-close">
           <Button type="button" size="sm" onclick={close}>Close</Button>
         </div>
       {/if}
     {/snippet}
   </Dialog>
 </footer>
+
+<style>
+
+  @layer components {
+    .footer {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      padding-top: 3rem;
+    }
+
+    .footer-shell {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 1120px;
+    }
+
+    .footer-top {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .footer-brand-col {
+      max-width: 20rem;
+    }
+
+    .footer-logo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-align: left;
+      color: var(--foreground);
+    }
+
+    .footer-brand-desc {
+      margin-top: 0.75rem;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    .footer-status {
+      margin-top: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .footer-status-dot {
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 9999px;
+      background-color: var(--punch);
+    }
+
+    .footer-links-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+    }
+
+    .footer-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--foreground);
+    }
+
+    .footer-list {
+      margin-top: 0.75rem;
+      font-size: 14px;
+      line-height: calc(1.5 * 14px);
+    }
+
+    .footer-list > li + li {
+      margin-top: 0.5rem;
+    }
+
+    .footer-list-item-link,
+    .footer-list-item-btn {
+      color: var(--muted-foreground);
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .footer-engine-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 14px;
+      color: var(--muted-foreground);
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .footer-trademark {
+      margin-top: 2.5rem;
+      max-width: 42rem;
+      font-size: 12px;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    .footer-strong {
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .footer-bottom {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      padding-bottom: 1.5rem;
+    }
+
+    .footer-copyright {
+      font-size: 13px;
+      line-height: 1.375;
+      color: var(--muted-foreground);
+    }
+
+    .footer-copyright-link {
+      font-weight: 500;
+      color: var(--primary);
+      transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .footer-sep {
+      margin-left: 0.375rem;
+      margin-right: 0.375rem;
+    }
+
+    .footer-small-legal {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      color: var(--muted-foreground);
+    }
+
+    .footer-small-legal-btn {
+      cursor: pointer;
+      font-size: 13px;
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    :global(.footer-dialog) {
+      max-height: 80vh;
+      overflow-y: auto;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+
+    .footer-modal-title {
+      font-family: "Geist Variable", sans-serif;
+      font-size: 1rem;
+      line-height: 1;
+      font-weight: 500;
+    }
+
+    .footer-modal-body {
+      margin-top: 0.75rem;
+    }
+
+    .footer-modal-body > p + p {
+      margin-top: 0.75rem;
+    }
+
+    .footer-modal-close {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 0.5rem;
+    }
+  }
+
+  /* unlayered: hover, dark if any, responsive */
+  .footer-list-item-link:hover,
+  .footer-list-item-btn:hover,
+  .footer-engine-link:hover {
+    color: var(--foreground);
+  }
+
+  .footer-copyright-link:hover {
+    opacity: 0.8;
+  }
+
+  .footer-small-legal-btn:hover {
+    color: var(--primary);
+  }
+
+  @media (min-width: 48rem) {
+    .footer {
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+
+    .footer-top {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 4rem;
+    }
+
+    .footer-links-wrap {
+      gap: 4rem;
+    }
+
+    .footer-bottom {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  :global(.footer-wordmark-size) {
+    font-size: 18px;
+  }
+
+  :global(.footer-engine-icon) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+</style>

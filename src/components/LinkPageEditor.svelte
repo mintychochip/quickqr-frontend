@@ -140,9 +140,9 @@
 
 <section data-testid="link-page-editor">
   {#if !editingCode}
-    <div class="mb-6">
-      <h1 class="text-2xl font-semibold tracking-[-0.03em] text-foreground">New link page</h1>
-      <p class="mt-1.5 max-w-lg text-sm leading-relaxed text-muted-foreground">
+    <div class="link-page-editor-intro">
+      <h1 class="link-page-editor-title">New link page</h1>
+      <p class="link-page-editor-subtitle">
         Order online, call, map, reviews — one code opens them all, and you can change the list any time.
       </p>
     </div>
@@ -153,11 +153,11 @@
       <AlertDescription>{loadError}</AlertDescription>
     </Alert>
   {:else if loading}
-    <p class="text-sm text-muted-foreground">Loading link page…</p>
+    <p class="link-page-editor-loading">Loading link page…</p>
   {:else}
-    <form onsubmit={submit} class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-10">
-      <div class="min-w-0 space-y-4">
-        <div class="space-y-2">
+    <form onsubmit={submit} class="link-page-editor-form">
+      <div class="link-page-editor-form-main">
+        <div class="link-page-editor-field">
           <Label for="page-title">Page title</Label>
           <Input
             id="page-title"
@@ -165,20 +165,20 @@
             required
             bind:value={title}
             placeholder="Harbor Lunch"
-            class="h-11 text-base md:text-base"
+            class="link-page-editor-title-input"
           />
         </div>
 
-        <div class="space-y-4">
-          <div class="grid grid-cols-[1fr_1.4fr_auto] items-center gap-2">
+        <div class="link-page-editor-items">
+          <div class="link-page-editor-item-labels">
             <Label>Name</Label>
             <Label>URL</Label>
-            <span class="sr-only">Remove</span>
+            <span class="link-page-editor-sr-only">Remove</span>
           </div>
 
-          <div class="space-y-2">
+          <div class="link-page-editor-item-rows">
             {#each links as entry, i (entry.id)}
-              <div class="grid grid-cols-[1fr_1.4fr_auto] gap-2">
+              <div class="link-page-editor-item-row">
                 <Input
                   data-testid="page-link-name"
                   required
@@ -203,14 +203,14 @@
                   aria-label="Remove link"
                   onclick={() => removeLink(entry.id)}
                 >
-                  <Trash2 class="size-3.5" />
+                  <Trash2 class="link-page-editor-icon-sm" />
                 </Button>
               </div>
             {/each}
           </div>
 
-          <Button type="button" variant="outline" data-testid="page-add-link" onclick={addLink}>
-            <Plus class="size-3.5" />
+          <Button type="button" variant="outline" class="link-page-editor-add" data-testid="page-add-link" onclick={addLink}>
+            <Plus class="link-page-editor-icon-sm" />
             Add link
           </Button>
 
@@ -223,38 +223,38 @@
           {#if saved}
             <div
               data-testid="page-success"
-              class="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground"
+              class="link-page-editor-success"
             >
-              <Check class="size-4 text-green-600" />
+              <Check class="link-page-editor-success-icon" />
               <span>
                 Page live:{' '}
-                <strong class="font-mono text-foreground">/r/{saved.code}</strong>
+                <strong class="font-mono link-page-editor-code">/r/{saved.code}</strong>
               </span>
             </div>
             <Button
               type="submit"
               disabled={submitting}
-              class="h-10 w-full bg-punch text-ink hover:bg-punch/80"
+              class="link-page-editor-primary-action"
               data-testid="save-page"
             >
               <span>{submitting ? 'Saving...' : 'Save page'}</span>
-              <ArrowRight class="size-4" />
+              <ArrowRight class="link-page-editor-icon" />
             </Button>
           {:else}
             <Button
               type="submit"
               disabled={submitting}
-              class="h-10 w-full bg-punch text-ink hover:bg-punch/80"
+              class="link-page-editor-primary-action"
               data-testid="create-page"
             >
               <span>{submitting ? 'Creating...' : 'Create page QR'}</span>
-              <ArrowRight class="size-4" />
+              <ArrowRight class="link-page-editor-icon" />
             </Button>
           {/if}
         </div>
       </div>
 
-      <div class="w-full space-y-3">
+      <div class="link-page-editor-qr-side">
         <QRCanvas
           value={qrValue}
           displayValue={saved ? dynamicShortLink(window.location.origin, saved.code) : 'Not saved yet'}
@@ -266,18 +266,184 @@
         {#if saved}
           <Button
             type="button"
-            class="w-full bg-punch text-ink hover:bg-punch/80"
+            class="link-page-editor-primary-action"
             data-testid="scan-page"
             onclick={scanShownPage}
           >
-            <ScanLine class="size-4" />
+            <ScanLine class="link-page-editor-icon" />
             Scan page
           </Button>
           {#if scanError}
-            <p data-testid="scan-page-error" class="text-center text-sm text-destructive">{scanError}</p>
+            <p data-testid="scan-page-error" class="link-page-editor-scan-error">{scanError}</p>
           {/if}
         {/if}
       </div>
     </form>
   {/if}
 </section>
+<style>
+  @layer components {
+    .link-page-editor-intro {
+      margin-bottom: 1.5rem;
+    }
+
+    .link-page-editor-title {
+      font-size: 1.5rem;
+      line-height: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: var(--foreground);
+    }
+
+    .link-page-editor-subtitle {
+      margin-top: 0.375rem;
+      max-width: 32rem;
+      font-size: 0.875rem;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    .link-page-editor-loading {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+
+    .link-page-editor-form {
+      display: grid;
+      align-items: start;
+      row-gap: 1.5rem;
+      column-gap: 1.5rem;
+    }
+
+    .link-page-editor-form-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .link-page-editor-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .link-page-editor-items {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .link-page-editor-item-labels {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr auto;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .link-page-editor-item-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .link-page-editor-item-row {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr auto;
+      gap: 0.5rem;
+    }
+
+    :global(.link-page-editor-title-input) {
+      height: 2.75rem;
+      font-size: 1rem;
+    }
+
+    .link-page-editor-success {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    :global(.link-page-editor-success-icon) {
+      width: 1rem;
+      height: 1rem;
+      color: #16a34a;
+    }
+
+    .link-page-editor-code {
+      color: var(--foreground);
+    }
+
+    :global(.link-page-editor-primary-action) {
+      height: 2.5rem;
+      width: 100%;
+      background-color: var(--punch);
+      color: var(--ink);
+    }
+
+    .link-page-editor-qr-side {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .link-page-editor-scan-error {
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--destructive);
+    }
+
+    .link-page-editor-sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  }
+
+  /* unlayered: states, responsive etc */
+  :global(.link-page-editor-primary-action):hover {
+    background-color: color-mix(in oklab, var(--punch) 80%, transparent);
+  }
+
+  :global(.link-page-editor-icon-sm) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  :global(.link-page-editor-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  @media (min-width: 64rem) {
+    .link-page-editor-form {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      column-gap: 2.5rem;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    :global(.link-page-editor-title-input) {
+      font-size: 1rem;
+    }
+  }
+
+  :global(.link-page-editor-add) {
+    align-self: flex-start;
+    width: fit-content;
+  }
+
+</style>

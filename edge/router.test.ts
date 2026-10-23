@@ -11,9 +11,12 @@ const signedIn: Policy = { auth: 'any', class: 'read' };
 const sessionOnly: Policy = { auth: 'session', class: 'read' };
 const write: Policy = { auth: 'any', class: 'write', maxBody: 16 };
 
-// A token "good" resolves to user u1; anything else is not a session.
-const authenticate = async (_env: Env, token: string): Promise<Principal | null> =>
-  token === 'good' ? { userId: 'u1', kind: 'session' } : null;
+// A token "good" resolves to Ada (u1), "bob" to Bob (u2); anything else is not a session.
+const people: Record<string, Principal> = {
+  good: { userId: 'u1', email: 'ada@example.com', kind: 'session' },
+  bob: { userId: 'u2', email: 'bob@example.com', kind: 'session' },
+};
+const authenticate = async (_env: Env, token: string): Promise<Principal | null> => people[token] ?? null;
 
 function build(): Router {
   const r = new Router(authenticate);
@@ -175,5 +178,52 @@ describe('CORS', () => {
   test('is present on errors too', async () => {
     const res = await call(build(), '/nope', { headers: { Origin: 'https://example.org' } });
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://example.org');
+  });
+});
+
+describe('Router admin routes', () => {
+  const adminOnly: Policy = { auth: 'admin', class: 'write' };
+  let ran = 0;
+  const build = (): Router => {
+    ran = 0;
+    const r = new Router(authenticate);
+    r.handle('GET /admin/things', adminOnly, (c: Ctx) => {
+      ran += 1;
+      return Response.json({ user: c.principal?.email ?? null });
+    });
+    return r;
+  };
+  const callWith = (adminEmails: string | undefined, path: string, init: RequestInit = {}) =>
+    build().dispatch(new Request(`https://x.test${path}`, init), { ADMIN_EMAILS: adminEmails } as Env, exec);
+
+  test('nobody and a stale token get the sign-in 401, whoever the administrators are', async () => {
+    for (const init of [{}, bearer('stale')]) {
+      const res = await callWith('ada@example.com', '/admin/things', init);
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({ error: SIGN_IN_REQUIRED });
+    }
+    expect(ran).toBe(0);
+  });
+
+  test('an administrator reaches the handler', async () => {
+    const res = await callWith('ada@example.com', '/admin/things', bearer('good'));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ user: 'ada@example.com' });
+  });
+
+  test('a signed-in person who is not an administrator gets exactly the answer a path nothing is registered at gets', async () => {
+    const missing = await callWith('ada@example.com', '/admin/nothing-here', bearer('bob'));
+    const refused = await callWith('ada@example.com', '/admin/things', bearer('bob'));
+    expect(refused.status).toBe(404);
+    expect([refused.status, await refused.text(), refused.headers.get('Content-Type')]).toEqual([missing.status, await missing.text(), missing.headers.get('Content-Type')]);
+    expect(ran).toBe(0);
+  });
+
+  test('with no administrators set nobody gets in, not even someone who would otherwise match', async () => {
+    for (const adminEmails of [undefined, '', ' , ']) {
+      const res = await callWith(adminEmails, '/admin/things', bearer('good'));
+      expect(res.status, String(adminEmails)).toBe(404);
+    }
+    expect(ran).toBe(0);
   });
 });

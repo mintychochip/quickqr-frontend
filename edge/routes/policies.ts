@@ -19,3 +19,9 @@ export const signedIn: Policy = { auth: 'any', class: 'read' };
 
 export const readPolicy = (scope: string): Policy => ({ auth: 'any', scope, class: 'read' });
 export const writePolicy = (scope: string): Policy => ({ auth: 'any', scope, class: 'write', maxBody: BODY_CAP });
+
+/** A browser session only: an API key, once there are any, must not claim a gift. */
+export const sessionWrite: Policy = { auth: 'session', class: 'write', maxBody: BODY_CAP };
+/** An administrator's session (an email on ADMIN_EMAILS). Anyone else gets the 404 of a path that is not there. */
+export const adminRead: Policy = { auth: 'admin', class: 'read' };
+export const adminWrite: Policy = { auth: 'admin', class: 'write', maxBody: BODY_CAP };

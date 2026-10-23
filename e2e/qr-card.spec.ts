@@ -1,53 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { decodedCode, generator, signInToken, signInViaOAuth } from './helpers';
-
-/** WCAG contrast of an element's text over whatever is actually painted behind it. */
-async function contrastOf(el: Locator): Promise<number> {
-  return el.evaluate((node) => {
-    type Rgba = [number, number, number, number];
-    const probe = document.createElement('canvas');
-    probe.width = 1;
-    probe.height = 1;
-    const ctx = probe.getContext('2d', { willReadFrequently: true });
-    if (!ctx) throw new Error('2d canvas is unavailable');
-
-    // Painting resolves any CSS colour (oklch, color-mix, ...) to plain sRGB.
-    const paint = (css: string): Rgba => {
-      ctx.clearRect(0, 0, 1, 1);
-      ctx.fillStyle = '#000';
-      ctx.fillStyle = css;
-      ctx.fillRect(0, 0, 1, 1);
-      const [r = 0, g = 0, b = 0, a = 0] = ctx.getImageData(0, 0, 1, 1).data;
-      return [r, g, b, a / 255];
-    };
-    const over = (top: Rgba, below: Rgba): Rgba => {
-      const a = top[3];
-      return [
-        top[0] * a + below[0] * (1 - a),
-        top[1] * a + below[1] * (1 - a),
-        top[2] * a + below[2] * (1 - a),
-        1,
-      ];
-    };
-    const luminance = ([r, g, b]: Rgba): number => {
-      const lin = (c: number) => {
-        const s = c / 255;
-        return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-      };
-      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-    };
-
-    const chain: Element[] = [];
-    for (let n: Element | null = node; n; n = n.parentElement) chain.push(n);
-    let backdrop: Rgba = [255, 255, 255, 1];
-    for (const n of chain.reverse()) {
-      backdrop = over(paint(getComputedStyle(n).backgroundColor), backdrop);
-    }
-    const text = over(paint(getComputedStyle(node).color), backdrop);
-    const [hi = 0, lo = 0] = [luminance(text), luminance(backdrop)].sort((a, b) => b - a);
-    return (hi + 0.05) / (lo + 0.05);
-  });
-}
+import { contrastOf, decodedCode, generator, signInToken, signInViaOAuth } from './helpers';
 
 /** How far from grey the most colourful pixel on a canvas is: 0 for black and white, over 100 for a blue code. */
 async function strongestTint(canvas: Locator): Promise<number> {

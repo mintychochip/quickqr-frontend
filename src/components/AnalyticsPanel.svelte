@@ -1,5 +1,4 @@
 <script lang="ts">
-  import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import type { AnalyticsSummary, Link } from '../types';
   import { fetchLinkAnalytics } from '../lib/api';
 
@@ -11,7 +10,6 @@
 
   let data = $state<AnalyticsSummary | null>(null);
   let loading = $state(true);
-  let scansOpen = $state(false);
 
   function referrerRows(referrers: Record<string, number>) {
     const entries = Object.entries(referrers)
@@ -83,157 +81,375 @@
   });
 </script>
 
-<div>
+<div class="analytics-root">
   {#if loading}
-    <p class="py-8 text-center text-xs text-muted-foreground">Loading statistics…</p>
+    <p class="analytics-empty">Loading statistics…</p>
   {:else if !data}
-    <p class="py-8 text-center text-xs text-muted-foreground">No analytics recorded for this link yet.</p>
+    <p class="analytics-empty">No analytics recorded for this link yet.</p>
   {:else}
     {@const topReferrer = Object.entries(data.top_referrers).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Direct'}
     {@const maxCount = Math.max(...data.hourly_timeline.map((point) => point.count), 1)}
     {@const slices = deviceSlices(data.device_breakdown)}
     {@const referrers = referrerRows(data.top_referrers)}
-    <div class="grid grid-cols-2 gap-2">
-      <div class="rounded-xl bg-muted/40 p-3">
-        <div class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Devices</div>
-        <div class="mt-1 text-xl font-medium tracking-[-0.04em] text-foreground">
-          {data.unique_devices}
-        </div>
+    <dl class="analytics-kpi-grid">
+      <div>
+        <dt class="analytics-kpi-label">Devices</dt>
+        <dd class="analytics-kpi-value-xl">{data.unique_devices}</dd>
       </div>
-      <div class="min-w-0 rounded-xl bg-muted/40 p-3">
-        <div class="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Top referrer
-        </div>
-        <div class="mt-1 truncate text-sm font-medium text-foreground">{topReferrer}</div>
+      <div class="analytics-min-w-0">
+        <dt class="analytics-kpi-label">Top referrer</dt>
+        <dd class="analytics-kpi-value-sm analytics-truncate">{topReferrer}</dd>
       </div>
+    </dl>
 
-      <div class="col-span-2 flex h-full flex-col rounded-xl bg-muted/40 p-3">
-        <div class="mb-2 text-[11px] font-medium text-foreground">Device mix</div>
-        {#if slices.length === 0}
-          <p class="text-[11px] text-muted-foreground">No device scans yet.</p>
-        {:else}
-          <div class="flex flex-1 items-center gap-4">
-            <svg
-              data-testid="device-mix-chart"
-              viewBox="0 0 32 32"
-              class="size-24 shrink-0"
-              role="img"
-              aria-label={`Device mix: ${slices.map((slice) => `${slice.name} ${slice.count}, ${slice.labelPct}%`).join(', ')}`}
-            >
-              <g transform="rotate(-90 16 16)">
-                {#each slices as slice (slice.name)}
-                  <circle
-                    cx="16"
-                    cy="16"
-                    r="7.5"
-                    fill="none"
-                    stroke={slice.color}
-                    stroke-width="15"
-                    pathLength="100"
-                    stroke-dasharray="{slice.pct} {Math.max(0, 100 - slice.pct)}"
-                    stroke-dashoffset={-slice.offset}
-                  />
-                {/each}
-              </g>
+    <section>
+      <h3 class="analytics-section-title">Device mix</h3>
+      {#if slices.length === 0}
+        <p class="analytics-empty-small">No device scans yet.</p>
+      {:else}
+        <div class="analytics-flex-center-gap4">
+          <svg
+            data-testid="device-mix-chart"
+            viewBox="0 0 32 32"
+            class="analytics-chart-svg"
+            role="img"
+            aria-label={`Device mix: ${slices.map((slice) => `${slice.name} ${slice.count}, ${slice.labelPct}%`).join(', ')}`}
+          >
+            <g transform="rotate(-90 16 16)">
               {#each slices as slice (slice.name)}
-                {#if slice.showCount}
-                  <text
-                    x={slice.labelX}
-                    y={slice.labelY}
-                    text-anchor="middle"
-                    dominant-baseline="central"
-                    fill={slice.countFill}
-                    font-size="3.6"
-                    font-weight="650"
-                    class="font-mono"
-                  >{slice.count}</text>
-                {/if}
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="7.5"
+                  fill="none"
+                  stroke={slice.color}
+                  stroke-width="15"
+                  pathLength="100"
+                  stroke-dasharray="{slice.pct} {Math.max(0, 100 - slice.pct)}"
+                  stroke-dashoffset={-slice.offset}
+                />
               {/each}
-            </svg>
-            <ul class="min-w-0 flex-1 space-y-1.5">
-              {#each slices as slice (slice.name)}
-                <li class="flex items-center justify-between gap-3 text-[11px] text-foreground">
-                  <span class="flex min-w-0 items-center gap-1.5">
-                    <span class="size-2 shrink-0 rounded-full" style:background-color={slice.color}></span>
-                    <span class="truncate">{slice.name}</span>
-                  </span>
-                  <span class="shrink-0 font-mono text-muted-foreground">{slice.labelPct}%</span>
-                </li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-      </div>
+            </g>
+            {#each slices as slice (slice.name)}
+              {#if slice.showCount}
+                <text
+                  x={slice.labelX}
+                  y={slice.labelY}
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  fill={slice.countFill}
+                  font-size="3.6"
+                  font-weight="650"
+                  class="font-mono"
+                >{slice.count}</text>
+              {/if}
+            {/each}
+          </svg>
+          <ul class="analytics-legend">
+            {#each slices as slice (slice.name)}
+              <li class="analytics-legend-item">
+                <span class="analytics-legend-row">
+                  <span class="analytics-color-dot" style:background-color={slice.color}></span>
+                  <span class="analytics-truncate">{slice.name}</span>
+                </span>
+                <span class="analytics-legend-pct font-mono">{slice.labelPct}%</span>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+    </section>
 
-      <div class="col-span-2 flex h-full min-w-0 flex-col rounded-xl bg-muted/40 p-3">
-        <div class="mb-2 text-[11px] font-medium text-foreground">Referrers</div>
-        {#if referrers.length === 0}
-          <p class="text-[11px] text-muted-foreground">No referrers yet.</p>
+    <section>
+      <h3 class="analytics-section-title">Referrers</h3>
+      {#if referrers.length === 0}
+        <p class="analytics-empty-small">No referrers yet.</p>
+      {:else}
+        <ul class="analytics-legend">
+          {#each referrers as row (row.name)}
+            <li class="analytics-legend-item">
+              <span class="analytics-truncate">{row.name}</span>
+              <span class="analytics-legend-pct font-mono">{row.count} · {row.labelPct}%</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+
+    <div class="analytics-volume-grid">
+      <section class="analytics-min-w-0">
+        <h3 class="analytics-volume-header">
+          <span>Scan volume</span>
+          <span class="analytics-volume-sub">Past 6 hours</span>
+        </h3>
+        <div
+          class="analytics-bars"
+          data-testid="scan-volume-chart"
+          role="img"
+          aria-label="Scan volume for the past 6 hours"
+        >
+          {#each data.hourly_timeline as point, index (index)}
+            {@const heightPercent = point.count === 0 ? 0 : Math.max(Math.round((point.count / maxCount) * 100), 8)}
+            <div class="analytics-bar-col">
+              <div class="font-mono analytics-bar-count">{point.count}</div>
+              <div class="analytics-bar" style:height="{Math.round((heightPercent / 100) * 80)}px"></div>
+              <div data-testid="scan-volume-hour" class="font-mono analytics-bar-time">{point.time}</div>
+            </div>
+          {/each}
+        </div>
+      </section>
+
+      <section class="analytics-min-w-0">
+        <h3 class="analytics-recent-title">Recent scans</h3>
+        {#if data.recent_scans.length === 0}
+          <p class="analytics-recent-empty">No scans yet.</p>
         {:else}
-          <ul class="flex flex-1 flex-col justify-center space-y-1.5">
-            {#each referrers as row (row.name)}
-              <li class="flex items-center justify-between gap-3 text-[11px] text-foreground">
-                <span class="truncate">{row.name}</span>
-                <span class="shrink-0 font-mono text-muted-foreground">{row.count} · {row.labelPct}%</span>
+          <ul class="analytics-recent-list">
+            {#each data.recent_scans.slice(0, 6) as event (event.id)}
+              <li class="analytics-recent-item">
+                <div class="analytics-recent-meta analytics-min-w-0">
+                  <div class="analytics-truncate analytics-recent-device">{event.device_type} · {event.referrer}</div>
+                  <div class="analytics-truncate analytics-recent-ip font-mono">{event.ip}</div>
+                </div>
+                <div class="analytics-recent-time font-mono">
+                  {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </li>
             {/each}
           </ul>
         {/if}
-      </div>
-
-      <div class="col-span-2 rounded-xl bg-card ring-1 ring-black/5 dark:ring-white/10">
-        <button
-          type="button"
-          aria-expanded={scansOpen}
-          onclick={() => (scansOpen = !scansOpen)}
-          class="flex w-full cursor-pointer items-center justify-between px-3 py-2.5 text-left text-sm font-medium text-foreground"
-        >
-          <span>Scans</span>
-          <ChevronDown class="size-4 text-muted-foreground transition-transform {scansOpen ? 'rotate-180' : ''}" />
-        </button>
-        {#if scansOpen}
-          <div class="grid gap-4 border-t border-border p-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(220px,0.8fr)]">
-            <div class="min-w-0">
-              <div class="mb-2 flex items-center justify-between text-[11px] font-medium text-foreground">
-                <span>Scan volume</span>
-                <span class="font-normal text-muted-foreground">Past 6 hours</span>
-              </div>
-              <div
-                class="flex h-32 items-end gap-2"
-                data-testid="scan-volume-chart"
-                role="img"
-                aria-label="Scan volume for the past 6 hours"
-              >
-                {#each data.hourly_timeline as point, index (index)}
-                  {@const heightPercent = point.count === 0 ? 0 : Math.max(Math.round((point.count / maxCount) * 100), 8)}
-                  <div class="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-                    <div class="font-mono text-[10px] font-medium text-foreground">{point.count}</div>
-                    <div class="w-full rounded-t-md bg-ink" style:height="{Math.round((heightPercent / 100) * 80)}px"></div>
-                    <div class="font-mono text-[10px] text-muted-foreground">{point.time}</div>
-                  </div>
-                {/each}
-              </div>
-            </div>
-
-            <div class="min-w-0">
-              <div class="mb-1 text-[11px] font-medium text-foreground">Recent scans</div>
-              <div class="max-h-36 divide-y divide-border overflow-y-auto">
-                {#each data.recent_scans.slice(0, 6) as event (event.id)}
-                  <div class="flex items-center justify-between gap-3 py-2 text-[11px]">
-                    <div class="min-w-0">
-                      <div class="truncate text-foreground">{event.device_type} · {event.referrer}</div>
-                      <div class="truncate font-mono text-[10px] text-muted-foreground">{event.ip}</div>
-                    </div>
-                    <div class="shrink-0 font-mono text-[10px] text-muted-foreground">
-                      {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                {/each}
-              </div>
-            </div>
-          </div>
-        {/if}
-      </div>
+      </section>
     </div>
   {/if}
 </div>
+
+<style>
+@layer components {
+	.analytics-root {
+		container-type: inline-size;
+	}
+
+	.analytics-root > * + * {
+		margin-top: 1.25rem;
+	}
+
+	.analytics-empty {
+		padding-block: 2rem;
+		text-align: center;
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-kpi-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	.analytics-kpi-label {
+		font-size: 10px;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-kpi-value-xl {
+		margin-top: 0.25rem;
+		font-size: 1.25rem;
+		line-height: 1.75rem;
+		font-weight: 500;
+		letter-spacing: -0.04em;
+		color: var(--foreground);
+	}
+
+	.analytics-kpi-value-sm {
+		margin-top: 0.25rem;
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+		font-weight: 500;
+		color: var(--foreground);
+	}
+
+	.analytics-truncate {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.analytics-min-w-0 {
+		min-width: 0;
+	}
+
+	.analytics-section-title {
+		margin-bottom: 0.5rem;
+		font-size: 11px;
+		font-weight: 500;
+		color: var(--foreground);
+	}
+
+	.analytics-empty-small {
+		font-size: 11px;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-flex-center-gap4 {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.analytics-chart-svg {
+		width: 6rem;
+		height: 6rem;
+		flex-shrink: 0;
+	}
+
+	.analytics-legend {
+		min-width: 0;
+		flex: 1;
+	}
+
+	.analytics-legend > * + * {
+		margin-top: 0.375rem;
+	}
+
+	.analytics-legend-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		font-size: 11px;
+		color: var(--foreground);
+	}
+
+	.analytics-legend-row {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 0.375rem;
+	}
+
+	.analytics-color-dot {
+		width: 0.5rem;
+		height: 0.5rem;
+		flex-shrink: 0;
+		border-radius: 9999px;
+	}
+
+	.analytics-legend-pct {
+		flex-shrink: 0;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-volume-grid {
+		display: grid;
+		gap: 1.25rem;
+	}
+
+	.analytics-bars {
+		display: flex;
+		height: 8rem;
+		align-items: flex-end;
+		gap: 0.5rem;
+	}
+
+	.analytics-bar-col {
+		display: flex;
+		height: 100%;
+		min-width: 0;
+		flex: 1;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.25rem;
+	}
+
+	.analytics-bar-count {
+		font-size: 10px;
+		font-weight: 500;
+		color: var(--foreground);
+	}
+
+	.analytics-bar {
+		width: 100%;
+		max-width: 2rem;
+		border-top-left-radius: calc(var(--radius) * 0.8);
+		border-top-right-radius: calc(var(--radius) * 0.8);
+		background-color: var(--ink);
+	}
+
+	.analytics-bar-time {
+		font-size: 10px;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-volume-header {
+		margin-bottom: 0.5rem;
+		font-size: 11px;
+		font-weight: 500;
+		color: var(--foreground);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.analytics-volume-sub {
+		font-weight: 400;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-recent-title {
+		margin-bottom: 0.25rem;
+		font-size: 11px;
+		font-weight: 500;
+		color: var(--foreground);
+	}
+
+	.analytics-recent-empty {
+		padding-top: 0.25rem;
+		font-size: 11px;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-recent-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding-block: 0.5rem;
+		font-size: 11px;
+	}
+
+	.analytics-recent-meta {
+		min-width: 0;
+	}
+
+	.analytics-recent-device {
+		color: var(--foreground);
+	}
+
+	.analytics-recent-ip {
+		font-size: 10px;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-recent-time {
+		flex-shrink: 0;
+		font-size: 10px;
+		color: var(--muted-foreground);
+	}
+
+	.analytics-recent-list > * + * {
+		border-top: 1px solid var(--border);
+	}
+}
+
+@container (min-width: 80rem) {
+	.analytics-volume-grid {
+		grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr);
+		gap: 1.5rem;
+	}
+}
+</style>

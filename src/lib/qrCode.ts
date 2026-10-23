@@ -316,10 +316,10 @@ export async function renderQrToSvg(value: string, style: QrRenderOptions | QrSt
 export function qrFrameWrapperClass(frame: QrFrameStyle): string {
   switch (frame) {
     case 'ring':
-      return 'rounded-2xl border-2 border-primary/25 p-5 shadow-[0_8px_30px_-12px_rgba(37,99,235,0.35)]';
+      return 'qr-frame-ring';
     case 'soft':
-      return 'rounded-2xl border border-border/80 p-5 shadow-sm';
+      return 'qr-frame-soft';
     default:
-      return 'rounded-xl border border-border p-4';
+      return 'qr-frame-plain';
   }
 }

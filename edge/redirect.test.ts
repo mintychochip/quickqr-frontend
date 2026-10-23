@@ -1,4 +1,7 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
+import { newGiftToken } from './gifts';
+import { sha256Hex } from './ids';
+import { createGrant, redeemGrant } from './store/gifts';
 import { bearer, go, location, rig, signUp, withJson, type Rig } from './test/rig';
 
 interface ScanRow {
@@ -198,5 +201,82 @@ describe('recording scans', () => {
     const res = await go(r, '/r/rec');
     expect([res.status, res.headers.get('Location')]).toEqual([302, 'https://a.example']);
     await r.settle(); // the failure is swallowed, not thrown
+  });
+});
+
+describe('an owner on a plan', () => {
+  const DAY = 86_400_000;
+
+  /** Gives a person a plan the way a claimed gift does. */
+  async function gift(r: Rig, userId: string, plan: 'plus' | 'pro' = 'plus', days = 30): Promise<void> {
+    const tokenHash = await sha256Hex(newGiftToken());
+    await createGrant(r.db, { tokenHash, plan, days, maxUses: 1, redeemBy: new Date(r.now().getTime() + 7 * DAY).toISOString(), note: '', createdBy: 'test' }, r.now());
+    expect((await redeemGrant(r.db, tokenHash, userId, r.now())).kind).toBe('granted');
+  }
+
+  test('their scans go straight to the destination while a person without one still sees the pause', async () => {
+    const r = rig();
+    const free = await signUp(r, 'free@example.com');
+    const paid = await signUp(r, 'paid@example.com');
+    await gift(r, paid.id);
+    await make(r, free.token, { code: 'freecode', destination_url: 'free.example/x' });
+    await make(r, paid.token, { code: 'paidcode', destination_url: 'paid.example/x' });
+
+    const withPause = await scan(r, '/r/freecode');
+    expect(withPause.status).toBe(200);
+    expect(await withPause.text()).toContain('Redirecting to');
+
+    const straight = await scan(r, '/r/paidcode');
+    expect([straight.status, straight.headers.get('Location')]).toEqual([302, 'https://paid.example/x']);
+    expect(scans(r).map((s) => s.link_code)).toEqual(['freecode', 'paidcode']);
+  });
+
+  test('Pro skips it too, and so does the banner style', async () => {
+    const r = rig();
+    const pro = await signUp(r, 'pro@example.com');
+    await gift(r, pro.id, 'pro');
+    await make(r, pro.token, { code: 'banner', destination_url: 'a.example', ad_style: 'sponsor_banner' });
+    await make(r, pro.token, { code: 'timed', destination_url: 'b.example', ad_style: 'interstitial_3s' });
+    for (const code of ['banner', 'timed']) expect((await scan(r, `/r/${code}`)).status, code).toBe(302);
+  });
+
+  test('the pause is back the instant the plan ends', async () => {
+    const r = rig();
+    const paid = await signUp(r, 'paid@example.com');
+    await gift(r, paid.id, 'plus', 10);
+    await make(r, paid.token, { code: 'later', destination_url: 'a.example' });
+
+    r.advance(10 * DAY - 1);
+    expect((await scan(r, '/r/later')).status).toBe(302);
+    r.advance(1);
+    expect((await scan(r, '/r/later')).status).toBe(200);
+  });
+
+  test('their menu and link page are still pages, never a redirect', async () => {
+    const r = rig();
+    const paid = await signUp(r, 'paid@example.com');
+    await gift(r, paid.id);
+    const menu = (await (await go(r, '/api/menus', withJson('POST', paid.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as { code: string };
+    const page = (await (await go(r, '/api/pages', withJson('POST', paid.token, { title: 'Me', links: [{ name: 'Site', url: 'https://a.example' }] }))).json()) as { code: string };
+    expect((await scan(r, `/r/${menu.code}`)).status).toBe(200);
+    expect((await scan(r, `/r/${page.code}`)).status).toBe(200);
+  });
+
+  test('a plan lookup that fails never stops a scan: the owner is treated as Free, and the failure is logged', async () => {
+    const r = rig();
+    const owner = await signUp(r, 'owner@example.com');
+    await make(r, owner.token, { code: 'unmigrated', destination_url: 'a.example/x' });
+    r.db.sqlite.exec('DROP TABLE entitlements'); // a database the 0002 migration has not reached yet
+
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await scan(r, '/r/unmigrated');
+      expect(res.status).toBe(200);
+      expect(await res.text()).toContain('Redirecting to');
+      expect(scans(r).map((s) => s.link_code)).toEqual(['unmigrated']);
+      expect(logged).toHaveBeenCalled();
+    } finally {
+      logged.mockRestore();
+    }
   });
 });

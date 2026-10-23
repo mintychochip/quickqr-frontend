@@ -194,50 +194,38 @@
   );
 </script>
 
-<section id="generator" class="px-6 pb-16 md:px-10">
-  <div class="mx-auto max-w-[1120px]">
-    <div class="py-6 md:py-8">
-      <p
-        class="mb-5 inline-flex items-center gap-2 rounded-full bg-card px-3 py-1 text-[12px] font-medium tracking-[-0.01em] text-foreground shadow-[0_10px_30px_-18px_rgba(17,17,19,0.55)] ring-1 ring-black/5 dark:ring-white/10"
-      >
-        <span class="size-1.5 rounded-full bg-punch" aria-hidden="true"></span>
+<section id="generator" class="gen">
+  <div class="gen-wrap">
+    <div class="gen-intro">
+      <p class="gen-pill">
+        <span class="gen-dot" aria-hidden="true"></span>
         Free QR codes forever
       </p>
-      <h1 class="qq-hero-title max-w-[680px]">
+      <h1 class="qq-hero-title gen-title">
         Dynamic QR codes
-        <br class="hidden sm:block" />
+        <br class="gen-break" />
         without the paywall.
       </h1>
-      <p class="qq-lede mt-4 max-w-[420px] text-muted-foreground">
+      <p class="qq-lede gen-lede">
         Paste a link. Download the code. Change where it goes later.
       </p>
     </div>
 
-    <Card class="overflow-hidden p-0">
-      <div class="border-b border-border px-5 py-3 sm:px-6">
-        <TabsList class="w-full sm:w-auto">
-          <TabsTrigger
-            value="dynamic"
-            activeValue={mode}
-            class="flex-1 sm:flex-none"
-            onclick={() => (mode = 'dynamic')}
-          >
+    <Card class="gen-card">
+      <div class="gen-tabs">
+        <TabsList class="gen-tabs-list">
+          <TabsTrigger value="dynamic" activeValue={mode} class="gen-tab" onclick={() => (mode = 'dynamic')}>
             Dynamic
           </TabsTrigger>
-          <TabsTrigger
-            value="static"
-            activeValue={mode}
-            class="flex-1 sm:flex-none"
-            onclick={() => (mode = 'static')}
-          >
+          <TabsTrigger value="static" activeValue={mode} class="gen-tab" onclick={() => (mode = 'static')}>
             Static
           </TabsTrigger>
         </TabsList>
       </div>
 
-      <div class="p-5 sm:p-6 lg:p-8">
+      <div class="gen-body">
         {#snippet preview()}
-          <div class="order-2 w-full lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:order-none lg:self-start">
+          <div class="gen-preview">
             <QRCanvas
               value={currentQRValue}
               displayValue={!linkReady
@@ -255,157 +243,141 @@
         {/snippet}
 
         {#snippet directNote()}
-          <p
-            data-testid="direct-note"
-            class="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground"
-          >
+          <p data-testid="direct-note" class="gen-note">
             This goes straight into the code. There's nothing to save or sign in for, and it can't be edited after printing.
           </p>
         {/snippet}
 
         {#if mode === 'dynamic'}
-          <form
-            onsubmit={handleCreateDynamic}
-            class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-10"
-          >
-            <div class="contents lg:col-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-            <div class="order-1 min-w-0">
-              <SourceField id="destination-url" bind:value={source} bind:forcedType bind:fieldValues {resolved} />
-            </div>
-
-            <div class="order-3 min-w-0 space-y-4">
-              {#if directPayload !== null}
-                {@render directNote()}
-              {:else if resolved.status === 'ready' || resolved.status === 'empty'}
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                class="h-auto px-0 text-muted-foreground hover:text-foreground"
-                onclick={() => (showOptions = !showOptions)}
-              >
-                <span>{showOptions ? 'Hide options' : 'Slug and ads'}</span>
-                {#if showOptions}
-                  <ChevronUp class="size-3.5" />
-                {:else}
-                  <ChevronDown class="size-3.5" />
-                {/if}
-              </Button>
-
-              {#if showOptions}
-                <div class="space-y-4 border-t border-border pt-4">
-                  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div class="space-y-1.5">
-                      <Label for="title">Title / label</Label>
-                      <Input id="title" bind:value={title} placeholder="e.g. Table Menu" />
-                    </div>
-                    <div class="space-y-1.5">
-                      <Label for="slug">Custom slug</Label>
-                      <div class="flex overflow-hidden rounded-lg border border-input">
-                        <span
-                          class="border-r border-input bg-muted px-2.5 py-2 text-xs text-muted-foreground select-none"
-                        >
-                          /r/
-                        </span>
-                        <Input
-                          id="slug"
-                          value={customSlug}
-                          oninput={(e) => {
-                            customSlug = e.currentTarget.value
-                              .toLowerCase()
-                              .replace(/[^a-z0-9_-]/g, '');
-                          }}
-                          placeholder="my-link"
-                          class="border-0 shadow-none focus-visible:ring-0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="space-y-2">
-                    <Label>Ad format</Label>
-                    <div class="grid grid-cols-3 gap-2">
-                      {#each [
-                        ['interstitial_3s', '3s Sponsor'],
-                        ['sponsor_banner', 'Banner'],
-                        ['direct', 'Direct'],
-                      ] as [value, label] (value)}
-                        <Button
-                          type="button"
-                          variant={adStyle === value ? 'default' : 'outline'}
-                          size="sm"
-                          class="h-auto py-2 text-xs"
-                          onclick={() => (adStyle = value as typeof adStyle)}
-                        >
-                          {label}
-                        </Button>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              {/if}
-
-              {#if errorMsg}
-                <Alert variant="destructive">
-                  <AlertDescription>{errorMsg}</AlertDescription>
-                </Alert>
-              {/if}
-
-              {#if createdDynamicLink}
-                <div
-                  data-testid="dynamic-link-success"
-                  class="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-3 text-xs"
-                >
-                  <div class="flex items-center gap-2 text-muted-foreground">
-                    <Check class="size-4 text-green-600" />
-                    <span>
-                      Live:{' '}
-                      <strong class="font-mono text-foreground">/r/{createdDynamicLink.code}</strong>
-                    </span>
-                  </div>
-                  <Button href="/dashboard" variant="link" size="sm" class="h-auto p-0">
-                    Dashboard →
-                  </Button>
-                </div>
-              {/if}
-
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                class="h-10 w-full bg-punch text-ink hover:bg-punch/80"
-                data-testid="create-dynamic-link"
-              >
-                <span>{isSubmitting ? 'Creating...' : 'Create QR code'}</span>
-                <ArrowRight class="size-4" />
-              </Button>
-              {/if}
-            </div>
-            </div>
-            {@render preview()}
-          </form>
-          {:else}
-            <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-10">
-              <div class="contents lg:col-start-1 lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
-              <div class="order-1 min-w-0">
-                <SourceField id="static-url" bind:value={source} bind:forcedType bind:fieldValues {resolved} />
+          <form onsubmit={handleCreateDynamic} class="gen-form">
+            <div class="gen-fields">
+              <div class="gen-source">
+                <SourceField id="destination-url" bind:value={source} bind:forcedType bind:fieldValues {resolved} />
               </div>
 
-              <div class="order-3 min-w-0">
+              <div class="gen-options">
                 {#if directPayload !== null}
                   {@render directNote()}
                 {:else if resolved.status === 'ready' || resolved.status === 'empty'}
-                  <div class="space-y-2 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-                    <p data-testid="static-compressed-url" class="break-all font-mono text-xs text-foreground">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="gen-options-toggle"
+                    onclick={() => (showOptions = !showOptions)}
+                  >
+                    <span>{showOptions ? 'Hide options' : 'Slug and ads'}</span>
+                    {#if showOptions}
+                      <ChevronUp class="gen-chevron" />
+                    {:else}
+                      <ChevronDown class="gen-chevron" />
+                    {/if}
+                  </Button>
+
+                  {#if showOptions}
+                    <div class="gen-options-body">
+                      <div class="gen-option-grid">
+                        <div class="gen-option">
+                          <Label for="title">Title / label</Label>
+                          <Input id="title" bind:value={title} placeholder="e.g. Table Menu" />
+                        </div>
+                        <div class="gen-option">
+                          <Label for="slug">Custom slug</Label>
+                          <div class="gen-slug">
+                            <span class="gen-slug-prefix">/r/</span>
+                            <Input
+                              id="slug"
+                              value={customSlug}
+                              oninput={(e) => {
+                                customSlug = e.currentTarget.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                              }}
+                              placeholder="my-link"
+                              class="gen-slug-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="gen-ad-block">
+                        <Label>Ad format</Label>
+                        <div class="gen-ad-grid">
+                          {#each [
+                            ['interstitial_3s', '3s Sponsor'],
+                            ['sponsor_banner', 'Banner'],
+                            ['direct', 'Direct'],
+                          ] as [value, label] (value)}
+                            <Button
+                              type="button"
+                              variant={adStyle === value ? 'default' : 'outline'}
+                              size="sm"
+                              class="gen-ad-button"
+                              onclick={() => (adStyle = value as typeof adStyle)}
+                            >
+                              {label}
+                            </Button>
+                          {/each}
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  {#if errorMsg}
+                    <Alert variant="destructive">
+                      <AlertDescription>{errorMsg}</AlertDescription>
+                    </Alert>
+                  {/if}
+
+                  {#if createdDynamicLink}
+                    <div data-testid="dynamic-link-success" class="gen-success">
+                      <div class="gen-success-status">
+                        <Check class="gen-check" />
+                        <span>
+                          Live:{' '}
+                          <strong class="font-mono gen-code">/r/{createdDynamicLink.code}</strong>
+                        </span>
+                      </div>
+                      <Button href="/dashboard" variant="link" size="sm" class="gen-dashboard-link">
+                        Dashboard →
+                      </Button>
+                    </div>
+                  {/if}
+
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    class="gen-submit"
+                    data-testid="create-dynamic-link"
+                  >
+                    <span>{isSubmitting ? 'Creating...' : 'Create QR code'}</span>
+                    <ArrowRight class="gen-arrow" />
+                  </Button>
+                {/if}
+              </div>
+            </div>
+            {@render preview()}
+          </form>
+        {:else}
+          <div class="gen-form">
+            <div class="gen-fields">
+              <div class="gen-source">
+                <SourceField id="static-url" bind:value={source} bind:forcedType bind:fieldValues {resolved} />
+              </div>
+
+              <div class="gen-static-col">
+                {#if directPayload !== null}
+                  {@render directNote()}
+                {:else if resolved.status === 'ready' || resolved.status === 'empty'}
+                  <div class="gen-static">
+                    <p data-testid="static-compressed-url" class="gen-static-url font-mono">
                       {staticResult?.url ?? '—'}
                     </p>
-                    <div class="flex justify-between text-muted-foreground">
+                    <div class="gen-static-row">
                       <span>Original</span>
-                      <span class="font-mono text-foreground">{linkPayload?.length ?? 0} chars</span>
+                      <span class="font-mono gen-code">{linkPayload?.length ?? 0} chars</span>
                     </div>
-                    <div class="flex justify-between text-muted-foreground">
+                    <div class="gen-static-row">
                       <span>Compressed</span>
-                      <span class="font-mono font-medium text-green-600">
+                      <span class="font-mono gen-savings">
                         {staticResult?.url.length ?? 0} chars
                         {staticResult && staticResult.savings > 0 ? `(${staticResult.savings}% smaller)` : ''}
                       </span>
@@ -413,60 +385,47 @@
                   </div>
                 {/if}
               </div>
-              </div>
-              {@render preview()}
             </div>
-          {/if}
+            {@render preview()}
+          </div>
+        {/if}
       </div>
-
     </Card>
   </div>
 
   <div
     bind:this={styleBarEl}
     data-testid="style-bar"
-    class="fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background from-40% to-transparent px-3 pt-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6"
+    class="gen-stylebar"
     style:opacity={styleBarOpacity}
     style:transform={`translateY(${styleBarShift}px)`}
     style:pointer-events={styleBarOpacity < 0.12 ? 'none' : 'auto'}
     aria-hidden={styleBarOpacity < 0.12 ? true : undefined}
   >
-    <div class="mx-auto w-full max-w-[1120px]">
+    <div class="gen-wrap">
       {#if tuneOpen}
-        <div
-          class="mb-2 max-h-[min(420px,46vh)] overflow-y-auto rounded-2xl bg-card p-4 text-foreground shadow-[0_24px_60px_-28px_rgba(17,17,19,0.55)] ring-1 ring-black/5 dark:ring-white/10"
-        >
+        <div class="gen-tune">
           <QRStyleEditor style={qrStyle} onChange={patchQrStyle} />
         </div>
       {/if}
-      <div class="rounded-2xl bg-ink p-3 text-primary-foreground shadow-[0_24px_50px_-24px_rgba(17,17,19,0.85)] ring-1 ring-white/10">
-        <div class="mb-2 flex items-center justify-between gap-3">
-          <p class="min-w-0 truncate text-sm font-medium text-punch">
-            {styleSummary}
-          </p>
+      <div class="gen-dock">
+        <div class="gen-dock-head">
+          <p class="gen-summary">{styleSummary}</p>
           <button
             type="button"
-            class="h-7 shrink-0 cursor-pointer rounded-full bg-white/10 px-3 text-xs text-white hover:bg-white/20"
+            class="gen-colors"
             aria-expanded={tuneOpen}
             onclick={() => (tuneOpen = !tuneOpen)}
           >
             {tuneOpen ? 'Close' : 'Colors'}
           </button>
         </div>
-        <div class="relative">
+        <div class="gen-presets">
           <QRStylePresets {activePresetId} onApply={(result, meta) => applyStyle(result, meta.presetId)} />
-          <div
-            class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-ink to-transparent"
-            aria-hidden="true"
-          ></div>
+          <div class="gen-fade" aria-hidden="true"></div>
         </div>
-        <div class="mt-2.5">
-        <QRStyleAssistant
-          dock
-          currentStyle={qrStyle}
-          onApplyStyle={applyStyle}
-          lastSummary={styleSummary}
-        />
+        <div class="gen-assistant">
+          <QRStyleAssistant dock currentStyle={qrStyle} onApplyStyle={applyStyle} lastSummary={styleSummary} />
         </div>
       </div>
     </div>
@@ -474,3 +433,457 @@
 
   <AuthModal bind:open={signInOpen} headline="Sign in to save this link" onBeforeOAuth={keepLinkThroughSignIn} />
 </section>
+
+<style>
+  @layer components {
+    .gen {
+      padding-inline: 1.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .gen-wrap {
+      margin-inline: auto;
+      width: 100%;
+      max-width: 1120px;
+    }
+
+    .gen-intro {
+      padding-block: 1.5rem;
+    }
+
+    .gen-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      border-radius: 9999px;
+      background-color: var(--card);
+      padding: 0.25rem 0.75rem;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--foreground);
+      box-shadow:
+        0 0 0 1px rgb(0 0 0 / 0.05),
+        0 10px 30px -18px rgba(17, 17, 19, 0.55);
+    }
+
+    .gen-dot {
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 9999px;
+      background-color: var(--punch);
+    }
+
+    .gen-title {
+      max-width: 680px;
+    }
+
+    .gen-break {
+      display: none;
+    }
+
+    .gen-lede {
+      margin-top: 1rem;
+      max-width: 420px;
+      color: var(--muted-foreground);
+    }
+
+    .gen-tabs {
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.25rem;
+    }
+
+    .gen-body {
+      padding: 1.25rem;
+    }
+
+    .gen-preview {
+      order: 2;
+      width: 100%;
+    }
+
+    .gen-note {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+      padding: 1rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: var(--muted-foreground);
+    }
+
+    .gen-form {
+      display: grid;
+      align-items: start;
+      gap: 1.5rem;
+    }
+
+    .gen-fields {
+      display: contents;
+    }
+
+    .gen-source {
+      order: 1;
+      min-width: 0;
+    }
+
+    .gen-options {
+      display: flex;
+      order: 3;
+      min-width: 0;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .gen-options-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    .gen-option-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+    }
+
+    .gen-option {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .gen-slug {
+      display: flex;
+      overflow: hidden;
+      border: 1px solid var(--input);
+      border-radius: var(--radius);
+    }
+
+    .gen-slug-prefix {
+      border-right: 1px solid var(--input);
+      background-color: var(--muted);
+      padding: 0.5rem 0.625rem;
+      font-size: 0.75rem;
+      line-height: 1rem;
+      color: var(--muted-foreground);
+      user-select: none;
+    }
+
+    .gen-ad-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .gen-ad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .gen-success {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+
+    .gen-success-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted-foreground);
+    }
+
+    .gen-static-col {
+      order: 3;
+      min-width: 0;
+    }
+
+    .gen-static {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+      padding: 1rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+
+    .gen-static-url {
+      font-size: 0.75rem;
+      line-height: 1rem;
+      color: var(--foreground);
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    .gen-static-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted-foreground);
+    }
+
+    .gen-code {
+      color: var(--foreground);
+    }
+
+    .gen-savings {
+      font-weight: 500;
+      color: oklch(0.627 0.194 149.214);
+    }
+
+    .gen-stylebar {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 30;
+      background-image: linear-gradient(to top, var(--background) 40%, transparent);
+      padding: 1.5rem 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    .gen-tune {
+      max-height: min(420px, 46vh);
+      margin-bottom: 0.5rem;
+      overflow-y: auto;
+      border-radius: calc(var(--radius) * 1.8);
+      background-color: var(--card);
+      padding: 1rem;
+      color: var(--foreground);
+      box-shadow:
+        0 0 0 1px rgb(0 0 0 / 0.05),
+        0 24px 60px -28px rgba(17, 17, 19, 0.55);
+    }
+
+    .gen-dock {
+      border-radius: calc(var(--radius) * 1.8);
+      background-color: var(--ink);
+      padding: 0.75rem;
+      color: var(--primary-foreground);
+      box-shadow:
+        0 0 0 1px rgb(255 255 255 / 0.1),
+        0 24px 50px -24px rgba(17, 17, 19, 0.85);
+    }
+
+    .gen-dock-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .gen-summary {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      font-weight: 500;
+      color: var(--punch);
+    }
+
+    .gen-colors {
+      height: 1.75rem;
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 9999px;
+      background-color: rgb(255 255 255 / 0.1);
+      padding-inline: 0.75rem;
+      font-size: 0.75rem;
+      line-height: 1rem;
+      color: #fff;
+    }
+
+    .gen-presets {
+      position: relative;
+    }
+
+    .gen-fade {
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 2rem;
+      background-image: linear-gradient(to left, var(--ink), transparent);
+    }
+
+    .gen-assistant {
+      margin-top: 0.625rem;
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .gen-break {
+      display: block;
+    }
+
+    .gen-tabs {
+      padding-inline: 1.5rem;
+    }
+
+    .gen-body {
+      padding: 1.5rem;
+    }
+
+    .gen-option-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gen-stylebar {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .gen {
+      padding-inline: 2.5rem;
+    }
+
+    .gen-intro {
+      padding-block: 2rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .gen-body {
+      padding: 2rem;
+    }
+
+    .gen-preview {
+      position: sticky;
+      top: 5rem;
+      grid-column-start: 2;
+      grid-row-start: 1;
+      order: 0;
+      align-self: start;
+    }
+
+    .gen-form {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      column-gap: 2.5rem;
+    }
+
+    .gen-fields {
+      display: flex;
+      grid-column-start: 1;
+      min-width: 0;
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  :global(.dark) .gen-pill {
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.1),
+      0 10px 30px -18px rgba(17, 17, 19, 0.55);
+  }
+
+  :global(.dark) .gen-tune {
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.1),
+      0 24px 60px -28px rgba(17, 17, 19, 0.55);
+  }
+
+  .gen-colors:hover {
+    background-color: rgb(255 255 255 / 0.2);
+  }
+
+  /* Handed to a child component, so global and prefixed. Unlayered so it beats the primitive. */
+  :global(.gen-card) {
+    overflow: hidden;
+    padding: 0;
+  }
+
+  :global(.gen-tabs-list) {
+    width: 100%;
+  }
+
+  :global(.gen-tab) {
+    flex: 1 1 0%;
+  }
+
+  @media (min-width: 40rem) {
+    :global(.gen-tabs-list) {
+      width: auto;
+    }
+
+    :global(.gen-tab) {
+      flex: none;
+    }
+  }
+
+  :global(.gen-options-toggle) {
+    align-self: flex-start;
+    width: fit-content;
+    height: auto;
+    padding-inline: 0;
+    color: var(--muted-foreground);
+  }
+
+  :global(.gen-options-toggle:hover) {
+    color: var(--foreground);
+  }
+
+  :global(.gen-chevron) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  :global(.gen-slug-input) {
+    border-width: 0;
+    box-shadow: none;
+  }
+
+  :global(.gen-slug-input:focus-visible) {
+    box-shadow: none;
+  }
+
+  :global(.gen-ad-button) {
+    height: auto;
+    padding-block: 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  :global(.gen-check) {
+    width: 1rem;
+    height: 1rem;
+    color: oklch(0.627 0.194 149.214);
+  }
+
+  :global(.gen-dashboard-link) {
+    height: auto;
+    padding: 0;
+  }
+
+  :global(.gen-submit) {
+    height: 2.5rem;
+    width: 100%;
+    background-color: var(--punch);
+    color: var(--ink);
+  }
+
+  :global(.gen-submit:hover) {
+    background-color: color-mix(in oklab, var(--punch) 80%, transparent);
+  }
+
+  :global(.gen-arrow) {
+    width: 1rem;
+    height: 1rem;
+  }
+</style>

@@ -1,6 +1,8 @@
-import type { Db } from '../db';
+import type { Db, StmtResult } from '../db';
 import { hmacSha256Hex, randomCode } from '../ids';
+import { bestPlan, type Plan, type PlanRow } from '../plans';
 import type { AnalyticsSummary, LinkTrend, ScanEvent, Sponsor, TimeCountPoint, TrendsSummary } from '../types';
+import { liveEntitlements } from './entitlements';
 import { StoreError } from './errors';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -241,9 +243,39 @@ interface SponsorRow {
   active: number;
 }
 
+const ACTIVE_SPONSOR_SQL = 'SELECT * FROM sponsors WHERE active = 1 LIMIT 1';
+
 export async function getActiveSponsor(db: Db): Promise<Sponsor | null> {
-  const row = await db.prepare('SELECT * FROM sponsors WHERE active = 1 LIMIT 1').first<SponsorRow>();
+  const row = await db.prepare(ACTIVE_SPONSOR_SQL).first<SponsorRow>();
   return row ? { ...row, active: true } : null;
+}
+
+/**
+ * Everything a scan that would show the sponsor screen needs, in one round trip: the sponsor to show and the plan the
+ * link's owner has right now. The owner's plan rides in the sponsor read's batch, so a plan costs a scan no extra trip.
+ *
+ * A scan is never rejected, and a printed code must not stop working because of a plan. So when the batch fails (the
+ * 0002 migration not applied yet is the likely cause: Pages deploys on a push, the migration is applied by hand) the
+ * owner is read as Free and gets the pause every owner got before plans existed. The sponsor is then read on its own,
+ * so a scan still fails when the database itself does.
+ */
+export async function readPause(db: Db, ownerId: string, now: Date): Promise<{ sponsor: Sponsor | null; plan: Plan }> {
+  let batched: StmtResult[];
+  try {
+    batched = await db.batch([db.prepare(ACTIVE_SPONSOR_SQL), liveEntitlements(db, ownerId, now)]);
+  } catch (err) {
+    console.error('plan lookup failed, serving the pause as for a Free owner', err);
+    return { sponsor: await getActiveSponsor(db), plan: 'free' };
+  }
+  const [sponsors, entitlements] = batched;
+  // D1 returns untyped rows. The plan decides who skips the sponsor screen, so its rows are checked, not assumed.
+  const planRows: PlanRow[] = [];
+  for (const row of entitlements?.results ?? []) {
+    if (typeof row.plan === 'string' && typeof row.ends_at === 'string') planRows.push({ plan: row.plan, ends_at: row.ends_at });
+  }
+  // The sponsor statement is `SELECT *` from a table this code owns, so its row has the shape SponsorRow names.
+  const sponsorRow = (sponsors?.results[0] ?? null) as SponsorRow | null;
+  return { sponsor: sponsorRow ? { ...sponsorRow, active: true } : null, plan: bestPlan(planRows, now).plan };
 }
 
 export type { ScanEvent };

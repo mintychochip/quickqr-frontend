@@ -1,3 +1,4 @@
+import { isAdmin } from '../admin';
 import type { AppDeps } from '../app';
 import { HttpError, bearerToken, errorJson, html, json, readForm } from '../http';
 import { randomCode } from '../ids';
@@ -16,6 +17,7 @@ import {
 } from '../oauth';
 import { renderDevConsent } from '../pages/devConsent';
 import type { Ctx, Router } from '../router';
+import { effectivePlan } from '../store/entitlements';
 import { StoreError } from '../store/errors';
 import { consumeOAuthState, loginOrRegisterOAuth, logoutToken, peekOAuthState, saveOAuthState, userFromToken } from '../store/users';
 import { optionalAuth, publicAuth, signedIn } from './policies';
@@ -45,8 +47,11 @@ function oauthSuccess(appPublicUrl: string, returnTo: string, token: string): Re
 
 export function registerAuthRoutes(router: Router, deps: AppDeps): void {
   router.handle('GET /api/auth/me', signedIn, async (c) => {
-    const user = await userFromToken(c.env.DB, bearerToken(c.req), deps.now());
-    return user ? json(200, { user }) : errorJson(401, 'Sign in to continue.');
+    const now = deps.now();
+    const user = await userFromToken(c.env.DB, bearerToken(c.req), now);
+    if (!user) return errorJson(401, 'Sign in to continue.');
+    const { plan, until } = await effectivePlan(c.env.DB, user.id, now);
+    return json(200, { user: { ...user, plan, plan_until: until, is_admin: isAdmin(c.env, user.email) } });
   });
 
   router.handle('POST /api/auth/logout', optionalAuth, async (c) => {

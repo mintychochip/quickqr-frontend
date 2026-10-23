@@ -73,8 +73,8 @@ export function formatScanRate(rate: number | null, lastHour: number): string {
 }
 
 export function scanRateTone(rate: number | null, lastHour: number): string {
-  if (rate === null) return lastHour > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground';
-  if (rate > 0) return 'text-emerald-600 dark:text-emerald-400';
-  if (rate < 0) return 'text-red-600 dark:text-red-400';
-  return 'text-muted-foreground';
+  if (rate === null) return lastHour > 0 ? 'scan-tone-up' : 'scan-tone-flat';
+  if (rate > 0) return 'scan-tone-up';
+  if (rate < 0) return 'scan-tone-down';
+  return 'scan-tone-flat';
 }

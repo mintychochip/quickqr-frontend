@@ -232,7 +232,9 @@ describe('Google callback', () => {
     const token = to.searchParams.get('auth_token') ?? '';
     const me = await go(r, '/api/auth/me', bearer(token));
     expect(me.status).toBe(200);
-    expect(await me.json()).toEqual({ user: { id: expect.stringMatching(/^usr-/), email: 'ada@example.com', created_at: expect.any(String) } });
+    expect(await me.json()).toEqual({
+      user: { id: expect.stringMatching(/^usr-/), email: 'ada@example.com', created_at: expect.any(String), plan: 'free', plan_until: null, is_admin: false },
+    });
   });
 });
 

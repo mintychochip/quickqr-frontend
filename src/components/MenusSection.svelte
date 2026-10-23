@@ -68,106 +68,90 @@
   }
 </script>
 
-<section data-testid="menus-section" class="space-y-6">
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+<section data-testid="menus-section" class="menus-section">
+  <div class="menus-section-header">
     <div>
-      <h1 class="text-2xl font-semibold tracking-[-0.03em] text-foreground">Menus</h1>
-      <p class="mt-1.5 max-w-lg text-sm leading-relaxed text-muted-foreground">
+      <h1 class="menus-section-title">Menus</h1>
+      <p class="menus-section-subtitle">
         Hosted menus behind printed codes. Edit rows, prices, and titles any time.
       </p>
     </div>
-    <Button href="/dashboard/menus/new" class="w-full bg-punch text-ink hover:bg-punch/80 sm:w-auto">
-      <Plus class="size-4" />
+    <Button href="/dashboard/menus/new" class="menus-section-new-btn">
+      <Plus class="menus-section-icon" />
       New menu
     </Button>
   </div>
 
-  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-    <Card class="border-0 bg-ink p-4 text-primary-foreground shadow-none ring-0">
-      <div class="text-[11px] font-medium uppercase tracking-[0.12em] text-white/55">Menus</div>
-      <div class="mt-2 text-2xl font-medium tracking-[-0.04em] text-punch">{menus.length}</div>
+  <div class="menus-section-stats">
+    <Card class="menus-section-stat-card menus-section-stat-ink">
+      <div class="menus-section-stat-label">Menus</div>
+      <div class="menus-section-stat-value menus-section-stat-value-punch">{menus.length}</div>
     </Card>
-    <Card class="p-4">
-      <div class="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-        Menu scans
-      </div>
-      <div class="mt-2 text-2xl font-medium tracking-[-0.04em] text-foreground">
-        {totalScans.toLocaleString()}
-      </div>
+    <Card class="menus-section-stat-card">
+      <div class="menus-section-stat-label">Menu scans</div>
+      <div class="menus-section-stat-value">{totalScans.toLocaleString()}</div>
     </Card>
-    <Card class="p-4">
-      <div class="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-        Listed items
-      </div>
-      <div class="mt-2 text-2xl font-medium tracking-[-0.04em] text-foreground">{totalItems}</div>
+    <Card class="menus-section-stat-card">
+      <div class="menus-section-stat-label">Listed items</div>
+      <div class="menus-section-stat-value">{totalItems}</div>
     </Card>
   </div>
 
-  <div class="relative">
-    <Search class="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-    <Input bind:value={search} type="text" placeholder="Search menus..." class="h-9 pl-9 text-sm" />
+  <div class="menus-section-search">
+    <Search class="menus-section-search-icon" />
+    <Input bind:value={search} type="text" placeholder="Search menus..." class="menus-section-search-input" />
   </div>
 
-  <Card class="overflow-hidden py-0 max-md:overflow-visible max-md:bg-transparent max-md:shadow-none max-md:ring-0">
+  <Card class="menus-section-table-card">
     {#if loading}
-      <div class="p-8 text-center text-xs text-muted-foreground">Loading menus...</div>
+      <div class="menus-section-loading">Loading menus...</div>
     {:else if filtered.length === 0}
-      <div class="p-8 text-center text-xs text-muted-foreground">
+      <div class="menus-section-empty">
         {menus.length === 0 ? 'No menus yet. Create your first menu.' : 'No menus match that search.'}
       </div>
     {:else}
-      <div class="overflow-x-auto max-md:overflow-visible">
-        <table class="w-full text-left text-xs border-collapse max-md:block">
-          <thead class="max-md:hidden">
-            <tr
-              class="border-b border-border text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70 dark:text-muted-foreground"
-            >
-              <th class="py-2.5 pr-4 pl-3">Menu</th>
-              <th class="py-2.5 pr-4 pl-2">Items</th>
-              <th class="py-2.5 pr-4 pl-2 text-right">Scans</th>
-              <th class="py-2.5 pr-3 pl-2 text-right">Actions</th>
+      <div class="menus-section-table-wrap">
+        <table class="menus-section-table">
+          <thead class="menus-section-thead">
+            <tr class="menus-section-head">
+              <th class="menus-section-th">Menu</th>
+              <th class="menus-section-th">Items</th>
+              <th class="menus-section-th menus-section-th-right">Scans</th>
+              <th class="menus-section-th menus-section-th-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border text-muted-foreground max-md:block max-md:space-y-3 max-md:divide-y-0">
+          <tbody class="menus-section-tbody">
             {#each filtered as menu (menu.code)}
               <tr
                 onclick={(event) => onRowClick(event, menu)}
-                class="cursor-pointer transition-colors hover:bg-muted/50 max-md:grid max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-3 max-md:rounded-2xl max-md:border max-md:border-border max-md:bg-card max-md:p-3.5 max-md:shadow-[0_14px_34px_-26px_rgba(17,17,19,0.45)]"
+                class="menus-section-row"
               >
-                <td class="py-2.5 pr-4 pl-3 min-w-[220px] max-md:col-span-2 max-md:min-w-0 max-md:p-0">
+                <td class="menus-section-cell-menu">
                   <button
                     type="button"
                     aria-haspopup="dialog"
                     onclick={() => openPreview(menu)}
-                    class="block max-w-full cursor-pointer truncate text-left text-[13px] font-semibold tracking-[-0.01em] text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+                    class="menus-section-link-btn"
                   >
                     {menu.title || 'Untitled menu'}
                   </button>
-                  <div
-                    class="mt-1 inline-block rounded-md bg-muted px-1.5 py-px font-mono text-[10px] text-muted-foreground"
-                  >
+                  <div class="menus-section-code">
                     /r/{menu.code}
                   </div>
                 </td>
-                <td class="py-2.5 pr-4 pl-2 whitespace-nowrap max-md:col-start-1 max-md:mt-3 max-md:self-center max-md:p-0 max-md:text-[11px]">
+                <td class="menus-section-cell-items">
                   {menu.items?.length ?? 0} items
                 </td>
-                <td class="py-2.5 pr-4 pl-2 text-right max-md:col-start-2 max-md:mt-3 max-md:self-center max-md:p-0">
-                  <span
-                    class="hidden text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70 dark:text-muted-foreground max-md:inline"
-                  >
-                    Scans
-                  </span>
-                  <span class="font-mono text-[13px] font-semibold text-foreground">
-                    {menu.total_scans || 0}
-                  </span>
+                <td class="menus-section-cell-scans">
+                  <span class="menus-section-scans-label">Scans</span>
+                  <span class="menus-section-scans-num">{menu.total_scans || 0}</span>
                 </td>
-                <td class="py-2.5 pr-3 pl-2 max-md:col-span-2 max-md:mt-2 max-md:p-0">
-                  <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                <td class="menus-section-cell-actions">
+                  <div class="menus-section-actions">
                     <Button
                       variant="outline"
                       size="sm"
-                      class="h-7 text-[12px] max-md:h-9 max-md:px-3"
+                      class="menus-section-edit-btn"
                       data-testid="menu-edit"
                       href={`/dashboard/menus/${menu.code}`}
                     >
@@ -176,11 +160,11 @@
                     <Button
                       variant="outline"
                       size="sm"
-                      class="h-7 text-[12px] max-md:h-9 max-md:px-3"
+                      class="menus-section-copy-btn"
                       onclick={() => copyLink(menu.code)}
                     >
                       {#if copiedCode === menu.code}
-                        <Check class="size-3.5" />
+                        <Check class="menus-section-icon-sm" />
                       {:else}
                         Copy
                       {/if}
@@ -188,19 +172,19 @@
                     <Button
                       variant="outline"
                       size="sm"
-                      class="h-7 text-[12px] max-md:size-9 max-md:px-0"
+                      class="menus-section-preview-btn"
                       data-testid="menu-preview"
                       aria-label="Preview menu"
                       aria-haspopup="dialog"
                       title="Preview menu"
                       onclick={() => openPreview(menu)}
                     >
-                      <Eye class="size-3.5" />
+                      <Eye class="menus-section-icon-sm" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      class="h-7 text-[12px] text-destructive max-md:h-9 max-md:px-3"
+                      class="menus-section-delete-btn"
                       data-testid="menu-delete"
                       onclick={() => remove(menu.code)}
                     >
@@ -225,3 +209,394 @@
     editHref={`/dashboard/menus/${previewMenu?.code ?? ''}`}
   />
 </section>
+<style>
+  @layer components {
+    .menus-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .menus-section-header {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .menus-section-title {
+      font-size: 1.5rem;
+      line-height: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: var(--foreground);
+    }
+
+    .menus-section-subtitle {
+      margin-top: 0.375rem;
+      max-width: 32rem;
+      font-size: 0.875rem;
+      line-height: 1.625;
+      color: var(--muted-foreground);
+    }
+
+    .menus-section-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    :global(.menus-section-stat-card) {
+      padding: 1rem;
+    }
+
+    :global(.menus-section-stat-ink) {
+      border: 0;
+      background-color: var(--ink);
+      color: var(--primary-foreground);
+      box-shadow: none;
+    }
+
+    .menus-section-stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted-foreground);
+    }
+
+    :global(.menus-section-stat-ink) .menus-section-stat-label {
+      color: rgb(255 255 255 / 0.55);
+    }
+
+    .menus-section-stat-value {
+      margin-top: 0.5rem;
+      font-size: 1.5rem;
+      line-height: 2rem;
+      font-weight: 500;
+      letter-spacing: -0.04em;
+    }
+
+    .menus-section-stat-value-punch {
+      color: var(--punch);
+    }
+
+    :global(.menus-section-search-input) {
+      height: 2.25rem;
+      padding-left: 2.25rem;
+      font-size: 0.875rem;
+    }
+    :global(.menus-section-new-btn) {
+      width: 100%;
+      background-color: var(--punch);
+      color: var(--ink);
+    }
+
+    :global(.menus-section-table-card) {
+      overflow: hidden;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    :global(.menus-section-edit-btn),
+    :global(.menus-section-copy-btn),
+    :global(.menus-section-preview-btn),
+    :global(.menus-section-delete-btn) {
+      height: 1.75rem;
+      font-size: 0.75rem;
+    }
+
+    :global(.menus-section-delete-btn) {
+      color: var(--destructive);
+    }
+
+    .menus-section-loading,
+    .menus-section-empty {
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .menus-section-table-wrap {
+      overflow-x: auto;
+    }
+
+    .menus-section-table {
+      width: 100%;
+      text-align: left;
+      font-size: 0.75rem;
+      border-collapse: collapse;
+    }
+
+    .menus-section-thead {
+      display: table-header-group;
+    }
+
+    .menus-section-head {
+      border-bottom: 1px solid var(--border);
+      font-size: 0.625rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+    }
+
+    .menus-section-th {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+      padding-right: 1rem;
+      padding-left: 0.75rem;
+    }
+
+    .menus-section-th-right {
+      text-align: right;
+    }
+
+    .menus-section-tbody {
+      color: var(--muted-foreground);
+    }
+
+    .menus-section-row {
+      cursor: pointer;
+      transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .menus-section-cell-menu {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+      padding-right: 1rem;
+      padding-left: 0.75rem;
+      min-width: 220px;
+    }
+
+    .menus-section-link-btn {
+      display: block;
+      max-width: 100%;
+      cursor: pointer;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--foreground);
+      outline: none;
+    }
+
+    .menus-section-code {
+      margin-top: 0.25rem;
+      display: inline-block;
+      border-radius: calc(var(--radius) * 0.8);
+      background-color: var(--muted);
+      padding-left: 0.375rem;
+      padding-right: 0.375rem;
+      padding-top: 0.0625rem;
+      padding-bottom: 0.0625rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.625rem;
+      color: var(--muted-foreground);
+    }
+
+    .menus-section-cell-items {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+      padding-right: 1rem;
+      padding-left: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .menus-section-cell-scans {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+      padding-right: 1rem;
+      padding-left: 0.5rem;
+      text-align: right;
+    }
+
+    .menus-section-scans-label {
+      font-size: 0.625rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+    }
+
+    .menus-section-scans-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .menus-section-cell-actions {
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+      padding-right: 0.75rem;
+      padding-left: 0.5rem;
+    }
+
+    .menus-section-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.375rem;
+      white-space: nowrap;
+    }
+
+    :global(.menus-section-edit-btn),
+    :global(.menus-section-copy-btn),
+    :global(.menus-section-preview-btn),
+    :global(.menus-section-delete-btn) {
+      height: 1.75rem;
+      font-size: 0.75rem;
+    }
+
+    :global(.menus-section-delete-btn) {
+      color: var(--destructive);
+    }
+  }
+
+  /* unlayered rules: hover, focus, responsive, dark overrides */
+  :global(.menus-section-new-btn):hover {
+    background-color: color-mix(in oklab, var(--punch) 80%, transparent);
+  }
+
+  .menus-section-row:hover {
+    background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+  }
+
+  .menus-section-link-btn:hover {
+    text-decoration: underline;
+  }
+
+  .menus-section-link-btn:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  :global(.menus-section-icon),
+  :global(.menus-section-icon-sm) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  :global(.menus-section-icon-sm) {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  :global(.menus-section-search-icon) {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    width: 0.875rem;
+    height: 0.875rem;
+    transform: translateY(-50%);
+    color: var(--muted-foreground);
+  }
+
+  :global(.menus-section-search-icon) {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    width: 0.875rem;
+    height: 0.875rem;
+    transform: translateY(-50%);
+    color: var(--muted-foreground);
+  }
+
+  @media (min-width: 40rem) {
+    .menus-section-header {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    :global(.menus-section-new-btn) {
+      width: auto;
+    }
+
+    .menus-section-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (width < 48rem) {
+    .menus-section-table-wrap {
+      overflow-x: visible;
+    }
+
+    .menus-section-table {
+      display: block;
+    }
+
+    .menus-section-thead {
+      display: none;
+    }
+
+    .menus-section-tbody {
+      display: block;
+    }
+
+    .menus-section-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.75rem 0.75rem;
+      border-radius: calc(var(--radius) * 1.8);
+      border: 1px solid var(--border);
+      background-color: var(--card);
+      padding: 0.875rem;
+      box-shadow: 0 14px 34px -26px rgba(17, 17, 19, 0.45);
+    }
+
+    .menus-section-cell-menu {
+      grid-column: span 2;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .menus-section-cell-items {
+      grid-column-start: 1;
+      margin-top: 0.75rem;
+      align-self: center;
+      padding: 0;
+      font-size: 0.6875rem;
+    }
+
+    .menus-section-cell-scans {
+      grid-column-start: 2;
+      margin-top: 0.75rem;
+      align-self: center;
+      padding: 0;
+    }
+
+    .menus-section-scans-label {
+      display: inline;
+    }
+
+    .menus-section-cell-actions {
+      grid-column: span 2;
+      margin-top: 0.5rem;
+      padding: 0;
+    }
+
+    :global(.menus-section-edit-btn),
+    :global(.menus-section-copy-btn),
+    :global(.menus-section-delete-btn) {
+      height: 2.25rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    :global(.menus-section-preview-btn) {
+      height: 2.25rem;
+      width: 2.25rem;
+      padding: 0;
+    }
+  }
+
+  :global(.dark) .menus-section-head,
+  :global(.dark) .menus-section-scans-label {
+    color: var(--muted-foreground);
+  }
+</style>

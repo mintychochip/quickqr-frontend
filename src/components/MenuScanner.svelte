@@ -125,37 +125,107 @@
   });
 </script>
 
-<Dialog bind:open class="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
+<Dialog bind:open class="menu-scanner-dialog">
   {#snippet children({ close })}
-    <div data-testid="menu-scanner" class="space-y-3">
+    <div data-testid="menu-scanner" class="menu-scanner-content">
       <div>
-        <h2 class="text-base font-medium tracking-[-0.03em]">Scan a menu</h2>
-        <p class="mt-1 text-sm text-muted-foreground">
+        <h2 class="menu-scanner-title">Scan a menu</h2>
+        <p class="menu-scanner-desc">
           Point the camera at a quickqr menu code. The menu on this site opens.
         </p>
       </div>
       {#if errorMsg}
-        <p data-testid="menu-scanner-error" class="text-sm text-destructive">{errorMsg}</p>
+        <p data-testid="menu-scanner-error" class="menu-scanner-error">{errorMsg}</p>
       {/if}
       <video
         bind:this={videoEl}
         data-testid="menu-scanner-video"
-        class="h-52 w-full rounded-xl bg-ink object-cover sm:h-64"
+        class="menu-scanner-video-el"
         autoplay
         muted
         playsinline
       ></video>
-      <label class="block text-sm text-muted-foreground">
+      <label class="menu-scanner-file-label">
         Photo of a code
         <input
           data-testid="scan-menu-file"
-          class="mt-1 block w-full text-sm text-foreground"
+          class="menu-scanner-file-input"
           type="file"
           accept="image/*"
           onchange={onPhoto}
         />
       </label>
-      <Button type="button" variant="outline" class="w-full" onclick={close}>Close</Button>
+      <Button type="button" variant="outline" class="menu-scanner-close-btn" onclick={close}>Close</Button>
     </div>
   {/snippet}
 </Dialog>
+<style>
+  @layer components {
+    .menu-scanner-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .menu-scanner-title {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    .menu-scanner-desc {
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: var(--muted-foreground);
+    }
+
+    .menu-scanner-error {
+      font-size: 0.875rem;
+      color: var(--destructive);
+    }
+
+    .menu-scanner-video-el {
+      height: 13rem;
+      width: 100%;
+      border-radius: calc(var(--radius) * 1.4);
+      background-color: var(--ink);
+      object-fit: cover;
+    }
+
+    .menu-scanner-file-label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+
+    .menu-scanner-file-input {
+      margin-top: 0.25rem;
+      display: block;
+      width: 100%;
+      font-size: 0.875rem;
+      color: var(--foreground);
+    }
+  }
+
+  /* unlayered */
+
+  :global(.menu-scanner-dialog) {
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+  }
+
+  :global(.menu-scanner-close-btn) {
+    width: 100%;
+  }
+
+  @media (min-width: 40rem) {
+    .menu-scanner-video-el {
+      height: 16rem;
+    }
+
+    :global(.menu-scanner-dialog) {
+      max-width: 28rem;
+    }
+  }
+</style>

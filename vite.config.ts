@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import type { Connect, Plugin } from 'vite'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import tailwindcss from '@tailwindcss/vite'
+
 import { dynamicCodeFromQrPayload } from './src/lib/dynamicQr'
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url))
@@ -89,7 +89,7 @@ const docsProxy = {
 }
 
 export default defineConfig({
-  plugins: [svelte(), tailwindcss(), compressedShortLinkPlugin()],
+  plugins: [svelte(), compressedShortLinkPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(projectRoot, './src'),

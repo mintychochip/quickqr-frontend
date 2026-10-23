@@ -36,43 +36,90 @@
         type="button"
         aria-label={label}
         title={label}
-        class={cn(
-          'grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-9',
-          className,
-        )}
+        class={cn('theme-trigger', className)}
       >
         {#if mode === 'system'}
-          <Monitor class="size-4" />
+          <Monitor class="theme-icon" />
         {:else if mode === 'dark'}
-          <Moon class="size-4" />
+          <Moon class="theme-icon" />
         {:else}
-          <Sun class="size-4" />
+          <Sun class="theme-icon" />
         {/if}
       </button>
     {/snippet}
   </DropdownMenuTrigger>
-  <DropdownMenuContent align="end" class="w-44">
+  <DropdownMenuContent align="end" class="theme-menu">
     <DropdownMenuLabel>Theme</DropdownMenuLabel>
     <DropdownMenuItem onclick={() => choose('system')}>
-      <Monitor class="size-4" />
+      <Monitor class="theme-icon" />
       System
       {#if mode === 'system'}
-        <Check class="ml-auto size-4" />
+        <Check class="theme-check" />
       {/if}
     </DropdownMenuItem>
     <DropdownMenuItem onclick={() => choose('light')}>
-      <Sun class="size-4" />
+      <Sun class="theme-icon" />
       Light
       {#if mode === 'light'}
-        <Check class="ml-auto size-4" />
+        <Check class="theme-check" />
       {/if}
     </DropdownMenuItem>
     <DropdownMenuItem onclick={() => choose('dark')}>
-      <Moon class="size-4" />
+      <Moon class="theme-icon" />
       Dark
       {#if mode === 'dark'}
-        <Check class="ml-auto size-4" />
+        <Check class="theme-check" />
       {/if}
     </DropdownMenuItem>
   </DropdownMenuContent>
 </DropdownMenu>
+
+<style>
+  /* Classes handed to a child (the icons, the menu content) are global here and prefixed with this component's
+     name, so two components cannot collide. See §3.1.9 of the design spec. */
+  .theme-trigger {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    outline-style: none;
+    transition:
+      color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .theme-trigger:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  .theme-trigger:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
+  }
+
+  @media (width < 40rem) {
+    .theme-trigger {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+
+  :global(.theme-icon) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  :global(.theme-check) {
+    width: 1rem;
+    height: 1rem;
+    margin-left: auto;
+  }
+
+  :global(.theme-menu) {
+    width: 11rem;
+  }
+</style>
