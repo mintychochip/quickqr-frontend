@@ -38,31 +38,81 @@
   const EDITED_AT = 10_600;
   const SAVE_CLICK = 10_900;
   /** Where the pointer rests, and when it gets there. Each target holds through its click and what that started. */
+  const REST_UNTIL = 500;
   const AT_FIELD = 1400;
+  const FIELD_BEAT = 4250;
   const AT_CREATE = 4900;
-  const HOLD_AT_CREATE = 7000;
+  const AT_EDIT_FROM = 8350;
   const AT_EDIT = 8900;
+  const LEAVE_AT = 11_250;
   const LEAVES = 12_000;
 
   type Waypoint = { t: number; x: number; y: number };
 
-  /** The pointer's position at `t`: eased between waypoints, holding on the last one. */
+  /** Deterministic value in [0, 1) for a seed, so a path does not redraw itself from frame to frame. */
+  function noise(seed: number): number {
+    const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  /** Minimum-jerk progress: a hand speeds up, coasts, and slows down, rather than easing both ends alike. */
+  function minJerk(p: number): number {
+    return p * p * p * (10 + p * (-15 + 6 * p));
+  }
+
+  function smoothstep(p: number): number {
+    return p * p * (3 - 2 * p);
+  }
+
+  /** A hand is never completely still: sub-pixel tremor on two incommensurate clocks. */
+  function tremorAt(t: number): { x: number; y: number } {
+    return {
+      x: 0.32 * Math.sin(t * 0.047) + 0.18 * Math.sin(t * 0.019 + 1.3),
+      y: 0.3 * Math.sin(t * 0.041 + 2.1) + 0.16 * Math.sin(t * 0.023 + 4.2),
+    };
+  }
+
+  /**
+   * The pointer's position at `t`: a hand-like path between waypoints, holding on each one. A move leaves rest,
+   * bows slightly off the straight line, overshoots the target a little, and is corrected before the click fires;
+   * between moves the hand trembles faintly rather than freezing.
+   */
   function cursorAt(waypoints: Waypoint[], t: number): { x: number; y: number } {
     const first = waypoints[0];
     const last = waypoints[waypoints.length - 1];
     if (!first || !last) return { x: 0, y: 0 };
-    if (t <= first.t) return { x: first.x, y: first.y };
-    if (t >= last.t) return { x: last.x, y: last.y };
+    const tremor = tremorAt(t);
+    const at = (point: Waypoint) => ({ x: point.x + tremor.x, y: point.y + tremor.y });
+    if (t <= first.t) return at(first);
+    if (t >= last.t) return at(last);
     for (let i = 1; i < waypoints.length; i += 1) {
       const from = waypoints[i - 1];
       const to = waypoints[i];
       if (!from || !to || t > to.t) continue;
       const span = to.t - from.t;
       const p = span <= 0 ? 1 : (t - from.t) / span;
-      const eased = p * p * (3 - 2 * p);
-      return { x: from.x + (to.x - from.x) * eased, y: from.y + (to.y - from.y) * eased };
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 0.5) return at(to);
+      // A fast flick lands a touch long and is corrected; a slow, careful move goes straight in. The overshoot
+      // peaks shortly before the waypoint and is gone by the time the click fires.
+      const speed = dist / Math.max(span, 1);
+      const overshoot = (Math.min(dist * 0.035, 12) * Math.min(1, speed / 0.45)) / dist;
+      const approach = 0.8;
+      const progress =
+        p < approach
+          ? minJerk(p / approach) * (1 + overshoot)
+          : 1 + overshoot * (1 - smoothstep((p - approach) / (1 - approach)));
+      // Hands bow rather than track a straight line; the bow is zero at both ends.
+      const bow = (noise(i * 7.3 + from.t * 0.011 + to.t * 0.003) * 2 - 1) * Math.min(dist * 0.03, 9);
+      const sway = bow * Math.sin(Math.PI * p);
+      return {
+        x: from.x + dx * progress - (dy / dist) * sway + tremor.x,
+        y: from.y + dy * progress + (dx / dist) * sway + tremor.y,
+      };
     }
-    return { x: last.x, y: last.y };
+    return at(last);
   }
 
   /** The slug a real create would take from an address: the last path segment, or the host's first label. */
@@ -85,6 +135,11 @@
   let fieldEl: HTMLElement | undefined = $state();
   let createEl: HTMLElement | undefined = $state();
   let pencilEl: HTMLElement | undefined = $state();
+  /** The pencil's last measured centre: the button gives way to the edit input while the demo types. */
+  let pencilAnchor: { x: number; y: number } | undefined;
+  /** The rest spot, kept for the current width so a row landing or leaving does not make the pointer hop. */
+  let restAnchor: { x: number; y: number } | undefined;
+  let restWidth = -1;
 
   let destination = $state('');
   let links = $state<DemoLink[]>([]);
@@ -246,23 +301,36 @@
 
   function measure() {
     const base = windowEl?.getBoundingClientRect();
-    if (!base || !fieldEl || !createEl || !pencilEl) return;
+    if (!base || !fieldEl || !createEl) return;
     const center = (el: HTMLElement) => {
       const rect = el.getBoundingClientRect();
       return { x: rect.left - base.left + rect.width / 2, y: rect.top - base.top + rect.height / 2 };
     };
-    const rest = { x: base.width * 0.86, y: base.height * 0.94 };
+    // Rest sits a fixed distance above the bottom edge and stays put for a given width: the empty state is taller
+    // than a row, and the pointer should not hop when the window grows or shrinks.
+    if (!restAnchor || Math.abs(base.width - restWidth) > 0.5) {
+      restWidth = base.width;
+      restAnchor = { x: base.width * 0.86, y: base.height - 30 };
+    } else {
+      restAnchor = { x: restAnchor.x, y: Math.min(restAnchor.y, base.height - 30) };
+    }
+    const rest = restAnchor;
     const field = center(fieldEl);
     const create = center(createEl);
-    const pencil = center(pencilEl);
+    // The pencil only exists once the demo's row does, and not while the edit input replaces it; keep the last
+    // place it was measured so the pointer does not jump while the demo types.
+    if (pencilEl) pencilAnchor = center(pencilEl);
+    const pencil = pencilAnchor ?? create;
     waypoints = [
       { t: 0, ...rest },
+      { t: REST_UNTIL, ...rest },
       { t: AT_FIELD, ...field },
       { t: TYPED, ...field },
+      { t: FIELD_BEAT, ...field },
       { t: AT_CREATE, ...create },
-      { t: HOLD_AT_CREATE, ...create },
+      { t: AT_EDIT_FROM, ...create },
       { t: AT_EDIT, ...pencil },
-      { t: SAVE_CLICK, ...pencil },
+      { t: LEAVE_AT, ...pencil },
       { t: LEAVES, ...rest },
     ];
   }
