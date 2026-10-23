@@ -34,7 +34,7 @@ export const PLANS: readonly Plan[] = [
       'Dynamic codes that never expire and can be re-pointed',
       'A short sponsor screen on each scan',
       'Scan counts, device mix, and referrers',
-      'Menus and link pages',
+      'Hosted link pages',
     ],
   },
   {
@@ -57,6 +57,7 @@ export const PLANS: readonly Plan[] = [
     live: false,
     features: [
       'Everything in Plus',
+      'Hosted menus you can edit any time',
       'No sponsor line on your menus and link pages',
       'No quickqr branding on them',
       `Up to ${AD_FREE_SCANS.pro.toLocaleString('en-US')} scans a month`,

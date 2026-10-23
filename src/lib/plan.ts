@@ -16,3 +16,11 @@ export function describePlan(user: Pick<User, 'plan' | 'plan_until'>, timeZone?:
   const line = known && known.id !== 'free' && user.plan_until ? `${name} plan until ${formatDay(user.plan_until, timeZone)}` : `${name} plan`;
   return { name, line };
 }
+
+/**
+ * Menus are a Pro feature on a server that has plans. The Go reference server sends no plan at all and keeps menus open
+ * for everyone, so this must not read a missing plan as Free: doing that would take menus away from every self-hoster.
+ */
+export function canUseMenus(user: Pick<User, 'plan'>): boolean {
+  return user.plan === undefined || user.plan === 'pro';
+}

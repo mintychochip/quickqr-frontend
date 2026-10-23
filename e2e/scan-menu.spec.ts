@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { signInViaOAuth } from './helpers';
+import { PRO_USER, signInViaOAuth } from './helpers';
 
 test('scanning the menu QR opens that menu', async ({ page }) => {
   await page.goto('/');
-  await signInViaOAuth(page);
+  await signInViaOAuth(page, '/', PRO_USER);
   const editor = page.getByTestId('menu-editor');
   await page.goto('/dashboard/menus/new');
 

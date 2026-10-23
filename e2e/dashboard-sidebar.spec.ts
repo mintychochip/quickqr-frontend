@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { signInViaOAuth } from './helpers';
+import { PRO_USER, signInViaOAuth } from './helpers';
 
 test('dashboard sidebar separates links, menus, and scan', async ({ page }) => {
-  await signInViaOAuth(page);
+  await signInViaOAuth(page, '/', PRO_USER);
   await page.goto('/');
   await page.getByTestId('dashboard-link').click();
   await expect(page).toHaveURL(/\/dashboard$/);

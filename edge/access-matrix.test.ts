@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { bearer, go, rig, signUp, withJson, type Rig } from './test/rig';
+import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
 
 /**
  * Every route, called by four kinds of caller: nobody, a token that no longer works, a signed-in stranger, and the
@@ -82,12 +82,38 @@ const stack = (): Rig =>
 
 const r = stack();
 let owner = '';
+let ownerId = '';
 let other = '';
+let otherId = '';
 
 beforeAll(async () => {
-  owner = (await signUp(r, 'matrix-owner@example.com')).token;
-  other = (await signUp(r, 'matrix-other@example.com')).token;
+  const account = await signUp(r, 'matrix-owner@example.com');
+  owner = account.token;
+  ownerId = account.id;
+  const stranger = await signUp(r, 'matrix-other@example.com');
+  other = stranger.token;
+  otherId = stranger.id;
 });
+
+/**
+ * Menus are a Pro feature, but a Pro owner's scans skip the sponsor page, and the scan rows expect the page. Fixtures
+ * are made while the owner is Pro (a menu needs it); both signed-in people then follow the row: Pro for the menu
+ * writes (the stranger creates their own menu, as they always have), Free for everything else.
+ */
+function setPlan(userId: string, on: boolean): void {
+  r.db.sqlite.query('DELETE FROM entitlements WHERE user_id = ?').run(userId);
+  if (on) grantPlan(r, userId, 'pro');
+}
+
+function planFor(row: Row): void {
+  const pro = row.pattern.includes('/api/menus');
+  setPlan(ownerId, pro);
+  setPlan(otherId, pro);
+}
+
+function makeFixtures(): void {
+  setPlan(ownerId, true);
+}
 
 const created = async (path: string, body: unknown): Promise<string> => {
   const res = await go(r, path, withJson('POST', owner, body));
@@ -125,11 +151,13 @@ async function titleOf(code: string, settings: boolean): Promise<string> {
 describe('access matrix', () => {
   for (const row of matrix) {
     test(row.pattern, async () => {
+      makeFixtures();
       const links: Record<Kind, string> = {
         link: await created('/api/links', { title: 'matrix link original', destination_url: 'https://example.com/matrix' }),
         menu: await created('/api/menus', { title: 'matrix menu original', items: [{ name: 'Soup', price: '6.00' }] }),
         page: await created('/api/pages', { title: 'matrix page original', links: [{ name: 'Shop', url: 'https://example.com' }] }),
       };
+      planFor(row);
       if (row.pattern.endsWith('/analytics')) {
         await go(r, `/r/${links.link}?direct=1`);
         await r.settle();

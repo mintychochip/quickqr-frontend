@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { contrastOf, decodedCode, generator, signInToken, signInViaOAuth } from './helpers';
+import { PRO_USER, contrastOf, decodedCode, generator, signInToken, signInViaOAuth } from './helpers';
 
 /** How far from grey the most colourful pixel on a canvas is: 0 for black and white, over 100 for a blue code. */
 async function strongestTint(canvas: Locator): Promise<number> {
@@ -82,7 +82,7 @@ for (const scheme of ['light', 'dark'] as const) {
 }
 
 test('a saved menu shows its link once, with copy, share, and open in one row', async ({ page }) => {
-  const token = await signInToken();
+  const token = await signInToken(PRO_USER);
   const created = await page.request.post('/api/menus', {
     headers: { Authorization: `Bearer ${token}` },
     data: { title: 'Card check', items: [{ name: 'Soup', price: '6.00' }] },
@@ -90,7 +90,7 @@ test('a saved menu shows its link once, with copy, share, and open in one row', 
   expect(created.status()).toBe(201);
   const { code } = (await created.json()) as { code: string };
 
-  await signInViaOAuth(page);
+  await signInViaOAuth(page, '/', PRO_USER);
   await page.goto(`/dashboard/menus/${code}`);
   const editor = page.getByTestId('menu-editor');
   const card = editor.getByTestId('qr-card');

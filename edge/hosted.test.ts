@@ -1,13 +1,21 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import type { Link } from './types';
-import { bearer, go, rig, signUp, withJson, type Rig } from './test/rig';
+import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
 
 const MENU_INVALID = 'menu needs a title and at least one item with a name and a price';
 const PAGE_INVALID = 'link page needs a title and at least one link with a name and a valid http(s) URL';
+const MENUS_PRO_ONLY = 'Menus are a Pro feature.';
 
 async function pair(): Promise<{ r: Rig; ada: { id: string; token: string }; bob: { id: string; token: string } }> {
   const r = rig();
   return { r, ada: await signUp(r, 'ada@example.com'), bob: await signUp(r, 'bob@example.com') };
+}
+
+/** The same two people, with ada on Pro: menu writes are a Pro feature. */
+async function proPair(): Promise<{ r: Rig; ada: { id: string; token: string }; bob: { id: string; token: string } }> {
+  const people = await pair();
+  grantPlan(people.r, people.ada.id, 'pro');
+  return people;
 }
 
 const post = async (r: Rig, path: string, token: string, body: unknown): Promise<Response> => go(r, path, withJson('POST', token, body));
@@ -25,8 +33,46 @@ describe('menus', () => {
     expect((await go(r, '/api/menus/abc123', { method: 'PUT', body: '{}' })).status).toBe(401);
   });
 
-  test('are created with their own code, hosted at /r/<code>', async () => {
+  test('need Pro: Free and Plus are refused, and an update stops when Pro ends', async () => {
     const { r, ada } = await pair();
+    const body = { title: 'Lunch', items: [soup] };
+    const refused = [403, { error: MENUS_PRO_ONLY }];
+    const free = await post(r, '/api/menus', ada.token, body);
+    expect([free.status, await free.json()]).toEqual(refused);
+    expect(r.db.sqlite.query('SELECT count(*) AS n FROM links').get()).toEqual({ n: 0 });
+
+    grantPlan(r, ada.id, 'plus');
+    const plus = await post(r, '/api/menus', ada.token, body);
+    expect([plus.status, await plus.json()]).toEqual(refused);
+    // The plan is checked before the body, so a broken body does not become a 400 for a Free owner.
+    const malformed = await go(r, '/api/menus', raw('POST', ada.token, '{'));
+    expect(malformed.status).toBe(403);
+    expect(r.db.sqlite.query('SELECT count(*) AS n FROM links').get()).toEqual({ n: 0 });
+
+    grantPlan(r, ada.id, 'pro');
+    const menu = (await (await post(r, '/api/menus', ada.token, body)).json()) as Link;
+    r.db.sqlite.query("DELETE FROM entitlements WHERE user_id = ? AND plan = 'pro'").run(ada.id);
+    const update = await go(r, `/api/menus/${menu.code}`, withJson('PUT', ada.token, { title: 'Hijack', items: [soup] }));
+    expect([update.status, await update.json()]).toEqual(refused);
+    expect(((await (await go(r, `/api/links/${menu.code}`, bearer(ada.token))).json()) as Link).title).toBe('Lunch');
+  });
+
+  test('a plan that cannot be read refuses menu writes rather than granting them', async () => {
+    const { r, ada } = await pair();
+    r.db.sqlite.exec('DROP TABLE entitlements'); // a database the 0002 migration has not reached yet
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup] });
+      expect([res.status, await res.json()]).toEqual([403, { error: MENUS_PRO_ONLY }]);
+      expect(r.db.sqlite.query('SELECT count(*) AS n FROM links').get()).toEqual({ n: 0 });
+      expect(logged).toHaveBeenCalled();
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
+  test('are created with their own code, hosted at /r/<code>', async () => {
+    const { r, ada } = await proPair();
     const res = await post(r, '/api/menus', ada.token, { title: '  Lunch ', items: [{ name: ' Soup ', price: ' 6.00 ' }] });
     expect(res.status).toBe(201);
     const menu = (await res.json()) as Link;
@@ -47,7 +93,7 @@ describe('menus', () => {
   });
 
   test('refuse a menu without a title, or without a priced and named item', async () => {
-    const { r, ada } = await pair();
+    const { r, ada } = await proPair();
     const bad: unknown[] = [
       {},
       null,
@@ -67,7 +113,7 @@ describe('menus', () => {
   });
 
   test('refuse a body of the wrong shape or size', async () => {
-    const { r, ada } = await pair();
+    const { r, ada } = await proPair();
     for (const body of ['{', '[]', '"x"', '{"title":5}', '{"title":"x","items":"soup"}', '{"title":"x","items":[5]}', '{"title":"x","items":[{"name":5,"price":"1"}]}', '{"title":"x","items":{"name":"a"}}']) {
       const res = await go(r, '/api/menus', raw('POST', ada.token, body));
       expect([res.status, await res.json()]).toEqual([400, { error: 'Invalid request body' }]);
@@ -77,7 +123,7 @@ describe('menus', () => {
   });
 
   test('are updated by their owner, keeping the code and the address', async () => {
-    const { r, ada } = await pair();
+    const { r, ada } = await proPair();
     const before = (await (await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup] })).json()) as Link;
     r.advance(5000);
     const res = await go(r, `/api/menus/${before.code}`, withJson('PUT', ada.token, { title: 'Dinner', items: [{ name: 'Steak', price: '24' }] }));
@@ -88,7 +134,7 @@ describe('menus', () => {
   });
 
   test('are not touched by an invalid update', async () => {
-    const { r, ada } = await pair();
+    const { r, ada } = await proPair();
     const menu = (await (await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup] })).json()) as Link;
     const res = await go(r, `/api/menus/${menu.code}`, withJson('PUT', ada.token, { title: '', items: [soup] }));
     expect([res.status, await res.json()]).toEqual([400, { error: MENU_INVALID }]);
@@ -96,7 +142,7 @@ describe('menus', () => {
   });
 
   test('cannot be updated by someone else, whatever the body, and a missing menu reads the same', async () => {
-    const { r, ada, bob } = await pair();
+    const { r, ada, bob } = await proPair();
     const menu = (await (await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup] })).json()) as Link;
     const expected = [404, { error: 'Menu not found' }];
     for (const init of [withJson('PUT', bob.token, { title: 'hijack', items: [soup] }), raw('PUT', bob.token, '{'), withJson('PUT', bob.token, null)]) {
@@ -109,7 +155,7 @@ describe('menus', () => {
   });
 
   test('are the only thing /api/menus edits: a plain link or a link page is a missing menu', async () => {
-    const { r, ada } = await pair();
+    const { r, ada } = await proPair();
     const link = (await (await post(r, '/api/links', ada.token, { code: 'plain', destination_url: 'a.co' })).json()) as Link;
     const page = (await (await post(r, '/api/pages', ada.token, { title: 'Me', links: [{ name: 'Site', url: 'https://a.co' }] })).json()) as Link;
     for (const code of [link.code, page.code]) {
@@ -120,7 +166,7 @@ describe('menus', () => {
   });
 
   test('show up in the owner\'s link list, and delete like any link', async () => {
-    const { r, ada } = await pair();
+    const { r, ada } = await proPair();
     const menu = (await (await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup] })).json()) as Link;
     const list = (await (await go(r, '/api/links', bearer(ada.token))).json()) as { links: Link[] };
     expect(list.links.map((l) => [l.code, l.kind])).toEqual([[menu.code, 'menu']]);
@@ -189,7 +235,7 @@ describe('link pages', () => {
   });
 
   test('are updated by their owner only, and "Link page not found" covers every other case', async () => {
-    const { r, ada, bob } = await pair();
+    const { r, ada, bob } = await proPair();
     const page = (await (await post(r, '/api/pages', ada.token, { title: 'Me', links: [site] })).json()) as Link;
     const menu = (await (await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] })).json()) as Link;
 

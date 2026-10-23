@@ -81,3 +81,15 @@ export async function signUp(r: Rig, email: string): Promise<{ id: string; token
   const { user, token } = await loginOrRegisterOAuth(r.db, 'dev', email, email, r.now());
   return { id: user.id, token };
 }
+
+/** Gives a person a paid plan ending in `days` days, as a gift or billing would, so a route that needs one can run. */
+export function grantPlan(r: Rig, userId: string, plan: 'plus' | 'pro' = 'pro', days = 30): void {
+  const now = r.now();
+  const endsAt = new Date(now.getTime() + days * 86_400_000).toISOString();
+  r.db.sqlite
+    .query(
+      `INSERT INTO entitlements (id, user_id, plan, ends_at, source, source_id, created_at)
+       VALUES (?, ?, ?, ?, 'test', 'test', ?)`,
+    )
+    .run(`ent-test-${crypto.randomUUID()}`, userId, plan, endsAt, now.toISOString());
+}

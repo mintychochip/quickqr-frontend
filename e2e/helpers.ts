@@ -23,8 +23,15 @@ export async function decodedCode(card: Locator): Promise<string | null> {
   return jsQR(new Uint8ClampedArray(data), width, height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
 }
 
+/** The fixture user every spec signs in as unless it names another. */
+export const FIXTURE_USER = 'ada@example.com';
+/** The administrator locally: `ADMIN_EMAILS=ada@example.com` in `frontend/.dev.vars`. */
+export const ADMIN_USER = 'ada@example.com';
+/** Holds Pro so the menu specs can use a Pro feature; `global-setup.ts` gives them a gift on a server with plans. */
+export const PRO_USER = 'pro@example.com';
+
 /** Sign in via the OAuth dev stand-in provider, as the fixture user unless another email is given. */
-export async function signInViaOAuth(page: Page, returnTo = '/', email = 'ada@example.com'): Promise<void> {
+export async function signInViaOAuth(page: Page, returnTo = '/', email = FIXTURE_USER): Promise<void> {
   const base = new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:5186');
   const target = new URL(returnTo, base);
 
@@ -55,7 +62,7 @@ export async function routeGoogleToStandIn(page: Page): Promise<void> {
 }
 
 /** Authenticate through the OAuth dev stand-in and return the API token. */
-export async function signInToken(email = 'ada@example.com'): Promise<string> {
+export async function signInToken(email = FIXTURE_USER): Promise<string> {
   const base = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:5186';
   const start = new URL('/api/auth/oauth/dev/start', base);
   start.searchParams.set('as', 'google');

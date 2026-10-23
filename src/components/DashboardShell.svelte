@@ -26,7 +26,7 @@
     DropdownMenuTrigger,
   } from '@/lib/components/ui/dropdown-menu';
   import { fetchLinks } from '../lib/api';
-  import { describePlan } from '../lib/plan';
+  import { canUseMenus, describePlan } from '../lib/plan';
   import { fly } from 'svelte/transition';
   import type { Link, Sponsor } from '../types';
   import type { User } from '../types/auth';
@@ -40,6 +40,7 @@
   import LinkDetailSidebar from './LinkDetailSidebar.svelte';
   import Logo from './Logo.svelte';
   import MenuEditor from './MenuEditor.svelte';
+  import MenusGate from './MenusGate.svelte';
   import MenuScanner from './MenuScanner.svelte';
   import MenusSection from './MenusSection.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
@@ -129,28 +130,27 @@
   const plan = $derived(describePlan(user));
   /** The gift admin page. For anyone who is not an administrator its path is like any other the dashboard does not know. */
   const showGifts = $derived(path.startsWith('/dashboard/gifts') && user.is_admin === true);
+  /** Menus are a Pro feature on the hosted server; a server with no plans (the Go reference) keeps them open. */
+  const menusLocked = $derived(!canUseMenus(user));
 
-  const title = $derived(
-    path === '/dashboard/menus/new'
-      ? 'New menu'
-      : path.startsWith('/dashboard/menus/')
-        ? 'Edit menu'
-        : path.startsWith('/dashboard/menus')
-          ? 'Menus'
-          : path === '/dashboard/pages/new'
-            ? 'New link page'
-            : path.startsWith('/dashboard/pages/')
-              ? 'Edit link page'
-              : path.startsWith('/dashboard/pages')
-                ? 'Link pages'
-                : showGifts
-                  ? 'Gifts'
-                  : 'Dynamic links',
-  );
+  function pageTitle(): string {
+    if (path.startsWith('/dashboard/menus')) {
+      if (menusLocked) return 'Menus';
+      if (path === '/dashboard/menus/new') return 'New menu';
+      return path.startsWith('/dashboard/menus/') ? 'Edit menu' : 'Menus';
+    }
+    if (path.startsWith('/dashboard/pages')) {
+      if (path === '/dashboard/pages/new') return 'New link page';
+      return path.startsWith('/dashboard/pages/') ? 'Edit link page' : 'Link pages';
+    }
+    return showGifts ? 'Gifts' : 'Dynamic links';
+  }
 
-  type NavItem = { label: string; href: string; icon: typeof Link2; testId: string; active: boolean };
+  const title = $derived(pageTitle());
 
-  const items: NavItem[] = [
+  type NavItem = { label: string; href: string; icon: typeof Link2; testId: string; active: boolean; locked?: boolean };
+
+  const items: NavItem[] = $derived([
     {
       label: 'Dynamic links',
       href: '/dashboard',
@@ -164,6 +164,7 @@
       icon: UtensilsCrossed,
       testId: 'nav-menus',
       active: path.startsWith('/dashboard/menus'),
+      locked: menusLocked,
     },
     {
       label: 'Link pages',
@@ -172,7 +173,7 @@
       testId: 'nav-pages',
       active: path.startsWith('/dashboard/pages'),
     },
-  ];
+  ]);
 
   const giftsItem: NavItem = {
     label: 'Gifts',
@@ -241,6 +242,9 @@
       )}
     />
     {item.label}
+    {#if item.locked}
+      <span class="dsh-nav-pro">Pro</span>
+    {/if}
   </a>
 {/snippet}
 
@@ -494,12 +498,16 @@
 
       <main class="dsh-main">
         <div class="dsh-main-inner">
-        {#if menuEditCode}
-          <MenuEditor code={menuEditCode} />
+        {#if path.startsWith('/dashboard/menus')}
+          {#if menusLocked}
+            <MenusGate />
+          {:else if menuEditCode}
+            <MenuEditor code={menuEditCode} />
+          {:else}
+            <MenusSection />
+          {/if}
         {:else if pageEditCode}
           <LinkPageEditor code={pageEditCode} />
-        {:else if path.startsWith('/dashboard/menus')}
-          <MenusSection />
         {:else if path.startsWith('/dashboard/pages')}
           <LinkPagesSection />
         {:else if showGifts}
@@ -1564,6 +1572,18 @@
   .dsh-nav-idle:hover {
     background-color: color-mix(in oklab, var(--muted) 70%, transparent);
     color: var(--foreground);
+  }
+
+  .dsh-nav-pro {
+    margin-left: auto;
+    border: 1px solid color-mix(in oklab, currentColor 45%, transparent);
+    border-radius: 999px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   :global(.dsh-nav-icon) {

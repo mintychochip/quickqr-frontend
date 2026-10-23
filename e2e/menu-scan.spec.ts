@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { dynamicQrValue } from '../src/lib/dynamicQr';
-import { signInViaOAuth } from './helpers';
+import { PRO_USER, signInViaOAuth } from './helpers';
 
 function menuExcerpt(body: string): string {
   const match = body.match(/<main[\s\S]*<\/main>/);
@@ -10,7 +10,7 @@ function menuExcerpt(body: string): string {
 
 test('hosted menu QR stays stable while the public menu changes', async ({ page, browser, request }) => {
   await page.goto('/');
-  await signInViaOAuth(page);
+  await signInViaOAuth(page, '/', PRO_USER);
   const editor = page.getByTestId('menu-editor');
   await page.goto('/dashboard/menus/new');
 

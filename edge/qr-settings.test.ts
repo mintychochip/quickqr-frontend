@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { Link, QRStyle } from './types';
-import { bearer, go, rig, signUp, withJson, type Rig } from './test/rig';
+import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
 
 interface Settings {
   resource: string;
@@ -60,6 +60,7 @@ describe('reading settings', () => {
 
   test('of a menu say its address and ad style are fixed', async () => {
     const { r, ada } = await setup();
+    grantPlan(r, ada.id, 'pro');
     const menu = (await (await go(r, '/api/menus', withJson('POST', ada.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as Link;
     const body = await settingsOf(await go(r, `/api/qr/${menu.code}/settings`, bearer(ada.token)));
     expect(body).toMatchObject({ kind: 'menu', settings: { ad_style: 'menu', destination_url: `/r/${menu.code}` } });
@@ -137,6 +138,7 @@ describe('changing settings', () => {
 
   test('a menu keeps its address and takes no ad style, but can be renamed and styled', async () => {
     const { r, ada } = await setup();
+    grantPlan(r, ada.id, 'pro');
     const menu = (await (await go(r, '/api/menus', withJson('POST', ada.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as Link;
     expect(await fail(await patch(r, ada.token, menu.code, { destination_url: 'x.example' }))).toEqual([400, 'A menu keeps its public address']);
     expect(await fail(await patch(r, ada.token, menu.code, { ad_style: 'direct' }))).toEqual([400, 'A menu does not use an ad style']);

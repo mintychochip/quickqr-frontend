@@ -2,7 +2,7 @@ import { describe, expect, spyOn, test } from 'bun:test';
 import { newGiftToken } from './gifts';
 import { sha256Hex } from './ids';
 import { createGrant, redeemGrant } from './store/gifts';
-import { bearer, go, location, rig, signUp, withJson, type Rig } from './test/rig';
+import { bearer, go, grantPlan, location, rig, signUp, withJson, type Rig } from './test/rig';
 
 interface ScanRow {
   link_code: string;
@@ -17,9 +17,10 @@ interface ScanRow {
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-async function setup(): Promise<{ r: Rig; token: string }> {
+async function setup(pro = false): Promise<{ r: Rig; token: string }> {
   const r = rig();
-  const { token } = await signUp(r, 'ada@example.com');
+  const { id, token } = await signUp(r, 'ada@example.com');
+  if (pro) grantPlan(r, id, 'pro');
   return { r, token };
 }
 
@@ -132,7 +133,7 @@ describe('what a scan shows', () => {
   });
 
   test('a menu is served as a page, and a link page as another', async () => {
-    const { r, token } = await setup();
+    const { r, token } = await setup(true);
     const menu = (await (await go(r, '/api/menus', withJson('POST', token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as { code: string };
     const page = (await (await go(r, '/api/pages', withJson('POST', token, { title: 'Me', links: [{ name: 'Site', url: 'https://a.example' }] }))).json()) as { code: string };
     const menuRes = await scan(r, `/r/${menu.code}`);
@@ -255,7 +256,7 @@ describe('an owner on a plan', () => {
   test('their menu and link page are still pages, never a redirect', async () => {
     const r = rig();
     const paid = await signUp(r, 'paid@example.com');
-    await gift(r, paid.id);
+    await gift(r, paid.id, 'pro');
     const menu = (await (await go(r, '/api/menus', withJson('POST', paid.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as { code: string };
     const page = (await (await go(r, '/api/pages', withJson('POST', paid.token, { title: 'Me', links: [{ name: 'Site', url: 'https://a.example' }] }))).json()) as { code: string };
     expect((await scan(r, `/r/${menu.code}`)).status).toBe(200);
