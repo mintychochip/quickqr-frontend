@@ -72,19 +72,22 @@ everything else is a static file, which costs nothing. Pages serves `index.html`
 
 ### Staging hostname
 
-The new backend answers at `https://quickqr-staging.pages.dev`. `staging.quickqr.app` is still the proxy Worker in
-`staging-worker/`, which sent the API paths to the Go server on odin through a Workers VPC service and everything else to
-this Pages project. That server, the service, and the tunnel were deleted on 2026-10-22, so on that hostname the static
-pages load and every API call fails until the hostname is pointed at the Pages project: remove the Worker's custom domain,
-then add the hostname under the project's Custom domains in the dashboard (with a proxied CNAME to
+The backend answers at `https://quickqr-staging.pages.dev`, and `staging.quickqr.app` reaches it too. That hostname is the
+proxy Worker in `staging-worker/` (deployed with `wrangler deploy` from that directory). It has had no backend of its own
+since the Go server on odin and its Workers VPC service were deleted on 2026-10-22, so its binding was removed and it now
+passes every path to this Pages project. It does not follow redirects, so a scan's or a sign-in's redirect reaches the
+browser. The cost: the Function reads the visitor's address from `CF-Connecting-IP` and nothing else, and through the
+Worker that header carries a Cloudflare address, so scans made through `staging.quickqr.app` are logged under Cloudflare's
+network (`2a06:98c0:3600::/48` on 2026-10-22, against the visitor's own `/24` for a scan sent straight to
+`quickqr-staging.pages.dev`). The cleaner arrangement is to point the hostname at the Pages project itself: remove the
+Worker's custom domain, then add the hostname under the project's Custom domains in the dashboard (with a proxied CNAME to
 `quickqr-staging.pages.dev` if the dashboard does not create it). The Wrangler login cannot write DNS, so that step is
-made in the dashboard. Once it is done, delete `staging-worker/` and the Worker.
+made in the dashboard. Until then this hostname is a stopgap that mis-records scan networks. Once it is done, delete
+`staging-worker/` and the Worker.
 
-The Worker (deployed from `staging-worker/` with `wrangler deploy`) also refuses `/api/qr/context` with `503`, because the
-Go server's site reader fetches whatever address the caller names from the machine it runs on. The Pages backend has no
-such worker in front of it: its reader refuses literal private addresses, `localhost`, `.local`, and `.internal`, checks every
-redirect hop, and times out after 8 seconds. It cannot see where a hostname points, so a name that resolves to a private
-address is left to Cloudflare, which refuses the connection: on 2026-10-22 `localtest.me` and `nip.io` names resolving to
-127.0.0.1, 10.0.0.1, 192.168.0.1, and 169.254.169.254 each came back `That site returned 530` from the deployed staging
-project. That is five names with one hop each, not a proof for every internal address. The route is still an anonymous GET
-fetcher.
+The site reader (`POST /api/qr/context`) on the Pages backend refuses literal private addresses, `localhost`, `.local`, and
+`.internal`, checks every redirect hop, and times out after 8 seconds. It cannot see where a hostname points, so a name that
+resolves to a private address is left to Cloudflare, which refuses the connection: on 2026-10-22 `localtest.me` and `nip.io`
+names resolving to 127.0.0.1, 10.0.0.1, 192.168.0.1, and 169.254.169.254 each came back `That site returned 530` from the
+deployed staging project. That is five names with one hop each, not a proof for every internal address. The route is still
+an anonymous GET fetcher.
