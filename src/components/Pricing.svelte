@@ -58,9 +58,9 @@
             <p class="plan-period" data-testid="plan-{plan.id}-period">
               {#if plan.price}
                 {#if period === 'yearly'}
-                  {money(monthlyEquivalent(plan.price))} a month, billed yearly ({monthsFree(plan.price)} months free)
+                  <span class="period-amount">{money(monthlyEquivalent(plan.price))}</span> a month, billed yearly ({monthsFree(plan.price)} months free)
                 {:else}
-                  or {money(plan.price.yearly)} a year ({monthsFree(plan.price)} months free)
+                  or <span class="period-amount">{money(plan.price.yearly)}</span> a year ({monthsFree(plan.price)} months free)
                 {/if}
               {:else}
                 No card, no trial clock.
@@ -231,6 +231,7 @@
     font-weight: 600;
     letter-spacing: -0.045em;
     color: var(--plan-accent);
+    font-variant-numeric: tabular-nums;
   }
 
   .per {
@@ -245,6 +246,12 @@
     font-size: 13px;
     line-height: 1.5;
     color: var(--plan-muted);
+  }
+
+  .period-amount {
+    font-weight: 600;
+    color: var(--plan-accent);
+    font-variant-numeric: tabular-nums;
   }
 
   .plan-action {
