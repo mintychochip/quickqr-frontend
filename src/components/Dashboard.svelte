@@ -5,10 +5,9 @@
   import Check from '@lucide/svelte/icons/check';
   import Search from '@lucide/svelte/icons/search';
   import { fade } from 'svelte/transition';
-  import type { Link, Sponsor } from '../types';
+  import type { Link } from '../types';
   import type { DetailSelection, SavedLink } from '../types/dashboard';
   import { fetchLinks, fetchTrends, updateLink, deleteLink } from '../lib/api';
-  import AdSpace from './AdSpace.svelte';
   import LinkRowDropdown from './LinkRowDropdown.svelte';
   import LinkRowMenu from './LinkRowMenu.svelte';
   import QRCanvas from './QRCanvas.svelte';
@@ -29,7 +28,6 @@
 
   type Props = {
     newLinkTrigger?: Link | null;
-    sponsor?: Sponsor | null;
     refreshKey?: number;
     onCreate: () => void;
     useDetailSidebar?: boolean;
@@ -40,7 +38,6 @@
 
   let {
     newLinkTrigger = null,
-    sponsor = null,
     refreshKey = 0,
     onCreate,
     useDetailSidebar = false,
@@ -295,12 +292,6 @@
     </Card>
   </div>
 
-  {#if sponsor}
-    <div class="dash-sponsor-hide">
-      <AdSpace variant="leaderboard" sponsor={sponsor} slotId="dashboard-banner" />
-    </div>
-  {/if}
-
   <div class="dash-search-wrap">
     <Search class="dash-search-icon" />
     <Input
@@ -429,7 +420,7 @@
                           <Sparkline points={trend.points} class="dash-spark-h4w14" />
                         </span>
                       {:else if trend?.error}
-                        <span class="dash-text10">—</span>
+                        <span class="dash-text10">No data</span>
                       {:else}
                         <span class="dash-pulse-h4w14"></span>
                       {/if}
@@ -683,15 +674,6 @@
   }
   .dash-tone-white65 {
     color: rgb(255 255 255 / 0.65);
-  }
-
-  .dash-sponsor-hide {
-    display: block;
-  }
-  @media (min-width: 1360px) {
-    .dash-sponsor-hide {
-      display: none;
-    }
   }
 
   .dash-search-wrap {

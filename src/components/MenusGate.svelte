@@ -9,7 +9,7 @@
     <Badge variant="outline" class="menus-gate-badge">Pro</Badge>
     <h1 class="menus-gate-title">Menus are a Pro feature</h1>
     <p class="menus-gate-copy">
-      Build a hosted menu behind a printed code and change it whenever you like—the code on the table stays the same.
+      Build a hosted menu behind a printed code and change it whenever you like. The code on the table stays the same.
     </p>
     <p class="menus-gate-note">
       Pro isn't on sale yet. A menu you already made keeps working.

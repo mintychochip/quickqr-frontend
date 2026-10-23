@@ -143,7 +143,7 @@
     <div class="link-page-editor-intro">
       <h1 class="link-page-editor-title">New link page</h1>
       <p class="link-page-editor-subtitle">
-        Order online, call, map, reviews — one code opens them all, and you can change the list any time.
+        Order online, call, map, reviews. One code opens them all, and you can change the list any time.
       </p>
     </div>
   {/if}

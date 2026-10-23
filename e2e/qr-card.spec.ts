@@ -21,7 +21,7 @@ test('the studio card downloads PNG and SVG and copies its link', async ({ page 
   await page.goto('/');
   const gen = generator(page);
   await gen.getByRole('tab', { name: 'Static', exact: true }).click();
-  await expect(gen.getByTestId('static-compressed-url')).not.toHaveText('—', { timeout: 8_000 });
+  await expect(gen.getByTestId('static-compressed-url')).not.toHaveText('Not generated yet', { timeout: 8_000 });
 
   const card = gen.getByTestId('qr-card');
   const [png] = await Promise.all([
@@ -57,7 +57,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.goto('/');
     const gen = generator(page);
     await gen.getByRole('tab', { name: 'Static', exact: true }).click();
-    await expect(gen.getByTestId('static-compressed-url')).not.toHaveText('—', { timeout: 8_000 });
+    await expect(gen.getByTestId('static-compressed-url')).not.toHaveText('Not generated yet', { timeout: 8_000 });
 
     const card = gen.getByTestId('qr-card');
     const labelled = [

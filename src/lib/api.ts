@@ -1,4 +1,4 @@
-import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, Sponsor, TrendsSummary } from '../types';
+import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, TrendsSummary } from '../types';
 import type { Gift, GiftClaimed, GiftCreated, NewGift } from '../types/gift';
 import { getAuthToken, setAuthToken } from './auth';
 
@@ -253,20 +253,6 @@ export async function fetchTrends(): Promise<TrendsSummary> {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load scan trends');
   }
   return parseJsonResponse<TrendsSummary>(res, 'Failed to load scan trends');
-}
-
-export async function fetchActiveSponsor(): Promise<Sponsor | null> {
-  try {
-    const res = await request('/api/sponsors/active');
-    if (!res.ok) return null;
-    const data = await parseJsonResponse<{ sponsor?: Sponsor | null }>(
-      res,
-      'Failed to load sponsor',
-    );
-    return data.sponsor || null;
-  } catch {
-    return null;
-  }
 }
 
 /**

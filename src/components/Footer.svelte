@@ -17,7 +17,6 @@
     { href: '/#generator', label: 'Create QR' },
     { href: '/dashboard', label: 'Dashboard' },
     { href: docsHref, label: 'Docs' },
-    { href: '/#preview', label: 'Redirect preview' },
     { href: '/#pricing', label: 'Pricing' },
   ];
 
@@ -158,7 +157,7 @@
             </p>
             <p>
               <strong>Static compressed codes:</strong> static mode compresses and decompresses entirely in
-              the browser—no server log.
+              the browser, with no server log.
             </p>
           {:else if activeModal === 'terms'}
             <p>

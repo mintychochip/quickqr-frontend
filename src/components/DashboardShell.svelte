@@ -1,5 +1,4 @@
 <script lang="ts">
-  import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
   import Check from '@lucide/svelte/icons/check';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import Files from '@lucide/svelte/icons/files';
@@ -28,10 +27,9 @@
   import { fetchLinks } from '../lib/api';
   import { canUseMenus, describePlan } from '../lib/plan';
   import { fly } from 'svelte/transition';
-  import type { Link, Sponsor } from '../types';
+  import type { Link } from '../types';
   import type { User } from '../types/auth';
   import type { DetailSelection, SavedLink } from '../types/dashboard';
-  import AdSpace from './AdSpace.svelte';
   import CreateDynamicCodePanel from './CreateDynamicCodePanel.svelte';
   import Dashboard from './Dashboard.svelte';
   import GiftsSection from './GiftsSection.svelte';
@@ -47,11 +45,10 @@
 
   type Props = {
     user: User;
-    sponsor?: Sponsor | null;
     onLogout: () => void;
   };
 
-  let { user, sponsor = null, onLogout }: Props = $props();
+  let { user, onLogout }: Props = $props();
 
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   const menuEditCode = path.startsWith('/dashboard/menus/')
@@ -514,7 +511,6 @@
           <GiftsSection />
         {:else}
           <Dashboard
-            {sponsor}
             refreshKey={dashboardRefresh}
             onCreate={openCreate}
             useDetailSidebar={wide && !createOpen}
@@ -556,7 +552,7 @@
                     {#if row.value !== null}
                       {row.value.toLocaleString()}
                     {:else if overviewState === 'error'}
-                      <span class="dsh-rail-empty">—</span>
+                      <span class="dsh-rail-empty">No data</span>
                     {:else}
                       <span
                         class="dsh-pulse-small"
@@ -606,23 +602,7 @@
                   Scan counts stay visible
                 </li>
               </ul>
-
-              <div class="dsh-preview-link">
-                <a
-                  href="/#preview"
-                  class="dsh-preview-a"
-                >
-                  See the redirect preview
-                  <ArrowUpRight class="dsh-preview-icon" />
-                </a>
-              </div>
             </section>
-
-            {#if sponsor}
-              <div class="dsh-rail-ad">
-                <AdSpace variant="native-card" {sponsor} slotId="dashboard-rail" />
-              </div>
-            {/if}
           </div>
         </aside>
       {/if}
@@ -1343,41 +1323,6 @@
     height: 0.875rem;
     flex-shrink: 0;
     color: var(--foreground);
-  }
-
-  .dsh-preview-link {
-    border-top: 1px solid var(--border);
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: 0.625rem;
-    padding-bottom: 0.625rem;
-  }
-
-  .dsh-preview-a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    border-radius: calc(var(--radius) * 0.6);
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--foreground);
-    outline-style: none;
-  }
-  .dsh-preview-a:hover {
-    text-decoration: underline;
-  }
-  .dsh-preview-a:focus-visible {
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 40%, transparent);
-  }
-
-  :global(.dsh-preview-icon) {
-    width: 0.875rem;
-    height: 0.875rem;
-  }
-
-  .dsh-rail-ad {
-    border-top: 1px solid var(--border);
-    padding: 1rem;
   }
 
   :global(.dsh-mobile-nav) {

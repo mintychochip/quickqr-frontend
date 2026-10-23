@@ -47,18 +47,6 @@ export interface ScanEvent {
   city: string;
 }
 
-export interface Sponsor {
-  id: string;
-  brand_name: string;
-  badge: string;
-  headline: string;
-  tagline: string;
-  cta: string;
-  target_url: string;
-  logo_url: string;
-  active: boolean;
-}
-
 export interface TimeCountPoint {
   time: string;
   count: number;

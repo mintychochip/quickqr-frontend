@@ -1,8 +1,6 @@
 <script lang="ts">
   import Navbar from './components/Navbar.svelte';
-  import AdSpace from './components/AdSpace.svelte';
   import Generator from './components/Generator.svelte';
-  import InterstitialPreview from './components/InterstitialPreview.svelte';
   import Pricing from './components/Pricing.svelte';
   import DashboardShell from './components/DashboardShell.svelte';
   import DashboardPreview from './components/DashboardPreview.svelte';
@@ -14,13 +12,10 @@
   import QrEmbedPage from './components/QrEmbedPage.svelte';
   import AuthModal from './components/AuthModal.svelte';
   import Button from './lib/components/ui/button.svelte';
-  import { fetchActiveSponsor } from './lib/api';
   import { dynamicCodeFromQrPayload, staticDestinationFromQrPayload } from './lib/dynamicQr';
   import { fetchCurrentUser, logoutAccount, consumeAuthTokenFromUrl, setAuthToken } from './lib/auth';
-  import type { Sponsor } from './types';
   import type { User } from './types/auth';
 
-  let activeSponsor = $state<Sponsor | null>(null);
   let user = $state<User | null>(null);
   let authOpen = $state(false);
   let authError = $state<string | null>(null);
@@ -59,9 +54,6 @@
 
   $effect(() => {
     if (isQrPage) return;
-    fetchActiveSponsor().then((s) => {
-      activeSponsor = s;
-    });
     fetchCurrentUser().then((u) => {
       user = u;
       userResolved = true;
@@ -116,7 +108,7 @@
       </div>
     </div>
   {:else if user}
-    <DashboardShell {user} sponsor={activeSponsor} onLogout={handleLogout} />
+    <DashboardShell {user} onLogout={handleLogout} />
   {:else}
     <div class="app-signin">
       <header class="app-signin-bar">
@@ -145,7 +137,6 @@
   />
 {:else}
 <div class="app-home">
-  <AdSpace variant="top-bar" sponsor={activeSponsor} />
   <Navbar
     {user}
     onLogin={() => openAuth()}
@@ -163,14 +154,6 @@
     <HomeCards />
 
     <DashboardPreview />
-
-    {#if activeSponsor}
-      <div class="qq-shell app-banner">
-        <AdSpace variant="leaderboard" sponsor={activeSponsor} slotId="homepage-middle-banner" />
-      </div>
-    {/if}
-
-    <InterstitialPreview />
 
     <Pricing />
   </main>
@@ -313,10 +296,6 @@
 
   .app-main {
     flex: 1;
-  }
-
-  .app-banner {
-    margin-block: 1rem;
   }
 
   :global(.app-signin-mark) {

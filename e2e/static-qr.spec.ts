@@ -10,7 +10,7 @@ test('static mode shows the compressed URL in preview', async ({ page }) => {
   await expect(gen.getByTestId('static-compressed-url')).toBeVisible();
 
   const compressed = gen.getByTestId('static-compressed-url');
-  await expect(compressed).not.toHaveText('—', { timeout: 8_000 });
+  await expect(compressed).not.toHaveText('Not generated yet', { timeout: 8_000 });
   await expect(compressed).toContainText(`HTTP://${host}/`);
 
   await expect(gen.getByTestId('qr-encoded-value')).toContainText(`HTTP://${host}/`);

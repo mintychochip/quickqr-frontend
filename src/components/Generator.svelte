@@ -369,7 +369,7 @@
                 {:else if resolved.status === 'ready' || resolved.status === 'empty'}
                   <div class="gen-static">
                     <p data-testid="static-compressed-url" class="gen-static-url font-mono">
-                      {staticResult?.url ?? '—'}
+                      {staticResult?.url ?? 'Not generated yet'}
                     </p>
                     <div class="gen-static-row">
                       <span>Original</span>

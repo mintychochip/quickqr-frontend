@@ -402,7 +402,7 @@
     <div class="dp-intro">
       <h2 class="qq-section-title">Create a code in seconds</h2>
       <p class="dp-intro-p">
-        This is the dashboard. Type where the code should point, press Create, and it is live—then change the
+        This is the dashboard. Type where the code should point, press Create, and it is live. Then change the
         destination whenever you like, because what you printed stays the same.
       </p>
     </div>
@@ -733,7 +733,7 @@
 
     <div class="dp-footer">
       <p class="dp-footer-p">
-        This is a preview—nothing here is saved. Sign in to make a real code, or
+        Sign in to make a real code, or
         <a class="dp-footer-link" href="/dashboard">open your dashboard</a>.
       </p>
       {#if !demo && motionOk}
