@@ -39,6 +39,9 @@
   let hovered = $state(false);
   let motionOk = $state(false);
   let lastPointerType = $state('mouse');
+  let dragStart: { x: number; y: number; pointerId: number } | null = null;
+  let suppressClick = false;
+  let suppressTimer = 0;
 
   const paused = $derived(userPaused || hovered);
   const current = $derived(sites[active] ?? sites[0]);
@@ -72,12 +75,38 @@
   function select(index: number) {
     const site = sites[index];
     if (!site) return;
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
     if (lastPointerType !== 'mouse') hovered = false;
     if (index === active) {
       window.open(liveUrl(site.code), '_blank', 'noopener,noreferrer');
     } else {
       active = index;
     }
+  }
+
+  /** A horizontal drag on the stage steps the ring; a drag that ends on a card must not also open it. */
+  function onStagePointerDown(event: PointerEvent) {
+    dragStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+  }
+
+  function onStagePointerUp(event: PointerEvent) {
+    const start = dragStart;
+    dragStart = null;
+    if (!start || start.pointerId !== event.pointerId) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) <= Math.abs(dy)) return;
+    suppressClick = true;
+    window.clearTimeout(suppressTimer);
+    suppressTimer = window.setTimeout(() => (suppressClick = false), 400);
+    step(dx < 0 ? 1 : -1);
+  }
+
+  function onStagePointerCancel() {
+    dragStart = null;
   }
 
   function onFocusIn(event: FocusEvent) {
@@ -124,6 +153,9 @@
       aria-roledescription="carousel"
       aria-label="Sites hosted on quickqr"
       data-testid="sites-carousel"
+      onpointerdown={onStagePointerDown}
+      onpointerup={onStagePointerUp}
+      onpointercancel={onStagePointerCancel}
     >
       {#each sites as site, index (site.code)}
         {@const offset = offsetFor(index)}
@@ -252,6 +284,7 @@
     overflow: hidden;
     perspective: 1400px;
     perspective-origin: 50% 42%;
+    touch-action: pan-y;
   }
 
   .page {
