@@ -225,7 +225,13 @@
     href={item.href}
     data-testid={item.testId}
     aria-current={item.active ? 'page' : undefined}
-    onclick={close}
+    onclick={(event) => {
+      close();
+      if (item.locked) {
+        event.preventDefault();
+        proOpen = true;
+      }
+    }}
     class={cn(
       'dsh-nav-link',
       item.active

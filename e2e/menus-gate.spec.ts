@@ -49,6 +49,13 @@ test('Free sees a Pro gate on menus, and the API refuses menu writes', async ({ 
   await expect(dialog.getByText('Tomato soup')).toBeVisible();
   await expect(page).toHaveURL(/\/dashboard$/);
 
+  // The Menus nav opens the same gate as a dialog too.
+  await page.goto('/dashboard');
+  await page.getByTestId('nav-menus').click();
+  await expect(page.getByRole('dialog').getByTestId('menus-gate')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('Lunch menu')).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
   // And the gate is not only the UI.
   const res = await page.request.post('/api/menus', {
     headers: { Authorization: `Bearer ${token}` },
