@@ -244,9 +244,9 @@ describe('sites API', () => {
 describe('customer domains', () => {
   test('normalize to a bare hostname, and refuse local, IP, malformed, and quickqr names', () => {
     expect(normalizeDomain('Cafe.Example.COM')).toEqual({ domain: 'cafe.example.com' });
-    expect(normalizeDomain('  https://Cafe.Example.com/menu?x=1  ')).toEqual({ domain: 'cafe.example.com' });
+    expect(normalizeDomain('  https://Cafe.Example.com/  ')).toEqual({ domain: 'cafe.example.com' });
     expect(normalizeDomain('cafe.example.com.')).toEqual({ domain: 'cafe.example.com' });
-    for (const raw of ['', '   ', 'localhost', 'cafe.local', 'cafe.internal', '10.0.0.1', '127.0.0.1', 'cafe', '*.cafe.com', 'a..b.com', '-a.com', 'cafe_example.com', 'cafe.example.com:8080', 'https://user@cafe.example.com/']) {
+    for (const raw of ['', '   ', 'localhost', 'cafe.local', 'cafe.internal', '10.0.0.1', '127.0.0.1', 'cafe', '*.cafe.com', 'a..b.com', '-a.com', 'cafe_example.com', 'cafe.example.com:8080', 'https://user@cafe.example.com/', 'https://cafe.example.com/menu', 'https://cafe.example.com/?x=1']) {
       expect({ raw, result: normalizeDomain(raw) }).toEqual({ raw, result: { error: DOMAIN_INVALID } });
     }
     for (const raw of ['quickqr.app', 'sites.quickqr.app', 'https://staging.sites.quickqr.app/']) {

@@ -54,8 +54,9 @@ export const DOMAIN_MISSING = 'Add a domain first.';
 export type DomainCheck = { domain: string } | { error: string };
 
 /**
- * A customer domain, lowercased, as a bare hostname. A scheme, path, port, or credentials are accepted only to be
- * discarded; the name must be a normal DNS name, not an IP literal, a local name, or one of quickqr's own addresses.
+ * A customer domain, lowercased, as a bare hostname. A scheme is accepted; a path, query, port, wildcard, or
+ * credentials are rejected rather than silently dropped. The name must be a normal DNS name, not an IP literal, a
+ * local name, or one of quickqr's own addresses.
  */
 export function normalizeDomain(raw: string): DomainCheck {
   let value = raw.trim().toLowerCase();
@@ -68,6 +69,7 @@ export function normalizeDomain(raw: string): DomainCheck {
     return { error: DOMAIN_INVALID };
   }
   if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.port) return { error: DOMAIN_INVALID };
+  if (url.pathname !== '/' || url.search || url.hash) return { error: DOMAIN_INVALID };
   const host = url.hostname.replace(/\.$/, '');
   if (!host || host.length > 253 || !host.includes('.') || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')) return { error: DOMAIN_INVALID };
   if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) return { error: DOMAIN_INVALID };

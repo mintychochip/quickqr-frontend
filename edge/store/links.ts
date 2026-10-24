@@ -257,10 +257,16 @@ export async function setSiteDomain(db: Db, code: string, domain: string, now = 
   const taken = await db.prepare('SELECT code FROM links WHERE domain = ? AND code <> ? AND is_active = 1').bind(domain, code).first<{ code: string }>();
   if (taken) throw new StoreError('domain_taken');
   const verifiedAt = current.domain === domain ? current.domain_verified_at : null;
-  await db
-    .prepare('UPDATE links SET domain = ?, domain_verified_at = ?, updated_at = ? WHERE code = ? AND kind = ? AND is_active = 1')
-    .bind(domain, verifiedAt, now.toISOString(), code, LINK_KIND_SITE)
-    .run();
+  try {
+    await db
+      .prepare('UPDATE links SET domain = ?, domain_verified_at = ?, updated_at = ? WHERE code = ? AND kind = ? AND is_active = 1')
+      .bind(domain, verifiedAt, now.toISOString(), code, LINK_KIND_SITE)
+      .run();
+  } catch (err) {
+    // The pre-check above loses a race only if two sites claim one name at once; the unique index still decides.
+    if (err instanceof Error && /UNIQUE constraint failed/i.test(err.message)) throw new StoreError('domain_taken');
+    throw err;
+  }
   return loadPublic(db, code);
 }
 
