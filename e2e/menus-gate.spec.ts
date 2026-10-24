@@ -45,6 +45,8 @@ test('Free sees a Pro gate on menus, and the API refuses menu writes', async ({ 
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId('menus-gate')).toBeVisible();
   await expect(dialog.getByRole('heading', { name: 'Menus are a Pro feature' })).toBeVisible();
+  await expect(dialog.getByText('Lunch menu')).toBeVisible();
+  await expect(dialog.getByText('Tomato soup')).toBeVisible();
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // And the gate is not only the UI.

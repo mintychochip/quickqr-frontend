@@ -704,6 +704,8 @@
 <style>
   :global(.dsh-pro-dialog) {
     max-width: min(26rem, calc(100% - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
     padding: 1.5rem;
   }
 
