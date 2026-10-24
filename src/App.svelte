@@ -6,6 +6,7 @@
   import DashboardPreview from './components/DashboardPreview.svelte';
   import Footer from './components/Footer.svelte';
   import GiftPage from './components/GiftPage.svelte';
+  import LegalPage from './components/LegalPage.svelte';
   import HomeCards from './components/HomeCards.svelte';
   import Logo from './components/Logo.svelte';
   import NotFound from './components/NotFound.svelte';
@@ -25,9 +26,15 @@
   const isDashboard = path === '/dashboard' || path.startsWith('/dashboard/');
   const isQrPage = path === '/qr';
   const isGift = path === '/gift';
-  const compressedCode = !isHome && !isDashboard && !isQrPage && !isGift ? dynamicCodeFromQrPayload(window.location.href) : null;
+  const isPrivacy = path === '/privacy';
+  const isTerms = path === '/terms';
+  const isLegalPage = isPrivacy || isTerms;
+  const compressedCode =
+    !isHome && !isDashboard && !isQrPage && !isGift && !isLegalPage
+      ? dynamicCodeFromQrPayload(window.location.href)
+      : null;
   const staticDestination =
-    !isHome && !isDashboard && !isQrPage && !isGift && !compressedCode
+    !isHome && !isDashboard && !isQrPage && !isGift && !isLegalPage && !compressedCode
       ? staticDestinationFromQrPayload(window.location.href)
       : null;
   if (compressedCode) {
@@ -95,6 +102,10 @@
     headline="Sign in to claim your gift"
     externalError={authError}
   />
+{:else if isPrivacy}
+  <LegalPage kind="privacy" />
+{:else if isTerms}
+  <LegalPage kind="terms" />
 {:else if !isHome && !isDashboard}
   <NotFound />
 {:else if isDashboard}

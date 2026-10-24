@@ -4,7 +4,7 @@
   import Dialog from '@/lib/components/ui/dialog.svelte';
   import Logo from './Logo.svelte';
 
-  type LegalModalType = 'privacy' | 'terms' | 'ad-disclosure' | 'trademark';
+  type LegalModalType = 'ad-disclosure' | 'trademark';
 
   let activeModal = $state<LegalModalType | null>(null);
   let dialogOpen = $state(false);
@@ -20,9 +20,12 @@
     { href: '/#pricing', label: 'Pricing' },
   ];
 
-  const legalLinks: { key: LegalModalType; label: string }[] = [
-    { key: 'privacy', label: 'Privacy' },
-    { key: 'terms', label: 'Terms' },
+  const legalPageLinks: { href: string; label: string }[] = [
+    { href: '/privacy', label: 'Privacy' },
+    { href: '/terms', label: 'Terms' },
+  ];
+
+  const legalModalLinks: { key: LegalModalType; label: string }[] = [
     { key: 'ad-disclosure', label: 'Ads' },
     { key: 'trademark', label: 'Trademark' },
   ];
@@ -33,8 +36,6 @@
   }
 
   const legalTitles: Record<LegalModalType, string> = {
-    privacy: 'Privacy Policy · Camera scanner protection',
-    terms: 'Terms of Service · Link permanence',
     'ad-disclosure': 'Ad-subsidy disclosure',
     trademark: 'DENSO WAVE trademark notice',
   };
@@ -73,7 +74,14 @@
         <div>
           <p class="footer-section-title">Legal</p>
           <ul class="footer-list">
-            {#each legalLinks as { key, label } (key)}
+            {#each legalPageLinks as { href, label } (href)}
+              <li>
+                <a href={href} class="footer-list-item-link">
+                  {label}
+                </a>
+              </li>
+            {/each}
+            {#each legalModalLinks as { key, label } (key)}
               <li>
                 <button
                   type="button"
@@ -128,14 +136,10 @@
       </p>
 
       <div class="footer-small-legal">
-        {#each legalLinks.slice(0, 2) as { key, label } (key)}
-          <button
-            type="button"
-            onclick={() => openLegal(key)}
-            class="footer-small-legal-btn"
-          >
+        {#each legalPageLinks as { href, label } (href)}
+          <a href={href} class="footer-small-legal-btn">
             {label}
-          </button>
+          </a>
         {/each}
       </div>
     </div>
@@ -146,29 +150,7 @@
       {#if activeModal}
         <h2 class="footer-modal-title">{legalTitles[activeModal]}</h2>
         <div class="footer-modal-body">
-          {#if activeModal === 'privacy'}
-            <p>
-              <strong>Zero personal data harvesting:</strong> quickqr.app does not deploy persistent cookies,
-              track browsing histories, or sell user profiling dossiers when someone scans a dynamic code.
-            </p>
-            <p>
-              <strong>Telemetry retention:</strong> Scans log anonymized IP segments, device platform, and
-              user-agent category only.
-            </p>
-            <p>
-              <strong>Static compressed codes:</strong> static mode compresses and decompresses entirely in
-              the browser, with no server log.
-            </p>
-          {:else if activeModal === 'terms'}
-            <p>
-              <strong>No subscription expiration:</strong> Dynamic codes are not disabled after an arbitrary
-              trial period.
-            </p>
-            <p>
-              <strong>Prohibited content:</strong> Malware, phishing, and deceptive redirects may be
-              deactivated immediately.
-            </p>
-          {:else if activeModal === 'ad-disclosure'}
+          {#if activeModal === 'ad-disclosure'}
             <p>
               Commercial QR vendors charge monthly fees after you print. quickqr.app covers infrastructure with a
               brief sponsor screen on scan.
