@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+  import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+  import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import Pause from '@lucide/svelte/icons/pause';
   import Play from '@lucide/svelte/icons/play';
   import Button from '@/lib/components/ui/button.svelte';
@@ -36,7 +38,6 @@
   let userPaused = $state(false);
   let hovered = $state(false);
   let motionOk = $state(false);
-  let tabsEl = $state<HTMLDivElement>();
 
   const paused = $derived(userPaused || hovered);
   const current = $derived(sites[active] ?? sites[0]);
@@ -47,22 +48,30 @@
   });
 
   $effect(() => {
-    const container = tabsEl;
-    const tab = container?.querySelector<HTMLElement>(`[data-tab="${active}"]`);
-    if (!container || !tab) return;
-    container.scrollTo({
-      left: Math.max(0, tab.offsetLeft - container.offsetLeft - 8),
-      behavior: motionOk ? 'smooth' : 'auto',
-    });
-  });
-
-  $effect(() => {
     if (!motionOk || paused) return;
     const timer = window.setTimeout(() => {
       active = (active + 1) % sites.length;
     }, 6000);
     return () => window.clearTimeout(timer);
   });
+
+  function offsetFor(index: number): number {
+    return ((index - active + 1 + sites.length) % sites.length) - 1;
+  }
+
+  function step(delta: number) {
+    active = (active + delta + sites.length) % sites.length;
+  }
+
+  function select(index: number) {
+    const site = sites[index];
+    if (!site) return;
+    if (index === active) {
+      window.open(liveUrl(site.code), '_blank', 'noopener,noreferrer');
+    } else {
+      active = index;
+    }
+  }
 
   function onFocusOut(event: FocusEvent) {
     const root = event.currentTarget;
@@ -81,88 +90,80 @@
   onfocusout={onFocusOut}
 >
   <div class="shell">
-    <div class="copy">
-      <p class="eyebrow"><span aria-hidden="true"></span>Hosted sites</p>
-      <h2 id="sites-showcase-title" class="qq-section-title">A whole site,<br>behind one code.</h2>
-      <p class="lede">Real sites, hosted on quickqr. Pick one to look around.</p>
-
-      <div class="actions">
-        <Button href={liveUrl(current.code)} target="_blank" rel="noreferrer">
-          Visit {current.name}
-          <ArrowUpRight class="icon" aria-hidden="true" />
-        </Button>
-        <a class="text-link" href="/dashboard/sites">
-          Open Sites
-          <ArrowUpRight class="icon" aria-hidden="true" />
-        </a>
+    <div class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow"><span aria-hidden="true"></span>Hosted sites</p>
+        <h2 id="sites-showcase-title" class="qq-section-title">A whole site,<br>behind one code.</h2>
+        <p class="lede">Real sites, hosted on quickqr. The pages do the talking.</p>
       </div>
-
-      <div class="carousel" data-testid="sites-carousel">
-        <div class="carousel-head">
-          <div class="tabs" bind:this={tabsEl} role="group" aria-label="Sites to preview">
-            {#each sites as site, index (site.code)}
-              <button
-                type="button"
-                class="tab"
-                class:active={index === active}
-                data-tab={index}
-                aria-pressed={index === active}
-                onclick={() => (active = index)}
-              >
-                <span class="num">0{index + 1}</span>
-                <span class="name">{site.name}</span>
-                <span class="kind">{site.kind}</span>
-              </button>
-            {/each}
-          </div>
-
-          {#if motionOk}
-            <button
-              type="button"
-              class="pause"
-              aria-label={userPaused ? 'Resume the site carousel' : 'Pause the site carousel'}
-              onclick={() => (userPaused = !userPaused)}
-            >
-              {#if userPaused}
-                <Play class="pause-icon" aria-hidden="true" />
-                <span>Play</span>
-              {:else}
-                <Pause class="pause-icon" aria-hidden="true" />
-                <span>Pause</span>
-              {/if}
-            </button>
-          {/if}
-        </div>
-      </div>
+      <a class="text-link" href="/dashboard/sites">
+        Open Sites
+        <ArrowUpRight class="icon" aria-hidden="true" />
+      </a>
     </div>
 
-    <a
-      class="frame"
-      href={liveUrl(current.code)}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={`Open ${current.name}, a ${current.kind} site hosted on quickqr, in a new tab`}
+    <div
+      class="stage"
+      role="group"
+      aria-roledescription="carousel"
+      aria-label="Sites hosted on quickqr"
+      data-testid="sites-carousel"
     >
-      <div class="frame-bar" aria-hidden="true">
-        <span class="dots"><i></i><i></i><i></i></span>
-        <span class="url">sites.quickqr.app/{current.code}</span>
-        <span class="live"><i></i>Live</span>
+      {#each sites as site, index (site.code)}
+        {@const offset = offsetFor(index)}
+        <button
+          type="button"
+          class="page"
+          class:active={offset === 0}
+          style:--offset={offset}
+          style:--abs={Math.abs(offset)}
+          aria-label={offset === 0 ? `Open ${site.name}, a ${site.kind} site` : `Show ${site.name}, a ${site.kind} site`}
+          aria-current={offset === 0 ? 'true' : undefined}
+          data-site={site.code}
+          onclick={() => select(index)}
+        >
+          <img src={site.image} alt={site.alt} width="1024" height="711" loading="eager" decoding="async" />
+          <span class="meta">
+            <span class="name">{site.name}</span>
+            <span class="kind">{site.kind}</span>
+            {#if offset === 0}
+              <ArrowUpRight class="meta-arrow" aria-hidden="true" />
+            {/if}
+          </span>
+        </button>
+      {/each}
+    </div>
+
+    <div class="controls">
+      <div class="steppers">
+        <button type="button" class="round" aria-label="Previous site" onclick={() => step(-1)}>
+          <ChevronLeft class="control-icon" aria-hidden="true" />
+        </button>
+        <button type="button" class="round" aria-label="Next site" onclick={() => step(1)}>
+          <ChevronRight class="control-icon" aria-hidden="true" />
+        </button>
       </div>
-      <div class="shots">
-        {#each sites as site, index (site.code)}
-          <img
-            class:on={index === active}
-            src={site.image}
-            alt={index === active ? site.alt : ''}
-            aria-hidden={index !== active}
-            width="1024"
-            height="711"
-            loading="eager"
-            decoding="async"
-          />
-        {/each}
-      </div>
-    </a>
+
+      <Button href={liveUrl(current.code)} target="_blank" rel="noreferrer">
+        Visit {current.name}
+        <ArrowUpRight class="icon" aria-hidden="true" />
+      </Button>
+
+      {#if motionOk}
+        <button
+          type="button"
+          class="round"
+          aria-label={userPaused ? 'Resume the site carousel' : 'Pause the site carousel'}
+          onclick={() => (userPaused = !userPaused)}
+        >
+          {#if userPaused}
+            <Play class="control-icon" aria-hidden="true" />
+          {:else}
+            <Pause class="control-icon" aria-hidden="true" />
+          {/if}
+        </button>
+      {/if}
+    </div>
   </div>
 </section>
 
@@ -174,13 +175,17 @@
 
   .shell {
     margin-inline: auto;
-    display: grid;
     max-width: 1120px;
-    gap: 2rem;
-    align-items: center;
   }
 
-  .copy {
+  .intro {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .intro-copy {
     min-width: 0;
     max-width: 34rem;
   }
@@ -220,21 +225,9 @@
     color: var(--muted-foreground);
   }
 
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 1.4rem;
-    margin-top: 1.6rem;
-  }
-
-  :global(.icon) {
-    width: 15px;
-    height: 15px;
-  }
-
   .text-link {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: 0.35rem;
     padding-bottom: 2px;
@@ -250,63 +243,82 @@
     border-color: var(--foreground);
   }
 
-  .carousel {
-    margin-top: 1.6rem;
+  :global(.icon) {
+    width: 15px;
+    height: 15px;
   }
 
-  .carousel-head {
-    display: flex;
-    align-items: stretch;
-    gap: 0.4rem;
-  }
-
-  .tabs {
+  .stage {
+    --card-w: min(82vw, 520px);
     position: relative;
-    display: flex;
-    flex: 1;
-    gap: 0.35rem;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    scroll-snap-type: x proximity;
+    height: calc(var(--card-w) * 0.694 + 100px);
+    margin-top: 1.5rem;
+    overflow: hidden;
+    perspective: 1400px;
+    perspective-origin: 50% 42%;
   }
 
-  .tabs::-webkit-scrollbar {
-    display: none;
-  }
-
-  .tab {
-    display: grid;
-    flex: 0 0 auto;
-    min-width: 8.6rem;
-    gap: 1px;
-    padding: 0.55rem 0.7rem 0.6rem;
+  .page {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: var(--card-w);
+    padding: 0;
+    overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: calc(var(--radius) * 0.9);
-    background: transparent;
-    color: var(--muted-foreground);
+    border-radius: calc(var(--radius) * 1.2);
+    background: var(--card);
+    box-shadow: 0 2px 4px rgba(20, 20, 22, 0.06), 0 24px 50px -32px rgba(20, 20, 22, 0.45);
+    font: inherit;
+    color: var(--foreground);
     text-align: left;
     cursor: pointer;
-    scroll-snap-align: start;
-    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    opacity: calc(1 - var(--abs) * 0.3);
+    z-index: calc(3 - var(--abs));
+    transform: translate(-50%, -50%) translateX(calc(var(--offset) * 58%))
+      translateZ(calc(var(--abs) * -110px)) rotateY(calc(var(--offset) * -34deg))
+      scale(calc(1 - var(--abs) * 0.12));
+    transition:
+      transform 650ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 450ms ease,
+      box-shadow 300ms ease,
+      border-color 300ms ease;
+    will-change: transform;
   }
 
-  .tab:hover {
-    border-color: color-mix(in srgb, var(--foreground) 30%, var(--border));
-    color: var(--foreground);
+  .page.active {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+    box-shadow: 0 4px 10px rgba(20, 20, 22, 0.08), 0 38px 70px -34px rgba(20, 20, 22, 0.55);
   }
 
-  .tab.active {
-    border-color: color-mix(in srgb, var(--foreground) 45%, var(--border));
+  .page:hover {
+    border-color: color-mix(in srgb, var(--foreground) 32%, var(--border));
+  }
+
+  .page:focus-visible {
+    outline: 2px solid var(--punch);
+    outline-offset: 3px;
+  }
+
+  .page img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1024 / 711;
+    object-fit: cover;
+    object-position: top center;
+    background: #f2eee5;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem 0.6rem;
+    border-top: 1px solid var(--border);
     background: var(--card);
-    color: var(--foreground);
-  }
-
-  .num {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.55rem;
-    letter-spacing: 0.08em;
-    color: var(--punch);
   }
 
   .name {
@@ -317,129 +329,66 @@
   }
 
   .kind {
+    margin-left: auto;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.55rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+    color: var(--muted-foreground);
     white-space: nowrap;
   }
 
-  .pause {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0 0.55rem;
-    border: 1px solid var(--border);
-    border-radius: calc(var(--radius) * 0.9);
-    background: transparent;
-    color: var(--muted-foreground);
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.55rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: border-color 160ms ease, color 160ms ease;
+  :global(.meta-arrow) {
+    width: 13px;
+    height: 13px;
+    color: var(--punch);
   }
 
-  .pause:hover {
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
+  }
+
+  .steppers {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .round {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition:
+      border-color 160ms ease,
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .round:hover {
     border-color: var(--foreground);
     color: var(--foreground);
   }
 
-  :global(.pause-icon) {
-    width: 11px;
-    height: 11px;
+  .round:focus-visible {
+    outline: 2px solid var(--punch);
+    outline-offset: 2px;
   }
 
-  .frame {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: calc(var(--radius) * 1.5);
-    background: var(--card);
-    box-shadow: 0 1px 2px rgba(20, 20, 22, 0.05), 0 18px 40px -28px rgba(20, 20, 22, 0.35);
-    text-decoration: none;
-    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
-  }
-
-  .frame:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
-    box-shadow: 0 1px 2px rgba(20, 20, 22, 0.05), 0 26px 50px -30px rgba(20, 20, 22, 0.42);
-  }
-
-  .frame-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.65rem 0.85rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--card);
-  }
-
-  .dots {
-    display: inline-flex;
-    gap: 4px;
-  }
-
-  .dots i {
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--border);
-  }
-
-  .url {
-    overflow: hidden;
-    flex: 1;
-    min-width: 0;
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.6875rem;
-    color: var(--muted-foreground);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .live {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.625rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #2f7a4f;
-  }
-
-  .live i {
-    width: 5px;
-    height: 5px;
-    border-radius: 999px;
-    background: #2f7a4f;
-    box-shadow: 0 0 0 3px rgba(47, 122, 79, 0.12);
-  }
-
-  .shots {
-    position: relative;
-    aspect-ratio: 1024 / 711;
-    background: #f2eee5;
-  }
-
-  .shots img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 450ms ease;
-  }
-
-  .shots img.on {
-    opacity: 1;
+  :global(.control-icon) {
+    width: 15px;
+    height: 15px;
   }
 
   @media (min-width: 48rem) {
@@ -448,35 +397,29 @@
       padding-block: 4rem;
     }
 
-    .shell {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
-      gap: 3.5rem;
+    .stage {
+      --card-w: min(46vw, 520px);
+      height: calc(var(--card-w) * 0.694 + 110px);
+      margin-top: 2rem;
     }
   }
 
-  @media (max-width: 26rem) {
-    .pause span {
-      display: none;
+  @media (max-width: 47.99rem) {
+    .intro {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.1rem;
     }
 
-    .pause {
-      padding-inline: 0.45rem;
+    .text-link {
+      align-self: flex-start;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .frame,
+    .page,
     .text-link,
-    .tab,
-    .pause {
-      transition: none;
-    }
-
-    .frame:hover {
-      transform: none;
-    }
-
-    .shots img {
+    .round {
       transition: none;
     }
   }
