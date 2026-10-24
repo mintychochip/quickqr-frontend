@@ -132,6 +132,10 @@
   const showGifts = $derived(path.startsWith('/dashboard/gifts') && user.is_admin === true);
   /** Menus are a Pro feature on the hosted server; a server with no plans (the Go reference) keeps them open. */
   const menusLocked = $derived(!canUseMenus(user));
+  /** The Go reference server has no site routes and sends no plan; hosted servers list sites for every plan. */
+  const showSites = $derived(user.plan !== undefined);
+  /** Deleting a site is a Pro write; reading, opening, and copying stay available to every plan. */
+  const canManageSites = $derived(user.plan === 'pro');
 
   function pageTitle(): string {
     if (path.startsWith('/dashboard/sites')) return 'Sites';
@@ -159,13 +163,15 @@
       testId: 'nav-dashboard',
       active: path === '/dashboard',
     },
-    {
-      label: 'Sites',
-      href: '/dashboard/sites',
-      icon: Globe,
-      testId: 'nav-sites',
-      active: path.startsWith('/dashboard/sites'),
-    },
+    ...(showSites
+      ? [{
+          label: 'Sites',
+          href: '/dashboard/sites',
+          icon: Globe,
+          testId: 'nav-sites',
+          active: path.startsWith('/dashboard/sites'),
+        }]
+      : []),
     {
       label: 'Menus',
       href: '/dashboard/menus',
@@ -226,7 +232,7 @@
 
   const overviewRows = $derived([
     { label: 'Dynamic links', value: overview?.links ?? null },
-    { label: 'Sites', value: overview?.sites ?? null },
+    ...(showSites ? [{ label: 'Sites', value: overview?.sites ?? null }] : []),
     { label: 'Menus', value: overview?.menus ?? null },
     { label: 'Link pages', value: overview?.pages ?? null },
     { label: 'All scans', value: overview?.scans ?? null },
@@ -522,7 +528,7 @@
       <main class="dsh-main">
         <div class="dsh-main-inner">
         {#if path.startsWith('/dashboard/sites')}
-          <SitesSection />
+          <SitesSection canDelete={canManageSites} />
         {:else if path.startsWith('/dashboard/menus')}
           {#if menusLocked}
             <MenusGate />

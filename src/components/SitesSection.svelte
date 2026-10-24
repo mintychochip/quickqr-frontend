@@ -9,6 +9,9 @@
   import { deleteLink, fetchLinks } from '../lib/api';
   import type { Link } from '../types';
 
+  type Props = { canDelete?: boolean };
+  let { canDelete = false }: Props = $props();
+
   let sites = $state<Link[]>([]);
   let loading = $state(true);
   let search = $state('');
@@ -123,15 +126,17 @@
                   Copy
                 {/if}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onclick={() => remove(site)}
-                aria-label={`Delete ${site.title || 'site'}`}
-                data-testid="site-delete"
-              >
-                <Trash2 class="sites-icon" />
-              </Button>
+              {#if canDelete}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onclick={() => remove(site)}
+                  aria-label={`Delete ${site.title || 'site'}`}
+                  data-testid="site-delete"
+                >
+                  <Trash2 class="sites-icon" />
+                </Button>
+              {/if}
             </div>
           </li>
         {/each}
