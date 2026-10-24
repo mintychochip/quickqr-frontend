@@ -67,7 +67,7 @@ describe('site paths and types', () => {
   });
 
   test('refuses segments that leave the root, empty segments, control characters, and long paths', () => {
-    for (const bad of ['..', '../x', 'a/../b', 'a//b', './x', 'a/./b', 'a/\u0000b', 'a/\u007fb', 'a'.repeat(201), `${'a'.repeat(101)}/b`]) {
+    for (const bad of ['..', '../x', 'a/../b', 'a//b', './x', 'a/./b', 'a/\u0000b', 'a/\u007fb', 'a?b.css', 'a#b', 'a'.repeat(201), `${'a'.repeat(101)}/b`]) {
       expect({ path: bad, result: sitePath(bad) }).toEqual({ path: bad, result: null });
     }
   });
@@ -272,6 +272,7 @@ describe('the public site host', () => {
 
     const missing = await go(r, `/s/${site.code}/missing`);
     expect([missing.status, await missing.text()]).toEqual([404, '<p>Gone</p>']);
+    expect(missing.headers.get('Content-Security-Policy')).toBe(SITE_CSP);
   });
 
   test('a menu and a link page are served by the same host, and a plain link is not', async () => {
@@ -326,6 +327,7 @@ describe('the public site host', () => {
     r.env.SITES = undefined;
     const unavailable = await go(r, `/s/${site.code}/`);
     expect([unavailable.status, (await unavailable.text()).includes('Sites are not available')]).toEqual([503, true]);
+    expect(unavailable.headers.get('Content-Security-Policy')).toBe(SITE_CSP);
     expect((await go(r, `/s/${menu.code}/`)).status).toBe(200);
   });
 });
