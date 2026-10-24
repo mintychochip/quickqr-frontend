@@ -46,6 +46,68 @@ export interface SiteBucket {
   list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{ objects: SiteObject[]; truncated: boolean; cursor?: string }>;
 }
 
+export const DOMAIN_INVALID = 'Give a domain like cafe.example.com';
+export const DOMAIN_OWN = 'That is a quickqr address, not a customer domain.';
+export const DOMAIN_TAKEN = 'That domain is already attached to another site.';
+export const DOMAIN_MISSING = 'Add a domain first.';
+
+export type DomainCheck = { domain: string } | { error: string };
+
+/**
+ * A customer domain, lowercased, as a bare hostname. A scheme, path, port, or credentials are accepted only to be
+ * discarded; the name must be a normal DNS name, not an IP literal, a local name, or one of quickqr's own addresses.
+ */
+export function normalizeDomain(raw: string): DomainCheck {
+  let value = raw.trim().toLowerCase();
+  if (!value) return { error: DOMAIN_INVALID };
+  if (!value.includes('://')) value = `https://${value}`;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return { error: DOMAIN_INVALID };
+  }
+  if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.port) return { error: DOMAIN_INVALID };
+  const host = url.hostname.replace(/\.$/, '');
+  if (!host || host.length > 253 || !host.includes('.') || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')) return { error: DOMAIN_INVALID };
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) return { error: DOMAIN_INVALID };
+  if (host === 'quickqr.app' || host.endsWith('.quickqr.app')) return { error: DOMAIN_OWN };
+  const labels = host.split('.');
+  if (labels.length < 2 || labels.some((label) => !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))) return { error: DOMAIN_INVALID };
+  return { domain: host };
+}
+
+/** Where a domain must forward: the site's public address, absolute even when this request is on another host. */
+export function siteForwardTarget(env: Env, url: URL, code: string): string {
+  const origin = (env.SITES_PUBLIC_URL || url.origin).replace(/\/+$/, '');
+  return `${origin}/s/${code}/`;
+}
+
+export function domainInstructions(domain: string, target: string): string {
+  return `At your DNS provider, forward https://${domain}/ to ${target} with URL forwarding (a 301 or 302 both work). A plain CNAME does not forward the root path, and an external apex domain needs a provider that offers forwarding.`;
+}
+
+/** True when a redirect location is the site's own address (or a path inside it) on the expected origin. */
+export function forwardsToSite(location: string, target: string): boolean {
+  try {
+    const seen = new URL(location);
+    const want = new URL(target);
+    if (seen.origin !== want.origin) return false;
+    const base = want.pathname.replace(/\/+$/, '');
+    return seen.pathname === base || seen.pathname.startsWith(`${base}/`);
+  } catch {
+    return false;
+  }
+}
+
+export interface SiteDomainView {
+  domain: string | null;
+  target: string;
+  status: 'unset' | 'pending' | 'verified';
+  verified_at: string | null;
+  instructions: string | null;
+}
+
 export interface SiteFile {
   path: string;
   size: number;

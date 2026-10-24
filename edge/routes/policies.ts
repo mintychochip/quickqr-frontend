@@ -22,6 +22,8 @@ export const readPolicy = (scope: string): Policy => ({ auth: 'any', scope, clas
 export const writePolicy = (scope: string): Policy => ({ auth: 'any', scope, class: 'write', maxBody: BODY_CAP });
 /** A site file is uploaded raw and read whole, so this write allows the file cap rather than a JSON body cap. */
 export const siteFileWritePolicy: Policy = { auth: 'any', scope: SCOPES.linksWrite, class: 'write', maxBody: SITE_FILE_CAP };
+/** A domain check fetches a customer host; the class says so even though nothing rate-limits it yet. */
+export const siteVerifyPolicy: Policy = { auth: 'any', scope: SCOPES.linksWrite, class: 'expensive', maxBody: BODY_CAP };
 
 /** A browser session only: an API key, once there are any, must not claim a gift. */
 export const sessionWrite: Policy = { auth: 'session', class: 'write', maxBody: BODY_CAP };

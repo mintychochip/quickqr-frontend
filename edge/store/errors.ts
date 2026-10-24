@@ -1,4 +1,4 @@
-export type StoreErrorCode = 'not_found' | 'conflict' | 'owner_required' | 'invalid_menu' | 'invalid_page' | 'invalid_site' | 'invalid_email' | 'invalid_identity';
+export type StoreErrorCode = 'not_found' | 'conflict' | 'owner_required' | 'invalid_menu' | 'invalid_page' | 'invalid_site' | 'domain_taken' | 'invalid_email' | 'invalid_identity';
 
 // The messages are the Go server's, word for word, because handlers and docs quote them.
 const MESSAGES: Record<StoreErrorCode, string> = {
@@ -8,6 +8,7 @@ const MESSAGES: Record<StoreErrorCode, string> = {
   invalid_menu: 'menu needs a title and at least one item with a name and a price',
   invalid_page: 'link page needs a title and at least one link with a name and a valid http(s) URL',
   invalid_site: 'site needs a title',
+  domain_taken: 'That domain is already attached to another site.',
   invalid_email: 'invalid email',
   invalid_identity: 'invalid oauth identity',
 };

@@ -27,12 +27,14 @@ export interface Link {
   created_at: string;
   updated_at: string;
   total_scans: number;
-  ad_style: 'interstitial_3s' | 'sponsor_banner' | 'direct' | 'menu' | 'linkpage';
+  ad_style: 'interstitial_3s' | 'sponsor_banner' | 'direct' | 'menu' | 'linkpage' | 'site';
   is_active: boolean;
-  kind?: 'menu' | 'linkpage' | '';
+  kind?: 'menu' | 'linkpage' | 'site' | '';
   items?: MenuItem[];
   links?: PageLink[];
   style?: QRStyle | null;
+  domain?: string;
+  domain_verified_at?: string;
 }
 
 export interface ScanEvent {

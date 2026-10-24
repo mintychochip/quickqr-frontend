@@ -1,9 +1,9 @@
 import { describe, expect, spyOn, test } from 'bun:test';
-import { enforceSiteCaps, siteContentType, sitePath, SITE_CSP, SITE_FILE_CAP, SITE_FILES_MAX } from './sites';
+import { DOMAIN_INVALID, DOMAIN_MISSING, DOMAIN_OWN, DOMAIN_TAKEN, enforceSiteCaps, forwardsToSite, normalizeDomain, siteContentType, siteForwardTarget, sitePath, SITE_CSP, SITE_FILE_CAP, SITE_FILES_MAX } from './sites';
 import { StoreError } from './store/errors';
-import { createMenu, createSite, createLink, updateSite } from './store/links';
+import { clearSiteDomain, createMenu, createSite, createLink, getLink, markSiteDomainVerified, setSiteDomain, updateSite } from './store/links';
 import { testBucket, type TestBucket } from './test/bucket';
-import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
+import { bearer, go, grantPlan, ORIGIN, rig, signUp, withJson, type Rig } from './test/rig';
 import type { Link } from './types';
 
 const SITES_PRO_ONLY = 'Sites are a Pro feature.';
@@ -237,6 +237,152 @@ describe('sites API', () => {
     r.db.sqlite.query('DELETE FROM entitlements WHERE user_id = ?').run(ada.id);
     const res = await upload(r, ada.token, site.code, '../x', 'x');
     expect([res.status, await res.json()]).toEqual([403, { error: SITES_PRO_ONLY }]);
+  });
+});
+
+
+describe('customer domains', () => {
+  test('normalize to a bare hostname, and refuse local, IP, malformed, and quickqr names', () => {
+    expect(normalizeDomain('Cafe.Example.COM')).toEqual({ domain: 'cafe.example.com' });
+    expect(normalizeDomain('  https://Cafe.Example.com/menu?x=1  ')).toEqual({ domain: 'cafe.example.com' });
+    expect(normalizeDomain('cafe.example.com.')).toEqual({ domain: 'cafe.example.com' });
+    for (const raw of ['', '   ', 'localhost', 'cafe.local', 'cafe.internal', '10.0.0.1', '127.0.0.1', 'cafe', '*.cafe.com', 'a..b.com', '-a.com', 'cafe_example.com', 'cafe.example.com:8080', 'https://user@cafe.example.com/']) {
+      expect({ raw, result: normalizeDomain(raw) }).toEqual({ raw, result: { error: DOMAIN_INVALID } });
+    }
+    for (const raw of ['quickqr.app', 'sites.quickqr.app', 'https://staging.sites.quickqr.app/']) {
+      expect({ raw, result: normalizeDomain(raw) }).toEqual({ raw, result: { error: DOMAIN_OWN } });
+    }
+  });
+
+  test('a redirect matches the site on its origin, and its paths', () => {
+    const target = 'https://sites.quickqr.app/s/abc123/';
+    expect(forwardsToSite('https://sites.quickqr.app/s/abc123/', target)).toBe(true);
+    expect(forwardsToSite('https://sites.quickqr.app/s/abc123', target)).toBe(true);
+    expect(forwardsToSite('https://sites.quickqr.app/s/abc123/about?x=1', target)).toBe(true);
+    expect(forwardsToSite('https://quickqr.app/s/abc123/', target)).toBe(false);
+    expect(forwardsToSite('https://sites.quickqr.app/s/other/', target)).toBe(false);
+    expect(forwardsToSite('https://sites.quickqr.app/s/abc1234/', target)).toBe(false);
+    expect(forwardsToSite('nonsense', target)).toBe(false);
+  });
+
+  test('the target is the configured sites origin, or this request origin when none is set', () => {
+    const env = rig().env;
+    const url = new URL(`${ORIGIN}/api/sites/abc123`);
+    expect(siteForwardTarget(env, url, 'abc123')).toBe(`${ORIGIN}/s/abc123/`);
+    env.SITES_PUBLIC_URL = 'https://sites.quickqr.app/';
+    expect(siteForwardTarget(env, url, 'abc123')).toBe('https://sites.quickqr.app/s/abc123/');
+  });
+
+  test('one domain belongs to one site, and changing it clears the check', async () => {
+    const r = rig();
+    const first = await createSite(r.db, 'u', 'First', r.now());
+    const second = await createSite(r.db, 'u', 'Second', r.now());
+    const set = await setSiteDomain(r.db, first.code, 'cafe.example.com', r.now());
+    expect(set).toMatchObject({ domain: 'cafe.example.com' });
+    expect(set.domain_verified_at).toBeUndefined();
+    await markSiteDomainVerified(r.db, first.code, r.now().toISOString(), r.now());
+    expect((await getLink(r.db, first.code))?.domain_verified_at).toBe(r.now().toISOString());
+    expect(await codeOf(setSiteDomain(r.db, second.code, 'cafe.example.com'))).toBe('domain_taken');
+    const changed = await setSiteDomain(r.db, first.code, 'shop.example.com', r.now());
+    expect(changed.domain).toBe('shop.example.com');
+    expect(changed.domain_verified_at).toBeUndefined();
+    expect((await clearSiteDomain(r.db, first.code, r.now())).domain).toBeUndefined();
+    const plain = await createLink(r.db, { code: 'plain2', title: 'Plain', destinationUrl: 'https://example.com', adStyle: 'direct', ownerId: 'u' });
+    expect(await codeOf(setSiteDomain(r.db, plain.code, 'shop.example.com'))).toBe('not_found');
+  });
+});
+
+describe('site domain API', () => {
+  const domainOf = (r: Rig, token: string, code: string): Promise<Response> => go(r, `/api/sites/${code}/domain`, bearer(token));
+  const setDomain = (r: Rig, token: string, code: string, domain: string): Promise<Response> => go(r, `/api/sites/${code}/domain`, withJson('PUT', token, { domain }));
+  const verifyDomain = (r: Rig, token: string, code: string): Promise<Response> => go(r, `/api/sites/${code}/domain/verify`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+
+  test('needs a session, the owner, and Pro for writes', async () => {
+    const { r, ada, bob } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    for (const res of [
+      await go(r, `/api/sites/${site.code}/domain`),
+      await go(r, `/api/sites/${site.code}/domain`, { method: 'PUT', body: '{}' }),
+      await go(r, `/api/sites/${site.code}/domain/verify`, { method: 'POST' }),
+    ]) {
+      expect(res.status).toBe(401);
+    }
+    expect((await domainOf(r, bob.token, site.code)).status).toBe(404);
+    expect((await setDomain(r, bob.token, site.code, 'cafe.example.com')).status).toBe(404);
+    expect((await verifyDomain(r, bob.token, site.code)).status).toBe(404);
+    // Reads are not Pro, writes are.
+    r.db.sqlite.query('DELETE FROM entitlements WHERE user_id = ?').run(ada.id);
+    expect((await domainOf(r, ada.token, site.code)).status).toBe(200);
+    expect([(await setDomain(r, ada.token, site.code, 'cafe.example.com')).status, await (await setDomain(r, ada.token, site.code, 'cafe.example.com')).json()]).toEqual([403, { error: SITES_PRO_ONLY }]);
+    expect((await verifyDomain(r, ada.token, site.code)).status).toBe(403);
+  });
+
+  test('sets, reads, refuses a taken or unsafe name, and deletes', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    const other = (await (await create(r, ada.token)).json()) as Link;
+    const target = `${ORIGIN}/s/${site.code}/`;
+
+    const set = await setDomain(r, ada.token, site.code, 'Cafe.Example.COM');
+    expect([set.status, await set.json()]).toEqual([200, {
+      domain: 'cafe.example.com',
+      target,
+      status: 'pending',
+      verified_at: null,
+      instructions: expect.stringContaining(`forward https://cafe.example.com/ to ${target}`),
+    }]);
+    expect((await domainOf(r, ada.token, site.code)).status).toBe(200);
+    const listed = (await (await go(r, '/api/links', bearer(ada.token))).json()) as { links: Link[] };
+    expect(listed.links.find((link) => link.code === site.code)?.domain).toBe('cafe.example.com');
+
+    const taken = await setDomain(r, ada.token, other.code, 'cafe.example.com');
+    expect([taken.status, await taken.json()]).toEqual([409, { error: DOMAIN_TAKEN }]);
+    expect(await (await setDomain(r, ada.token, site.code, 'quickqr.app')).json()).toEqual({ error: DOMAIN_OWN });
+    expect(await (await setDomain(r, ada.token, site.code, 'nope')).json()).toEqual({ error: DOMAIN_INVALID });
+
+    const removed = await go(r, `/api/sites/${site.code}/domain`, { method: 'DELETE', headers: { Authorization: `Bearer ${ada.token}` } });
+    expect(removed.status).toBe(204);
+    const view = (await (await domainOf(r, ada.token, site.code)).json()) as { domain: string | null; status: string; target: string; verified_at: string | null; instructions: string | null };
+    expect(view).toEqual({ domain: null, target, status: 'unset', verified_at: null, instructions: null });
+    expect((await go(r, `/api/sites/${site.code}/domain`, { method: 'DELETE', headers: { Authorization: `Bearer ${ada.token}` } })).status).toBe(204);
+  });
+
+  test('verify follows no redirect, records a match, and clears it when the forward breaks', async () => {
+    let mode: 'match' | 'wrong' | 'answered' | 'unreachable' = 'match';
+    let target = '';
+    const r = rig({}, {
+      'GET https://cafe.example.com/': () => {
+        if (mode === 'unreachable') throw new Error('dns');
+        if (mode === 'answered') return new Response('ok');
+        const location = mode === 'wrong' ? 'https://sites.quickqr.app/s/other/' : target;
+        return new Response(null, { status: 301, headers: { Location: location } });
+      },
+    });
+    const ada = await signUp(r, 'ada@example.com');
+    grantPlan(r, ada.id, 'pro');
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    target = `${ORIGIN}/s/${site.code}/`;
+
+    expect(await (await verifyDomain(r, ada.token, site.code)).json()).toEqual({ error: DOMAIN_MISSING });
+    await setDomain(r, ada.token, site.code, 'cafe.example.com');
+
+    const verified = (await (await verifyDomain(r, ada.token, site.code)).json()) as { domain: string; target: string; status: string; verified_at: string; checked_at: string; location: string; message: string };
+    expect(verified).toEqual({ domain: 'cafe.example.com', target, status: 'verified', verified_at: r.now().toISOString(), checked_at: r.now().toISOString(), location: target, message: 'The domain forwards to the site.' });
+    expect((await (await domainOf(r, ada.token, site.code)).json()) as { status: string; verified_at: string }).toMatchObject({ status: 'verified', verified_at: r.now().toISOString() });
+
+    mode = 'wrong';
+    const wrong = (await (await verifyDomain(r, ada.token, site.code)).json()) as { status: string; verified_at: unknown; location: string; message: string };
+    expect(wrong.status).toBe('failed');
+    expect(wrong.verified_at).toBeNull();
+    expect(wrong.location).toBe('https://sites.quickqr.app/s/other/');
+    expect(wrong.message).toContain('not');
+    expect((await (await domainOf(r, ada.token, site.code)).json()) as { status: string }).toMatchObject({ status: 'pending' });
+
+    mode = 'answered';
+    expect((await (await verifyDomain(r, ada.token, site.code)).json()) as { status: string }).toMatchObject({ status: 'failed' });
+    mode = 'unreachable';
+    const unreachable = (await (await verifyDomain(r, ada.token, site.code)).json()) as { domain: string; target: string; status: string; verified_at: string | null; checked_at: string; location: string | null; message: string };
+    expect(unreachable).toEqual({ status: 'failed', domain: 'cafe.example.com', target, verified_at: null, checked_at: r.now().toISOString(), location: null, message: 'Could not reach that domain.' });
   });
 });
 

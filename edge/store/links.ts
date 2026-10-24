@@ -15,6 +15,8 @@ interface LinkRow {
   items: string | null;
   links: string | null;
   style: string | null;
+  domain: string | null;
+  domain_verified_at: string | null;
   total_scans: number;
   created_at: string;
   updated_at: string;
@@ -38,6 +40,8 @@ function toStored(row: LinkRow): StoredLink {
   if (row.items) link.items = JSON.parse(row.items) as MenuItem[];
   if (row.links) link.links = JSON.parse(row.links) as PageLink[];
   if (row.style) link.style = JSON.parse(row.style) as QRStyle;
+  if (row.domain) link.domain = row.domain;
+  if (row.domain_verified_at) link.domain_verified_at = row.domain_verified_at;
   return link;
 }
 
@@ -241,6 +245,41 @@ export async function createSite(db: Db, ownerId: string, title: string, now = n
   const clean = title.trim();
   if (!clean) throw new StoreError('invalid_site');
   return createHosted(db, ownerId, clean, { prefix: 'site', kind: LINK_KIND_SITE, destination: 's' }, now);
+}
+
+/** Attaches one customer domain to a site; an unchanged name keeps its last successful check. */
+export async function setSiteDomain(db: Db, code: string, domain: string, now = new Date()): Promise<Link> {
+  const current = await db
+    .prepare('SELECT domain, domain_verified_at FROM links WHERE code = ? AND kind = ? AND is_active = 1')
+    .bind(code, LINK_KIND_SITE)
+    .first<{ domain: string | null; domain_verified_at: string | null }>();
+  if (!current) throw new StoreError('not_found');
+  const taken = await db.prepare('SELECT code FROM links WHERE domain = ? AND code <> ? AND is_active = 1').bind(domain, code).first<{ code: string }>();
+  if (taken) throw new StoreError('domain_taken');
+  const verifiedAt = current.domain === domain ? current.domain_verified_at : null;
+  await db
+    .prepare('UPDATE links SET domain = ?, domain_verified_at = ?, updated_at = ? WHERE code = ? AND kind = ? AND is_active = 1')
+    .bind(domain, verifiedAt, now.toISOString(), code, LINK_KIND_SITE)
+    .run();
+  return loadPublic(db, code);
+}
+
+/** Clears the domain and its check. A site without a domain answers 204 for a second delete. */
+export async function clearSiteDomain(db: Db, code: string, now = new Date()): Promise<Link> {
+  const res = await db
+    .prepare('UPDATE links SET domain = NULL, domain_verified_at = NULL, updated_at = ? WHERE code = ? AND kind = ? AND is_active = 1')
+    .bind(now.toISOString(), code, LINK_KIND_SITE)
+    .run();
+  if (res.meta.changes === 0) throw new StoreError('not_found');
+  return loadPublic(db, code);
+}
+
+/** Records the outcome of a forwarding check: the instant it passed, or null when it did not. */
+export async function markSiteDomainVerified(db: Db, code: string, verifiedAt: string | null, now = new Date()): Promise<void> {
+  await db
+    .prepare('UPDATE links SET domain_verified_at = ?, updated_at = ? WHERE code = ? AND kind = ? AND is_active = 1 AND domain IS NOT NULL')
+    .bind(verifiedAt, now.toISOString(), code, LINK_KIND_SITE)
+    .run();
 }
 
 export async function updateSite(db: Db, code: string, title: string, now = new Date()): Promise<Link> {

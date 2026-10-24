@@ -39,6 +39,10 @@ export interface Link {
   items?: MenuItem[];
   links?: PageLink[];
   style?: QRStyle;
+  /** A site's customer domain, set on the hosted backend only; the owner forwards it to `/s/{code}/`. */
+  domain?: string;
+  /** When a forwarding check last saw the domain redirect to the site, ISO 8601. Cleared when it breaks. */
+  domain_verified_at?: string;
 }
 
 /** A link plus the owner, which is stored but never sent to a client. */
