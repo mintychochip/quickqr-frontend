@@ -282,6 +282,7 @@ describe('the public site host', () => {
 
     const menuRes = await go(r, `/s/${menu.code}/`);
     expect([menuRes.status, (await menuRes.text()).includes('data-testid="public-menu-item-name">Soup<')]).toEqual([200, true]);
+    expect(menuRes.headers.get('Content-Security-Policy')).toBe(SITE_CSP);
     expect((await go(r, `/s/${menu.code}/anything`)).status).toBe(404);
     expect((await go(r, `/s/${page.code}/`)).status).toBe(200);
     expect((await go(r, `/s/${plain.code}/`)).status).toBe(404);
