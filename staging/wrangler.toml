@@ -12,6 +12,8 @@ compatibility_date = "2026-10-13"
 [vars]
 OAUTH_REDIRECT_ORIGIN = "https://staging.quickqr.app"
 APP_PUBLIC_URL = "https://staging.quickqr.app"
+# Hosted sites are canonical on the staging sites origin.
+SITES_PUBLIC_URL = "https://staging.sites.quickqr.app"
 GOOGLE_CLIENT_ID = "488834070117-krb6561gmj74nkbto5oel0b36klqvohf.apps.googleusercontent.com"
 
 [[d1_databases]]

@@ -5,6 +5,7 @@ import { renderLinkPage } from '../pages/linkPage';
 import { renderMenu } from '../pages/menu';
 import { renderNotFound } from '../pages/notFound';
 import { notFound, type Ctx, type Router } from '../router';
+import { sitePublicUrl } from '../sites';
 import { getLink } from '../store/links';
 import { readPause } from '../store/scans';
 import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE } from '../types';
@@ -42,7 +43,7 @@ export function registerRedirectRoutes(router: Router, deps: AppDeps): void {
     // A site is hosted at its own address so relative files resolve; the index request there records the scan, so
     // this redirect does not log one twice. /s/ is where a site's bytes and its scan counting both live.
     if (link.kind === LINK_KIND_SITE) {
-      return new Response(null, { status: 302, headers: { Location: locationHeader(`/s/${link.code}/`) } });
+      return new Response(null, { status: 302, headers: { Location: locationHeader(sitePublicUrl(c.env, c.url, link.code)) } });
     }
 
     // Recording must never hold up or break a scan, so it runs after the response and its failure is only logged.

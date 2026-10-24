@@ -299,6 +299,26 @@ describe('the public site host', () => {
     }
   });
 
+  test('the sites host is canonical: the app origin redirects there, a scan points there, and local hosts stay put', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    await upload(r, ada.token, site.code, 'index.html', '<h1>Cafe</h1>');
+    r.env.SITES_PUBLIC_URL = 'https://sites.quickqr.app';
+    const at = (origin: string, path: string): Promise<Response> =>
+      r.app.dispatch(new Request(`${origin}${path}`), r.env, { waitUntil: () => {} });
+
+    const apex = await go(r, `/s/${site.code}/?from=apex`);
+    expect([apex.status, apex.headers.get('Location')]).toEqual([301, `https://sites.quickqr.app/s/${site.code}/?from=apex`]);
+
+    const moved = await go(r, `/r/${site.code}`);
+    expect([moved.status, moved.headers.get('Location')]).toEqual([302, `https://sites.quickqr.app/s/${site.code}/`]);
+
+    const hosted = await at('https://sites.quickqr.app', `/s/${site.code}/`);
+    expect([hosted.status, await hosted.text()]).toEqual([200, '<h1>Cafe</h1>']);
+
+    expect((await at('http://localhost:8080', `/s/${site.code}/`)).status).toBe(200);
+  });
+
   test('rounds a site scan through /r/ once, and never counts its files', async () => {
     const { r, ada } = await proPair();
     const site = (await (await create(r, ada.token)).json()) as Link;

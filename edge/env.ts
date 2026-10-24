@@ -9,6 +9,8 @@ export interface Env {
   DB: Db;
   /** The R2 binding holding hosted site files. Unset on a deployment that does not host sites. */
   SITES?: SiteBucket;
+  /** The public sites origin, such as https://sites.quickqr.app. The app's own origin 301s `/s/` here. */
+  SITES_PUBLIC_URL?: string;
   /** Pages static assets, used to fall through to the app for paths the API does not own. */
   ASSETS?: { fetch(request: Request): Promise<Response> };
 

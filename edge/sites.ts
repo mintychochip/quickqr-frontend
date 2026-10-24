@@ -1,3 +1,4 @@
+import type { Env } from './env';
 import { HttpError } from './http';
 
 /**
@@ -109,6 +110,33 @@ export function sitePath(raw: string): string | null {
     }
   }
   return path;
+}
+
+/** True for a host that can only be a local development server; it never redirects to the public sites origin. */
+export function isLocalHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+}
+
+/**
+ * The public sites origin to send a request to, without a trailing slash, or '' when this server has none, the
+ * request is already there, or it is local. The sites host is canonical: the app's own origin answers `/s/` with a
+ * 301 to it, so hosted content always keeps one origin.
+ */
+export function canonicalSiteOrigin(env: Env, url: URL): string {
+  const origin = (env.SITES_PUBLIC_URL ?? '').replace(/\/+$/, '');
+  if (!origin || isLocalHost(url.hostname)) return '';
+  try {
+    // Hostnames, not hosts: a local run reaches the sites name on a test port, and the public origin is always 443.
+    return new URL(origin).hostname === url.hostname ? '' : origin;
+  } catch {
+    return '';
+  }
+}
+
+/** The public address of a site, absolute when this server has a different public sites origin. */
+export function sitePublicUrl(env: Env, url: URL, code: string): string {
+  const origin = canonicalSiteOrigin(env, url);
+  return origin ? `${origin}/s/${code}/` : `/s/${code}/`;
 }
 
 export const sitePrefix = (code: string): string => `sites/${code}/`;

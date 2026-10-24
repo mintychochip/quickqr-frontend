@@ -4,7 +4,7 @@ import { renderLinkPage } from '../pages/linkPage';
 import { renderMenu } from '../pages/menu';
 import { renderNotFound } from '../pages/notFound';
 import { type Ctx, type Router } from '../router';
-import { getSiteFile, headSiteFile, siteContentType, sitePath, SITE_CSP, type SiteObjectBody } from '../sites';
+import { canonicalSiteOrigin, getSiteFile, headSiteFile, siteContentType, sitePath, SITE_CSP, type SiteObjectBody } from '../sites';
 import { getLink } from '../store/links';
 import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE } from '../types';
 import { publicNone } from './policies';
@@ -74,6 +74,11 @@ function siteFile(object: SiteObjectBody, path: string, status: number): Respons
 }
 
 async function serve(c: Ctx, deps: AppDeps): Promise<Response> {
+  // One origin for hosted content: on the app's own origin, send the request to the sites host before anything else,
+  // including a missing code, so a shared /s/ link settles on the same address. Local hosts are never redirected.
+  const canonical = canonicalSiteOrigin(c.env, c.url);
+  if (canonical) return redirect(`${canonical}${c.url.pathname}${c.url.search}`);
+
   const t = target(c);
   if (!t) return html(404, renderNotFound(''), HTML_HEADERS);
 
