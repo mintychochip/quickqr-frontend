@@ -1,10 +1,12 @@
 import type { AppDeps } from '../app';
-import { bodyObject, errorJson, json, stringField } from '../http';
+import { bodyObject, errorJson, HttpError, json, stringField } from '../http';
 import { randomCode } from '../ids';
 import type { Router } from '../router';
+import { purgeSite } from '../sites';
 import { isStoreError } from '../store/errors';
 import { createLink, deleteLink, listLinksByOwner, toPublicLink, updateLink } from '../store/links';
 import { getActiveSponsor, getAnalytics, getAnalyticsForOwner, getTrendsForOwner } from '../store/scans';
+import { LINK_KIND_SITE } from '../types';
 import { publicNone, publicRead, readPolicy, SCOPES, writePolicy } from './policies';
 import { hasHttpScheme, ownedLink, userId } from './shared';
 
@@ -75,7 +77,17 @@ export function registerLinkRoutes(router: Router, deps: AppDeps): void {
 
   router.handle('DELETE /api/links/{code}', writePolicy(SCOPES.linksWrite), async (c) => {
     const code = c.param('code');
-    await ownedLink(c, code);
+    const link = await ownedLink(c, code);
+    // Files are not in D1 and do not cascade. Purge them first: if that fails the link stays, so a printed code never
+    // points at a half-deleted site. A server without the bucket has nothing to purge.
+    if (link.kind === LINK_KIND_SITE && c.env.SITES) {
+      try {
+        await purgeSite(c.env.SITES, link.code);
+      } catch (err) {
+        console.error('site purge failed', err);
+        throw new HttpError(500, 'Could not delete the site files');
+      }
+    }
     try {
       await deleteLink(c.env.DB, code);
     } catch (err) {

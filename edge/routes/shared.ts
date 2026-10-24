@@ -1,7 +1,11 @@
+import type { AppDeps } from '../app';
 import { HttpError } from '../http';
 import { SIGN_IN_REQUIRED, type Ctx } from '../router';
+import { effectivePlan } from '../store/entitlements';
 import { getLink } from '../store/links';
+import { recordScan } from '../store/scans';
 import type { StoredLink } from '../types';
+import { detectBrowser, detectDevice } from '../useragent';
 
 /** The signed-in person's id. Routes that need one are registered with an `any` policy, so this is a guard, not a gate. */
 export function userId(c: Ctx): string {
@@ -24,6 +28,42 @@ export async function ownedLink(c: Ctx, code: string, notFound = 'Link not found
   const link = await getLink(c.env.DB, code);
   if (!link || link.owner_id !== owner) throw new HttpError(404, notFound);
   return link;
+}
+
+/**
+ * The hosted backend's Pro rule for a hosted write. The session and ownership checks are the router's and
+ * `ownedLink`'s job; this reads the same plan `GET /api/auth/me` reports. A read that fails counts as Free, so a
+ * database without 0002 refuses the write instead of granting it.
+ */
+export async function requirePro(c: Ctx, deps: AppDeps, message: string): Promise<void> {
+  const { plan } = await effectivePlan(c.env.DB, userId(c), deps.now());
+  if (plan !== 'pro') throw new HttpError(403, message);
+}
+
+/**
+ * Records a scan after the response, so it never holds up or breaks the visit. `/r/` and `/s/` both use this: a site
+ * logs its index there, and `/r/` does not log a site again before redirecting to it.
+ */
+export function logScan(c: Ctx, code: string, deps: AppDeps): void {
+  const userAgent = c.req.headers.get('User-Agent') ?? '';
+  c.exec.waitUntil(
+    recordScan(
+      c.env.DB,
+      {
+        linkCode: code,
+        timestamp: deps.now(),
+        // Cloudflare sets this itself and replaces any value the visitor sends. No other header is believed.
+        ip: c.req.headers.get('CF-Connecting-IP') ?? '',
+        userAgent,
+        deviceType: detectDevice(userAgent),
+        browser: detectBrowser(userAgent),
+        referrer: c.req.headers.get('Referer') || 'Direct Scan',
+        country: 'US',
+        city: 'Local',
+      },
+      c.env.SCAN_HASH_KEY,
+    ).catch((err) => console.error('scan not recorded', err)),
+  );
 }
 
 /** Go checked the prefix exactly, so `HTTPS://x` is not recognised. The docs promise only this rule. */

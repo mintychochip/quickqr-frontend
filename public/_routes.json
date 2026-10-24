@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/api/*", "/r/*", "/R/*", "/qr", "/qr.png", "/qr.svg", "/healthz"],
+  "include": ["/api/*", "/r/*", "/R/*", "/s", "/s/*", "/qr", "/qr.png", "/qr.svg", "/healthz"],
   "exclude": []
 }

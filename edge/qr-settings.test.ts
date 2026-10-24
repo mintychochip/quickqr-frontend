@@ -74,6 +74,24 @@ describe('reading settings', () => {
     expect(body.fields[2]?.about).toBe('A menu is served as a page, not an ad redirect.');
   });
 
+  test('of a site say its address and ad style are fixed', async () => {
+    const { r, ada } = await setup();
+    grantPlan(r, ada.id, 'pro');
+    const site = (await (await go(r, '/api/sites', withJson('POST', ada.token, { title: 'Cafe site' }))).json()) as Link;
+    const body = await settingsOf(await go(r, `/api/qr/${site.code}/settings`, bearer(ada.token)));
+    expect(body).toMatchObject({ kind: 'site', settings: { ad_style: 'site', destination_url: `/s/${site.code}/` } });
+    expect(body.fields.map((f) => [f.name, f.editable])).toEqual([
+      ['title', true],
+      ['destination_url', false],
+      ['ad_style', false],
+      ['style', true],
+    ]);
+    expect(body.fields[1]?.about).toBe('A site keeps its public address.');
+    expect(body.fields[2]?.about).toBe('A site is served as a page, not an ad redirect.');
+    expect(await fail(await patch(r, ada.token, site.code, { destination_url: 'x.example' }))).toEqual([400, 'A site keeps its public address']);
+    expect(await fail(await patch(r, ada.token, site.code, { ad_style: 'direct' }))).toEqual([400, 'A site does not use an ad style']);
+  });
+
   test('need a session, and someone else\'s code reads like a missing one', async () => {
     const { r, bob, code } = await setup();
     expect((await go(r, `/api/qr/${code}/settings`)).status).toBe(401);

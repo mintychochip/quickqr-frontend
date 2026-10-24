@@ -1,4 +1,5 @@
 import type { Db } from './db';
+import type { SiteBucket } from './sites';
 
 /**
  * Everything the backend reads from the platform. `DB` is the D1 binding; the rest are plain variables and secrets
@@ -6,6 +7,8 @@ import type { Db } from './db';
  */
 export interface Env {
   DB: Db;
+  /** The R2 binding holding hosted site files. Unset on a deployment that does not host sites. */
+  SITES?: SiteBucket;
   /** Pages static assets, used to fall through to the app for paths the API does not own. */
   ASSETS?: { fetch(request: Request): Promise<Response> };
 

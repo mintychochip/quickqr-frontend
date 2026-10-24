@@ -1,6 +1,6 @@
 import type { Db } from '../db';
 import { randomCode } from '../ids';
-import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, type Link, type MenuItem, type PageLink, type QRStyle, type StoredLink } from '../types';
+import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE, type Link, type MenuItem, type PageLink, type QRStyle, type StoredLink } from '../types';
 import { StoreError } from './errors';
 
 interface LinkRow {
@@ -170,6 +170,8 @@ function normalizePage(title: string, links: PageLink[]): { title: string; links
 interface HostedKind {
   prefix: string;
   kind: string;
+  /** A site answers at `/s/<code>/`; menus and link pages keep `/r/<code>`. */
+  destination?: 'r' | 's';
   items?: MenuItem[];
   links?: PageLink[];
 }
@@ -188,7 +190,7 @@ async function createHosted(db: Db, ownerId: string, title: string, hosted: Host
         code,
         ownerId,
         title,
-        `/r/${code}`,
+        `${hosted.destination === 's' ? `/s/${code}/` : `/r/${code}`}`,
         hosted.kind,
         hosted.kind,
         hosted.items ? JSON.stringify(hosted.items) : null,
@@ -231,4 +233,23 @@ export async function createPage(db: Db, ownerId: string, title: string, links: 
 export async function updatePage(db: Db, code: string, title: string, links: PageLink[], now = new Date()): Promise<Link> {
   const page = normalizePage(title, links);
   return updateHosted(db, code, LINK_KIND_LINK_PAGE, page.title, 'links', page.links, now);
+}
+
+/** A site is a hosted prefix of files in R2; the link row only names it and carries the counters. */
+export async function createSite(db: Db, ownerId: string, title: string, now = new Date()): Promise<Link> {
+  if (!ownerId) throw new StoreError('owner_required');
+  const clean = title.trim();
+  if (!clean) throw new StoreError('invalid_site');
+  return createHosted(db, ownerId, clean, { prefix: 'site', kind: LINK_KIND_SITE, destination: 's' }, now);
+}
+
+export async function updateSite(db: Db, code: string, title: string, now = new Date()): Promise<Link> {
+  const clean = title.trim();
+  if (!clean) throw new StoreError('invalid_site');
+  const res = await db
+    .prepare('UPDATE links SET title = ?, updated_at = ? WHERE code = ? AND is_active = 1 AND kind = ?')
+    .bind(clean, now.toISOString(), code, LINK_KIND_SITE)
+    .run();
+  if (res.meta.changes === 0) throw new StoreError('not_found');
+  return loadPublic(db, code);
 }

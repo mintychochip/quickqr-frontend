@@ -52,12 +52,12 @@ export const PLANS: readonly Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Ad-free menus and pages.',
+    tagline: 'Hosted sites and ad-free pages.',
     price: { monthly: 15, yearly: 150 },
     live: false,
     features: [
       'Everything in Plus',
-      'Hosted menus you can edit any time',
+      'Hosted sites and menus you can edit any time',
       'No sponsor line on your menus and link pages',
       'No quickqr branding on them',
       `Up to ${AD_FREE_SCANS.pro.toLocaleString('en-US')} scans a month`,
@@ -67,7 +67,7 @@ export const PLANS: readonly Plan[] = [
 
 /** Printed under the plans. It stays true only while no code is ever disabled for lack of payment. */
 export const PLEDGE =
-  'If a paid plan ends, your codes keep working. The sponsor screen comes back; your links, menus, and scan history stay as they are.';
+  'If a paid plan ends, your codes keep working. The sponsor screen comes back; your links, sites, menus, and scan history stay as they are.';
 
 /** Months of the year you do not pay for on the yearly price. */
 export function monthsFree(price: { monthly: number; yearly: number }): number {

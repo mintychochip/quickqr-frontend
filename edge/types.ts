@@ -2,6 +2,7 @@
 
 export const LINK_KIND_MENU = 'menu';
 export const LINK_KIND_LINK_PAGE = 'linkpage';
+export const LINK_KIND_SITE = 'site';
 
 export interface MenuItem {
   name: string;

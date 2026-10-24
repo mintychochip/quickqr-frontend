@@ -1,0 +1,357 @@
+import { describe, expect, spyOn, test } from 'bun:test';
+import { enforceSiteCaps, siteContentType, sitePath, SITE_CSP, SITE_FILE_CAP, SITE_FILES_MAX } from './sites';
+import { StoreError } from './store/errors';
+import { createMenu, createSite, createLink, updateSite } from './store/links';
+import { testBucket, type TestBucket } from './test/bucket';
+import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
+import type { Link } from './types';
+
+const SITES_PRO_ONLY = 'Sites are a Pro feature.';
+const SITE_NOT_FOUND = 'Site not found';
+
+interface Person {
+  id: string;
+  token: string;
+}
+
+async function pair(): Promise<{ r: Rig; ada: Person; bob: Person }> {
+  const r = rig();
+  return { r, ada: await signUp(r, 'ada@example.com'), bob: await signUp(r, 'bob@example.com') };
+}
+
+async function proPair(): Promise<{ r: Rig; ada: Person; bob: Person }> {
+  const people = await pair();
+  grantPlan(people.r, people.ada.id, 'pro');
+  return people;
+}
+
+const create = (r: Rig, token: string, title = 'Cafe site'): Promise<Response> =>
+  go(r, '/api/sites', withJson('POST', token, { title }));
+
+const upload = (r: Rig, token: string, code: string, path: string, body: string | Uint8Array, contentType = 'text/html'): Promise<Response> =>
+  go(r, `/api/sites/${code}/files?path=${encodeURIComponent(path)}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': contentType },
+    body,
+  });
+
+const scans = (r: Rig): number => (r.db.sqlite.query('SELECT count(*) AS n FROM scans').get() as { n: number }).n;
+
+async function errorOf(promise: Promise<unknown>): Promise<string> {
+  try {
+    await promise;
+    return 'no error';
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+async function codeOf(promise: Promise<unknown>): Promise<string> {
+  try {
+    await promise;
+    return 'no error';
+  } catch (err) {
+    return err instanceof StoreError ? err.code : String(err);
+  }
+}
+
+describe('site paths and types', () => {
+  test('the empty path is the index, a trailing slash is a directory index, and backslashes are separators', () => {
+    expect(sitePath('')).toBe('index.html');
+    expect(sitePath('/')).toBe('index.html');
+    expect(sitePath('/index.html')).toBe('index.html');
+    expect(sitePath('css/site.css')).toBe('css/site.css');
+    expect(sitePath('docs/')).toBe('docs/index.html');
+    expect(sitePath('\\docs\\index.html')).toBe('docs/index.html');
+    expect(sitePath('.well-known/security.txt')).toBe('.well-known/security.txt');
+  });
+
+  test('refuses segments that leave the root, empty segments, control characters, and long paths', () => {
+    for (const bad of ['..', '../x', 'a/../b', 'a//b', './x', 'a/./b', 'a/\u0000b', 'a/\u007fb', 'a'.repeat(201), `${'a'.repeat(101)}/b`]) {
+      expect({ path: bad, result: sitePath(bad) }).toEqual({ path: bad, result: null });
+    }
+  });
+
+  test('decides the type by extension, and an unknown extension is a download', () => {
+    expect(siteContentType('index.html')).toBe('text/html; charset=utf-8');
+    expect(siteContentType('a/b.css')).toBe('text/css; charset=utf-8');
+    expect(siteContentType('app.js')).toBe('text/javascript; charset=utf-8');
+    expect(siteContentType('logo.PNG')).toBe('image/png');
+    expect(siteContentType('font.woff2')).toBe('font/woff2');
+    expect(siteContentType('archive.zip')).toBe('application/octet-stream');
+    expect(siteContentType('.env')).toBe('application/octet-stream');
+  });
+});
+
+describe('site cap checks', () => {
+  test('one file may not pass 1 MiB', async () => {
+    const bucket = testBucket();
+    expect(await errorOf(enforceSiteCaps(bucket, 'abc123', 'big.bin', SITE_FILE_CAP + 1))).toBe('A file may be at most 1 MiB');
+  });
+
+  test('a site may not pass 64 files', async () => {
+    const bucket = testBucket();
+    for (let i = 0; i < SITE_FILES_MAX; i++) await bucket.put(`sites/abc123/f${i}.txt`, 'x');
+    expect(await errorOf(enforceSiteCaps(bucket, 'abc123', 'new.txt', 1))).toBe('A site may hold at most 64 files');
+  });
+
+  test('a site may not pass 10 MiB, and replacing a file counts only its new size', async () => {
+    const bucket = testBucket();
+    for (let i = 0; i < 10; i++) await bucket.put(`sites/abc123/big${i}.bin`, new Uint8Array(SITE_FILE_CAP));
+    expect(await errorOf(enforceSiteCaps(bucket, 'abc123', 'one.bin', 1))).toBe('A site may hold at most 10 MiB');
+    // Replacing an existing 1 MiB file with another 1 MiB file still fits.
+    await enforceSiteCaps(bucket, 'abc123', 'big0.bin', SITE_FILE_CAP);
+  });
+});
+
+describe('site rows', () => {
+  test('a site is a link of kind site at /s/<code>/ with a title', async () => {
+    const r = rig();
+    const site = await createSite(r.db, 'usr-a', '  My site ', r.now());
+    const { id, code } = site;
+    expect(id).toMatch(/^site-[2-9a-hjkmnp-z]{8}$/);
+    expect(code).toMatch(/^[2-9a-hjkmnp-z]{6}$/);
+    expect(site).toMatchObject({
+      title: 'My site',
+      destination_url: `/s/${code}/`,
+      ad_style: 'site',
+      kind: 'site',
+      total_scans: 0,
+      is_active: true,
+    });
+  });
+
+  test('needs an owner and a title', async () => {
+    const r = rig();
+    expect(await codeOf(createSite(r.db, '', 'T'))).toBe('owner_required');
+    expect(await codeOf(createSite(r.db, 'u', '   '))).toBe('invalid_site');
+  });
+
+  test('renames only a site, and trims', async () => {
+    const r = rig();
+    const site = await createSite(r.db, 'u', 'Lunch', r.now());
+    const renamed = await updateSite(r.db, site.code, '  Dinner  ', r.now());
+    expect(renamed.title).toBe('Dinner');
+    const link = await createLink(r.db, { code: 'plain1', title: 'Plain', destinationUrl: 'https://example.com', adStyle: 'direct', ownerId: 'u' });
+    expect(await codeOf(updateSite(r.db, link.code, 'Nope'))).toBe('not_found');
+    const menu = await createMenu(r.db, 'u', 'Menu', [{ name: 'Soup', price: '6' }]);
+    expect(await codeOf(updateSite(r.db, menu.code, 'Nope'))).toBe('not_found');
+    expect(await codeOf(updateSite(r.db, site.code, '  '))).toBe('invalid_site');
+  });
+});
+
+describe('sites API', () => {
+  test('needs a session', async () => {
+    const r = rig();
+    expect((await go(r, '/api/sites', { method: 'POST', body: '{}' })).status).toBe(401);
+    expect((await go(r, '/api/sites', { method: 'POST', ...bearer('stale'), body: '{}' })).status).toBe(401);
+    expect((await go(r, '/api/sites/abc123', bearer('stale'))).status).toBe(401);
+  });
+
+  test('needs Pro: Free and Plus are refused before the body is read', async () => {
+    const { r, ada } = await pair();
+    expect([(await create(r, ada.token)).status, (await create(r, ada.token)).status]).toEqual([403, 403]);
+    expect(await (await create(r, ada.token)).json()).toEqual({ error: SITES_PRO_ONLY });
+    grantPlan(r, ada.id, 'plus');
+    const plus = await go(r, '/api/sites', { method: 'POST', headers: { Authorization: `Bearer ${ada.token}` }, body: '{' });
+    expect([plus.status, await plus.json()]).toEqual([403, { error: SITES_PRO_ONLY }]);
+    expect(r.db.sqlite.query('SELECT count(*) AS n FROM links').get()).toEqual({ n: 0 });
+  });
+
+  test('a Pro owner creates and renames a site, and a Free owner cannot rename it later', async () => {
+    const { r, ada } = await proPair();
+    const made = await create(r, ada.token);
+    expect(made.status).toBe(201);
+    const site = (await made.json()) as Link;
+    expect(site).toMatchObject({ kind: 'site', ad_style: 'site', title: 'Cafe site', destination_url: `/s/${site.code}/` });
+    const renamed = await go(r, `/api/sites/${site.code}`, withJson('PUT', ada.token, { title: '  New name ' }));
+    const renamedBody = (await renamed.json()) as Link;
+    expect([renamed.status, renamedBody.title]).toEqual([200, 'New name']);
+
+    r.db.sqlite.query('DELETE FROM entitlements WHERE user_id = ?').run(ada.id);
+    const refused = await go(r, `/api/sites/${site.code}`, withJson('PUT', ada.token, { title: 'Free again' }));
+    expect([refused.status, await refused.json()]).toEqual([403, { error: SITES_PRO_ONLY }]);
+  });
+
+  test('a stranger gets 404 before their body is read, and another kind is not a site', async () => {
+    const { r, ada, bob } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    const stranger = await go(r, `/api/sites/${site.code}`, { method: 'PUT', headers: { Authorization: `Bearer ${bob.token}` }, body: '{' });
+    expect([stranger.status, await stranger.json()]).toEqual([404, { error: SITE_NOT_FOUND }]);
+    const menu = (await (await go(r, '/api/menus', withJson('POST', ada.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as Link;
+    const wrongKind = await go(r, `/api/sites/${menu.code}`, withJson('PUT', ada.token, { title: 'Nope' }));
+    expect([wrongKind.status, await wrongKind.json()]).toEqual([404, { error: SITE_NOT_FOUND }]);
+  });
+
+  test('uploads, lists, downloads, replaces, and deletes files', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    const first = await upload(r, ada.token, site.code, 'index.html', '<h1>Cafe</h1>');
+    expect([first.status, await first.json()]).toEqual([200, { path: 'index.html', size: 13, content_type: 'text/html; charset=utf-8' }]);
+    await upload(r, ada.token, site.code, 'css/site.css', 'h1{color:#123}', 'text/css');
+
+    const read = (await (await go(r, `/api/sites/${site.code}`, bearer(ada.token))).json()) as { site: Link; files: { path: string; size: number; content_type: string }[] };
+    expect(read.site.code).toBe(site.code);
+    expect(read.files.map((file) => [file.path, file.content_type])).toEqual([
+      ['css/site.css', 'text/css; charset=utf-8'],
+      ['index.html', 'text/html; charset=utf-8'],
+    ]);
+
+    const file = await go(r, `/api/sites/${site.code}/files?path=index.html`, bearer(ada.token));
+    expect([file.status, file.headers.get('Content-Type'), await file.text()]).toEqual([200, 'text/html; charset=utf-8', '<h1>Cafe</h1>']);
+
+    const replaced = await upload(r, ada.token, site.code, 'index.html', '<h1>Dinner</h1>');
+    const replacedBody = (await replaced.json()) as { size: number };
+    expect([replaced.status, replacedBody.size]).toEqual([200, 15]);
+
+    const removed = await go(r, `/api/sites/${site.code}/files?path=index.html`, { method: 'DELETE', headers: { Authorization: `Bearer ${ada.token}` } });
+    expect(removed.status).toBe(204);
+    expect((await go(r, `/api/sites/${site.code}/files?path=index.html`, bearer(ada.token))).status).toBe(404);
+    expect((await go(r, `/api/sites/${site.code}/files?path=index.html`, { method: 'DELETE', headers: { Authorization: `Bearer ${ada.token}` } })).status).toBe(404);
+  });
+
+  test('refuses an unsafe path and a body over 1 MiB, and ignores the upload content type', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    const bad = await upload(r, ada.token, site.code, '../index.html', 'x');
+    expect([bad.status, await bad.json()]).toEqual([400, { error: 'That path is not a safe site path' }]);
+    const big = await upload(r, ada.token, site.code, 'big.bin', new Uint8Array(SITE_FILE_CAP + 1));
+    expect([big.status, await big.json()]).toEqual([413, { error: 'A file may be at most 1 MiB' }]);
+    const disguised = await upload(r, ada.token, site.code, 'payload.bin', '<h1>no</h1>', 'text/html');
+    const disguisedBody = (await disguised.json()) as { content_type: string };
+    expect(disguisedBody.content_type).toBe('application/octet-stream');
+  });
+
+  test('a server without a bucket creates nothing and uploads nothing', async () => {
+    const r = rig({ SITES: undefined });
+    const ada = await signUp(r, 'ada@example.com');
+    grantPlan(r, ada.id, 'pro');
+    const made = await create(r, ada.token);
+    expect([made.status, await made.json()]).toEqual([503, { error: 'Sites are not available on this server.' }]);
+    expect(r.db.sqlite.query('SELECT count(*) AS n FROM links').get()).toEqual({ n: 0 });
+  });
+
+  test('an upload by a Free owner is refused even when the path is bad', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    r.db.sqlite.query('DELETE FROM entitlements WHERE user_id = ?').run(ada.id);
+    const res = await upload(r, ada.token, site.code, '../x', 'x');
+    expect([res.status, await res.json()]).toEqual([403, { error: SITES_PRO_ONLY }]);
+  });
+});
+
+describe('the public site host', () => {
+  test('serves the index, files, directory indexes, and a custom 404 under a sandbox', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    await upload(r, ada.token, site.code, 'index.html', '<!doctype html><title>Cafe</title><link rel="stylesheet" href="css/site.css"><h1>Cafe</h1>');
+    await upload(r, ada.token, site.code, 'css/site.css', 'h1{color:#123}', 'text/css');
+    await upload(r, ada.token, site.code, 'docs/index.html', '<p>Docs</p>');
+    await upload(r, ada.token, site.code, '404.html', '<p>Gone</p>');
+
+    const bare = await go(r, `/s/${site.code}`);
+    expect([bare.status, bare.headers.get('Location')]).toEqual([301, `/s/${site.code}/`]);
+
+    const index = await go(r, `/s/${site.code}/`);
+    expect(index.status).toBe(200);
+    expect(await index.text()).toContain('<h1>Cafe</h1>');
+    expect(index.headers.get('Content-Type')).toBe('text/html; charset=utf-8');
+    expect(index.headers.get('Content-Security-Policy')).toBe(SITE_CSP);
+    expect(index.headers.get('Content-Security-Policy')).not.toContain('allow-same-origin');
+    expect(index.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(index.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(index.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(index.headers.get('Cache-Control')).toBe('public, max-age=300');
+
+    const css = await go(r, `/s/${site.code}/css/site.css`);
+    expect([css.status, css.headers.get('Content-Type'), await css.text()]).toEqual([200, 'text/css; charset=utf-8', 'h1{color:#123}']);
+
+    const directory = await go(r, `/s/${site.code}/docs`);
+    expect([directory.status, directory.headers.get('Location')]).toEqual([301, `/s/${site.code}/docs/`]);
+    expect((await go(r, `/s/${site.code}/docs/`)).status).toBe(200);
+
+    const missing = await go(r, `/s/${site.code}/missing`);
+    expect([missing.status, await missing.text()]).toEqual([404, '<p>Gone</p>']);
+  });
+
+  test('a menu and a link page are served by the same host, and a plain link is not', async () => {
+    const { r, ada } = await proPair();
+    const menu = (await (await go(r, '/api/menus', withJson('POST', ada.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as Link;
+    const page = (await (await go(r, '/api/pages', withJson('POST', ada.token, { title: 'Me', links: [{ name: 'Site', url: 'https://example.com' }] }))).json()) as Link;
+    const plain = (await (await go(r, '/api/links', withJson('POST', ada.token, { destination_url: 'example.com' }))).json()) as Link;
+
+    const menuRes = await go(r, `/s/${menu.code}/`);
+    expect([menuRes.status, (await menuRes.text()).includes('data-testid="public-menu-item-name">Soup<')]).toEqual([200, true]);
+    expect((await go(r, `/s/${menu.code}/anything`)).status).toBe(404);
+    expect((await go(r, `/s/${page.code}/`)).status).toBe(200);
+    expect((await go(r, `/s/${plain.code}/`)).status).toBe(404);
+    expect((await go(r, '/s/doesnotexist/')).status).toBe(404);
+  });
+
+  test('refuses traversal in both encoded and plain forms', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    await upload(r, ada.token, site.code, 'index.html', 'ok');
+    for (const path of [`/s/${site.code}/%2e%2e/index.html`, `/s/${site.code}/..%2Findex.html`, `/s/${site.code}/a/..%2F..%2Findex.html`]) {
+      expect({ path, status: (await go(r, path)).status }).toEqual({ path, status: 404 });
+    }
+  });
+
+  test('rounds a site scan through /r/ once, and never counts its files', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    await upload(r, ada.token, site.code, 'index.html', 'ok');
+    await upload(r, ada.token, site.code, 'style.css', 'x', 'text/css');
+
+    const moved = await go(r, `/r/${site.code}`);
+    expect([moved.status, moved.headers.get('Location')]).toEqual([302, `/s/${site.code}/`]);
+    await r.settle();
+    expect(scans(r)).toBe(0);
+
+    await go(r, `/s/${site.code}/`);
+    await r.settle();
+    expect(scans(r)).toBe(1);
+
+    await go(r, `/s/${site.code}/style.css`);
+    await go(r, `/s/${site.code}/`);
+    await r.settle();
+    expect(scans(r)).toBe(2);
+  });
+
+  test('a site on a server without a bucket is 503, while a menu still renders', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    const menu = (await (await go(r, '/api/menus', withJson('POST', ada.token, { title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }))).json()) as Link;
+    r.env.SITES = undefined;
+    const unavailable = await go(r, `/s/${site.code}/`);
+    expect([unavailable.status, (await unavailable.text()).includes('Sites are not available')]).toEqual([503, true]);
+    expect((await go(r, `/s/${menu.code}/`)).status).toBe(200);
+  });
+});
+
+describe('deleting a site', () => {
+  test('purging the prefix happens before the link row, and failure keeps the site', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    await upload(r, ada.token, site.code, 'index.html', 'ok');
+    const bucket = r.env.SITES as TestBucket;
+    expect(bucket.keys()).toContain(`sites/${site.code}/index.html`);
+
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      r.env.SITES = { ...bucket, delete: async () => { throw new Error('r2 down'); } };
+      const failed = await go(r, `/api/links/${site.code}`, { method: 'DELETE', headers: { Authorization: `Bearer ${ada.token}` } });
+      expect(failed.status).toBe(500);
+      expect((await go(r, `/api/links/${site.code}`, bearer(ada.token))).status).toBe(200);
+      expect(bucket.keys()).toContain(`sites/${site.code}/index.html`);
+    } finally {
+      logged.mockRestore();
+    }
+
+    r.env.SITES = bucket;
+    const removed = await go(r, `/api/links/${site.code}`, { method: 'DELETE', headers: { Authorization: `Bearer ${ada.token}` } });
+    expect(removed.status).toBe(200);
+    expect(bucket.keys().filter((key) => key.startsWith(`sites/${site.code}/`))).toEqual([]);
+    expect((await go(r, `/s/${site.code}/`)).status).toBe(404);
+  });
+});

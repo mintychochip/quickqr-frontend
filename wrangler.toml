@@ -24,6 +24,12 @@ database_name = "quickqr-prod"
 database_id = "b83ff4c1-f4f1-4ccc-a1da-7ced89c5ab45"
 migrations_dir = "edge/migrations"
 
+# Hosted site files. The bucket must exist before this binding is deployed:
+#   bunx wrangler r2 bucket create quickqr-sites
+[[r2_buckets]]
+binding = "SITES"
+bucket_name = "quickqr-sites"
+
 # Preview deployments (every branch but master) are built from this same file, and without this section they would use
 # the production database above. They get the staging one instead, and no Google client id, so a preview can neither
 # sign anyone in nor touch real data. The origins are staging's only to keep the sign-in stand-in off: it turns on
@@ -38,3 +44,7 @@ binding = "DB"
 database_name = "quickqr-staging"
 database_id = "619f58ec-9a6d-4ec9-a034-1ff192636164"
 migrations_dir = "edge/migrations"
+
+[[env.preview.r2_buckets]]
+binding = "SITES"
+bucket_name = "quickqr-sites-staging"

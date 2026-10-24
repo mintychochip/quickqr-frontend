@@ -3,6 +3,7 @@ import { createApp } from '../app';
 import type { Env } from '../env';
 import type { Router } from '../router';
 import { loginOrRegisterOAuth } from '../store/users';
+import { testBucket } from './bucket';
 import { testDb, type TestDb } from './sqlite';
 
 export const ORIGIN = 'https://staging.quickqr.app';
@@ -48,7 +49,7 @@ export function rig(over: Partial<Env> = {}, handlers: Record<string, NetworkHan
   const now = () => new Date(clock);
   return {
     db,
-    env: { DB: db, ...configured, ...over },
+    env: { DB: db, SITES: testBucket(), ...configured, ...over },
     app: createApp({ fetch: network(handlers), now }),
     waiting,
     now,

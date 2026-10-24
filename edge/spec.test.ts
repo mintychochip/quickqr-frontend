@@ -14,7 +14,7 @@ interface Spec {
 }
 
 /** The scan gateway is registered as a subtree (`/r/`, `/R/`) and documented as one operation with a code in the path. */
-const SUBTREES: Record<string, string> = { '/r/': 'GET /r/{code}', '/R/': 'GET /R/{code}' };
+const SUBTREES: Record<string, string> = { '/r/': 'GET /r/{code}', '/R/': 'GET /R/{code}', '/s/': 'GET /s/{code}' };
 
 describe.skipIf(!existsSync(specPath))('the registered routes and docs/openapi.yaml', () => {
   const spec = Bun.YAML.parse(readFileSync(specPath, 'utf8')) as unknown as Spec;
@@ -35,7 +35,7 @@ describe.skipIf(!existsSync(specPath))('the registered routes and docs/openapi.y
     expect([...documented].filter((route) => !served.has(route))).toEqual([]);
   });
 
-  test('the only registrations without a method are the scan subtrees', () => {
-    expect(subtrees.sort()).toEqual(['/R/', '/r/']);
+  test('the only registrations without a method are the scan and site subtrees', () => {
+    expect(subtrees.sort()).toEqual(['/R/', '/r/', '/s/']);
   });
 });

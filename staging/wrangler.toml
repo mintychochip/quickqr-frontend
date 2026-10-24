@@ -19,3 +19,7 @@ binding = "DB"
 database_name = "quickqr-staging"
 database_id = "619f58ec-9a6d-4ec9-a034-1ff192636164"
 migrations_dir = "../edge/migrations"
+
+[[r2_buckets]]
+binding = "SITES"
+bucket_name = "quickqr-sites-staging"

@@ -4,7 +4,7 @@ import { mergeQRStyle } from '../qrStyle';
 import type { Router } from '../router';
 import { isStoreError } from '../store/errors';
 import { updateLinkSettings, type LinkSettingsChange } from '../store/links';
-import { LINK_KIND_MENU, type Link } from '../types';
+import { LINK_KIND_MENU, LINK_KIND_SITE, type Link } from '../types';
 import { publicRead, readPolicy, SCOPES, writePolicy } from './policies';
 import { hasHttpScheme, ownedLink } from './shared';
 
@@ -27,18 +27,19 @@ const INDEX = {
   ],
 };
 
-/** The settings a client may change, and which of them this link allows. A menu is served as a page at a fixed address. */
+/** The settings a client may change, and which of them this link allows. A hosted page is served at a fixed address. */
 function fields(link: Link) {
-  const menu = link.kind === LINK_KIND_MENU;
+  const hosted = link.kind === LINK_KIND_MENU || link.kind === LINK_KIND_SITE;
+  const noun = link.kind === LINK_KIND_SITE ? 'site' : 'menu';
   return [
     { name: 'title', type: 'string', editable: true, about: 'Name shown in the dashboard.' },
-    { name: 'destination_url', type: 'url', editable: !menu, about: menu ? 'A menu keeps its public address.' : 'Where this code sends people.' },
+    { name: 'destination_url', type: 'url', editable: !hosted, about: hosted ? `A ${noun} keeps its public address.` : 'Where this code sends people.' },
     {
       name: 'ad_style',
       type: 'enum',
-      editable: !menu,
+      editable: !hosted,
       values: AD_STYLES,
-      about: menu ? 'A menu is served as a page, not an ad redirect.' : 'What a scan shows before the destination.',
+      about: hosted ? `A ${noun} is served as a page, not an ad redirect.` : 'What a scan shows before the destination.',
     },
     { name: 'style', type: 'object', editable: true, about: 'Colors and shape used when this code is drawn.' },
   ];
@@ -63,17 +64,18 @@ export function registerQrRoutes(router: Router, deps: AppDeps): void {
     const body = bodyObject(await c.json());
     for (const key of Object.keys(body)) if (!SETTINGS.includes(key)) return errorJson(400, `Unknown setting: ${key}`);
 
-    const menu = link.kind === LINK_KIND_MENU;
+    const hosted = link.kind === LINK_KIND_MENU || link.kind === LINK_KIND_SITE;
+    const noun = link.kind === LINK_KIND_SITE ? 'site' : 'menu';
     const change: LinkSettingsChange = {};
     if ('title' in body) change.title = stringValue(body.title, 'title');
     if ('destination_url' in body) {
-      if (menu) return errorJson(400, 'A menu keeps its public address');
+      if (hosted) return errorJson(400, `A ${noun} keeps its public address`);
       const destination = stringValue(body.destination_url, 'destination_url').trim();
       if (!destination) return errorJson(400, 'destination_url is required');
       change.destinationUrl = hasHttpScheme(destination) ? destination : `https://${destination}`;
     }
     if ('ad_style' in body) {
-      if (menu) return errorJson(400, 'A menu does not use an ad style');
+      if (hosted) return errorJson(400, `A ${noun} does not use an ad style`);
       const adStyle = stringValue(body.ad_style, 'ad_style');
       if (!AD_STYLES.includes(adStyle)) return errorJson(400, 'ad_style must be interstitial_3s, sponsor_banner, or direct');
       change.adStyle = adStyle;

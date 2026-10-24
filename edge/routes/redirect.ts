@@ -6,10 +6,10 @@ import { renderMenu } from '../pages/menu';
 import { renderNotFound } from '../pages/notFound';
 import { notFound, type Ctx, type Router } from '../router';
 import { getLink } from '../store/links';
-import { readPause, recordScan } from '../store/scans';
-import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU } from '../types';
-import { detectBrowser, detectDevice } from '../useragent';
+import { readPause } from '../store/scans';
+import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE } from '../types';
 import { publicNone } from './policies';
+import { logScan } from './shared';
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 
@@ -39,26 +39,14 @@ export function registerRedirectRoutes(router: Router, deps: AppDeps): void {
     }
     if (!link) return html(404, renderNotFound(code));
 
+    // A site is hosted at its own address so relative files resolve; the index request there records the scan, so
+    // this redirect does not log one twice. /s/ is where a site's bytes and its scan counting both live.
+    if (link.kind === LINK_KIND_SITE) {
+      return new Response(null, { status: 302, headers: { Location: locationHeader(`/s/${link.code}/`) } });
+    }
+
     // Recording must never hold up or break a scan, so it runs after the response and its failure is only logged.
-    const userAgent = c.req.headers.get('User-Agent') ?? '';
-    c.exec.waitUntil(
-      recordScan(
-        c.env.DB,
-        {
-          linkCode: code,
-          timestamp: deps.now(),
-          // Cloudflare sets this itself and replaces any value the visitor sends. No other header is believed.
-          ip: c.req.headers.get('CF-Connecting-IP') ?? '',
-          userAgent,
-          deviceType: detectDevice(userAgent),
-          browser: detectBrowser(userAgent),
-          referrer: c.req.headers.get('Referer') || 'Direct Scan',
-          country: 'US',
-          city: 'Local',
-        },
-        c.env.SCAN_HASH_KEY,
-      ).catch((err) => console.error('scan not recorded', err)),
-    );
+    logScan(c, code, deps);
 
     if (link.kind === LINK_KIND_MENU) return html(200, renderMenu(link), NO_CACHE);
     if (link.kind === LINK_KIND_LINK_PAGE) return html(200, renderLinkPage(link), NO_CACHE);

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
+import { SITE_FILE_CAP } from './sites';
 import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
 
 /**
@@ -7,7 +8,7 @@ import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/r
  * until it is.
  */
 type Statuses = [anonymous: number, stale: number, other: number, owner: number];
-type Kind = 'link' | 'menu' | 'page';
+type Kind = 'link' | 'menu' | 'page' | 'site';
 
 interface Row {
   pattern: string;
@@ -16,6 +17,8 @@ interface Row {
   /** Which fresh code `{code}` stands for. */
   code?: Kind;
   body?: unknown;
+  /** A raw request body, for a route that does not take JSON. */
+  raw?: string;
   form?: string;
   want?: Statuses;
   /** The status does not depend on the caller, whatever it is. */
@@ -69,11 +72,18 @@ const matrix: Row[] = [
   { pattern: 'PUT /api/menus/{code}', code: 'menu', body: menuBody, want: [401, 401, 404, 200], untouched: 'menu' },
   { pattern: 'POST /api/pages', body: pageBody, want: [401, 401, 201, 201] },
   { pattern: 'PUT /api/pages/{code}', code: 'page', body: pageBody, want: [401, 401, 404, 200], untouched: 'page' },
+  { pattern: 'POST /api/sites', body: { title: 'Matrix Site' }, want: [401, 401, 201, 201] },
+  { pattern: 'PUT /api/sites/{code}', code: 'site', body: { title: 'Matrix site renamed' }, want: [401, 401, 404, 200], untouched: 'site' },
+  { pattern: 'GET /api/sites/{code}', code: 'site', want: [401, 401, 404, 200] },
+  { pattern: 'PUT /api/sites/{code}/files', path: '/api/sites/{code}/files?path=matrix.txt', code: 'site', raw: 'matrix', want: [401, 401, 404, 200] },
+  { pattern: 'GET /api/sites/{code}/files', path: '/api/sites/{code}/files?path=matrix.txt', code: 'site', want: [401, 401, 404, 200] },
+  { pattern: 'DELETE /api/sites/{code}/files', path: '/api/sites/{code}/files?path=matrix.txt', code: 'site', want: [401, 401, 404, 204] },
   { pattern: 'GET /qr', path: '/qr?url=https%3A%2F%2Fexample.com%2Fx', want: everyone(200) },
   { pattern: 'GET /qr.png', path: '/qr.png?url=https%3A%2F%2Fexample.com%2Fx', want: everyone(200) },
   { pattern: 'GET /qr.svg', path: '/qr.svg?url=https%3A%2F%2Fexample.com%2Fx', want: everyone(200) },
   { pattern: '/r/', path: '/r/{link}', want: everyone(200) },
   { pattern: '/R/', path: '/R/{link}', want: everyone(200) },
+  { pattern: '/s/', path: '/s/{code}/', code: 'site', sameForAll: true },
 ];
 
 /** No sign-in provider is configured, and the local stand-in is on, as it is in the Go matrix stack. */
@@ -96,7 +106,7 @@ beforeAll(async () => {
 });
 
 /**
- * Menus are a Pro feature, but a Pro owner's scans skip the sponsor page, and the scan rows expect the page. Fixtures
+ * Hosted writes are a Pro feature, but a Pro owner's scans skip the sponsor page, and the scan rows expect the page. Fixtures
  * are made while the owner is Pro (a menu needs it); both signed-in people then follow the row: Pro for the menu
  * writes (the stranger creates their own menu, as they always have), Free for everything else.
  */
@@ -106,7 +116,7 @@ function setPlan(userId: string, on: boolean): void {
 }
 
 function planFor(row: Row): void {
-  const pro = row.pattern.includes('/api/menus');
+  const pro = row.pattern.includes('/api/menus') || row.pattern.includes('/api/sites');
   setPlan(ownerId, pro);
   setPlan(otherId, pro);
 }
@@ -135,6 +145,8 @@ const call = async (row: Row, links: Record<Kind, string>, token: string): Promi
   } else if (row.body !== undefined) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(row.body);
+  } else if (row.raw !== undefined) {
+    body = row.raw;
   }
   const res = await go(r, path, { method, headers, body });
   await res.arrayBuffer();
@@ -156,7 +168,11 @@ describe('access matrix', () => {
         link: await created('/api/links', { title: 'matrix link original', destination_url: 'https://example.com/matrix' }),
         menu: await created('/api/menus', { title: 'matrix menu original', items: [{ name: 'Soup', price: '6.00' }] }),
         page: await created('/api/pages', { title: 'matrix page original', links: [{ name: 'Shop', url: 'https://example.com' }] }),
+        site: await created('/api/sites', { title: 'matrix site original' }),
       };
+      for (const name of ['index.html', 'matrix.txt']) {
+        await go(r, `/api/sites/${links.site}/files?path=${name}`, { method: 'PUT', headers: { Authorization: `Bearer ${owner}` }, body: name === 'index.html' ? '<h1>matrix</h1>' : 'matrix' });
+      }
       planFor(row);
       if (row.pattern.endsWith('/analytics')) {
         await go(r, `/r/${links.link}?direct=1`);
@@ -218,8 +234,11 @@ describe('the registry', () => {
       expect(route.policy.auth, route.pattern).toBeTruthy();
       expect(route.policy.class, route.pattern).toBeTruthy();
       if (route.policy.auth === 'any' && route.pattern !== 'GET /api/auth/me') expect(route.policy.scope, route.pattern).toBeTruthy();
-      const owned = /^\/api\/(links|menus|pages)/.test(route.path) || route.path === '/api/qr/{code}/settings';
-      if (owned && ['POST', 'PUT', 'PATCH'].includes(route.method)) expect(route.policy.maxBody, route.pattern).toBe(64 << 10);
+      const owned = /^\/api\/(links|menus|pages|sites)/.test(route.path) || route.path === '/api/qr/{code}/settings';
+      if (owned && ['POST', 'PUT', 'PATCH'].includes(route.method)) {
+        const cap = route.path === '/api/sites/{code}/files' ? SITE_FILE_CAP : 64 << 10;
+        expect(route.policy.maxBody, route.pattern).toBe(cap);
+      }
     }
   });
 });
