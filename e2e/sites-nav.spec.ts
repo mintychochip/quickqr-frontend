@@ -1,0 +1,11 @@
+import { expect, test } from '@playwright/test';
+import { signInViaOAuth } from './helpers';
+
+test('Sites is in the dashboard navigation', async ({ page }) => {
+  await signInViaOAuth(page, '/dashboard');
+  await page.getByTestId('nav-sites').click();
+  await expect(page).toHaveURL(/\/dashboard\/sites$/);
+  await expect(page.getByTestId('sites-section')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sites' })).toBeVisible();
+  await expect(page.getByTestId('sites-empty')).toContainText('No sites yet');
+});

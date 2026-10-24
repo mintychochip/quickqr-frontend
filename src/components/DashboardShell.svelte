@@ -3,6 +3,7 @@
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import Files from '@lucide/svelte/icons/files';
   import Gift from '@lucide/svelte/icons/gift';
+  import Globe from '@lucide/svelte/icons/globe';
   import House from '@lucide/svelte/icons/house';
   import Link2 from '@lucide/svelte/icons/link-2';
   import LogOut from '@lucide/svelte/icons/log-out';
@@ -41,6 +42,7 @@
   import MenusGate from './MenusGate.svelte';
   import MenuScanner from './MenuScanner.svelte';
   import MenusSection from './MenusSection.svelte';
+  import SitesSection from './SitesSection.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
 
   type Props = {
@@ -132,6 +134,7 @@
   const menusLocked = $derived(!canUseMenus(user));
 
   function pageTitle(): string {
+    if (path.startsWith('/dashboard/sites')) return 'Sites';
     if (path.startsWith('/dashboard/menus')) {
       if (menusLocked) return 'Menus';
       if (path === '/dashboard/menus/new') return 'New menu';
@@ -155,6 +158,13 @@
       icon: Link2,
       testId: 'nav-dashboard',
       active: path === '/dashboard',
+    },
+    {
+      label: 'Sites',
+      href: '/dashboard/sites',
+      icon: Globe,
+      testId: 'nav-sites',
+      active: path.startsWith('/dashboard/sites'),
     },
     {
       label: 'Menus',
@@ -181,7 +191,7 @@
     active: path.startsWith('/dashboard/gifts'),
   };
 
-  let overview = $state<{ links: number; menus: number; pages: number; scans: number } | null>(
+  let overview = $state<{ links: number; sites: number; menus: number; pages: number; scans: number } | null>(
     null,
   );
   let overviewState = $state<'loading' | 'ready' | 'error'>('loading');
@@ -192,16 +202,18 @@
       .then((all: Link[]) => {
         if (cancelled) return;
         let links = 0;
+        let sites = 0;
         let menus = 0;
         let pages = 0;
         let scans = 0;
         for (const link of all) {
-          if (link.kind === 'menu') menus += 1;
+          if (link.kind === 'site') sites += 1;
+          else if (link.kind === 'menu') menus += 1;
           else if (link.kind === 'linkpage') pages += 1;
           else links += 1;
           scans += link.total_scans || 0;
         }
-        overview = { links, menus, pages, scans };
+        overview = { links, sites, menus, pages, scans };
         overviewState = 'ready';
       })
       .catch(() => {
@@ -214,6 +226,7 @@
 
   const overviewRows = $derived([
     { label: 'Dynamic links', value: overview?.links ?? null },
+    { label: 'Sites', value: overview?.sites ?? null },
     { label: 'Menus', value: overview?.menus ?? null },
     { label: 'Link pages', value: overview?.pages ?? null },
     { label: 'All scans', value: overview?.scans ?? null },
@@ -508,7 +521,9 @@
 
       <main class="dsh-main">
         <div class="dsh-main-inner">
-        {#if path.startsWith('/dashboard/menus')}
+        {#if path.startsWith('/dashboard/sites')}
+          <SitesSection />
+        {:else if path.startsWith('/dashboard/menus')}
           {#if menusLocked}
             <MenusGate />
           {:else if menuEditCode}
