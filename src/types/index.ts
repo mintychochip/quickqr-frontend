@@ -14,14 +14,6 @@ export interface MenuDesign {
   font: MenuFont;
 }
 
-export const DEFAULT_MENU_DESIGN: MenuDesign = {
-  logoUrl: '',
-  background: '#f3f3f5',
-  ink: '#111113',
-  accent: '#d7ff3c',
-  font: 'sans',
-};
-
 export interface PageLink {
   name: string;
   url: string;

@@ -15,7 +15,7 @@
   import { dynamicQrValue, dynamicShortLink } from '../lib/dynamicQr';
   import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '../lib/qrStylePresets';
   import type { Link, MenuDesign, MenuFont, MenuItem } from '../types';
-  import { DEFAULT_MENU_DESIGN } from '../types';
+  import { DEFAULT_MENU_DESIGN, MENU_PRESETS, contrastRatio, validateMenuDesign, validateMenuLogo } from '../lib/menuDesign';
 
   type Props = {
     /** Present on /dashboard/menus/:code to edit an existing menu. */
@@ -40,12 +40,6 @@
   let logoError = $state('');
   let saved = $state<Link | null>(null);
 
-  const MENU_PRESETS: { id: string; name: string; design: MenuDesign }[] = [
-    { id: 'bistro', name: 'Bistro', design: { logoUrl: '', background: '#f2ede4', ink: '#17130f', accent: '#b4532e', font: 'serif' } },
-    { id: 'reading', name: 'Reading Room', design: { logoUrl: '', background: '#0e1a14', ink: '#eee7d7', accent: '#c8a56b', font: 'serif' } },
-    { id: 'gallery', name: 'Gallery', design: { logoUrl: '', background: '#f5f3ee', ink: '#121212', accent: '#6f6a62', font: 'sans' } },
-  ];
-
   const brand = $derived(design ?? DEFAULT_MENU_DESIGN);
   const contrast = $derived(contrastRatio(brand.ink, brand.background));
   const previewHref = $derived(saved ? `/r/${saved.code}` : '');
@@ -56,37 +50,9 @@
 
   function setLogo(value: string) {
     updateBrand({ logoUrl: value.trim() });
-    logoError = validateLogo(value.trim());
+    logoError = validateMenuLogo(value.trim());
   }
 
-  function validateLogo(value: string): string {
-    if (!value) return '';
-    if (value.length > 500) return 'The logo URL is too long.';
-    let parsed: URL;
-    try {
-      parsed = new URL(value);
-    } catch {
-      return 'Use a full https:// URL.';
-    }
-    if (parsed.protocol !== 'https:' || !parsed.host || parsed.username || parsed.password) {
-      return 'Use a full https:// URL without a username or password.';
-    }
-    return '';
-  }
-
-  function contrastRatio(a: string, b: string): number {
-    const luminance = (hex: string) => {
-      const value = parseInt(hex.slice(1), 16);
-      const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map((channel) => {
-        const c = channel / 255;
-        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-      });
-      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-    };
-    const first = luminance(a);
-    const second = luminance(b);
-    return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
-  }
   let loading = $state(false);
   let submitting = $state(false);
   let loadError = $state('');
@@ -155,9 +121,12 @@
     submitting = true;
     errorMsg = '';
     try {
-      if (logoError) {
-        errorMsg = logoError;
-        return;
+      if (design) {
+        const problem = validateMenuDesign(design);
+        if (problem) {
+          errorMsg = problem;
+          return;
+        }
       }
       const payload = {
         title: title.trim(),
@@ -165,6 +134,7 @@
         ...(design !== undefined ? { design } : {}),
       };
       saved = saved ? await updateMenu(saved.code, payload) : await createMenu(payload);
+      design = saved.design;
     } catch (err: unknown) {
       errorMsg = err instanceof Error ? err.message : 'Failed to save menu';
     } finally {
@@ -403,7 +373,7 @@
               </div>
             {/if}
 
-            {#if contrast < 4.5}
+            {#if contrast > 0 && contrast < 4.5}
               <p class="menu-editor-warning" data-testid="menu-brand-contrast">
                 Low contrast ({contrast.toFixed(1)}:1) between ink and background. Check it before printing.
               </p>
