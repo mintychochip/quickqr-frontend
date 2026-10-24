@@ -46,6 +46,8 @@ export interface Link {
   style?: QRStyle | null;
   /** Absent for an unbranded menu. */
   design?: MenuDesign;
+  /** The site a menu was published to; absent while it serves its dynamic page. */
+  published_site_code?: string;
   domain?: string;
   domain_verified_at?: string;
 }

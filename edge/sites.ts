@@ -94,8 +94,8 @@ export function sitePathFromInternal(pathname: string): string {
 
 /** Where a domain must forward: the site's public address, absolute even when this request is on another host. */
 export function siteForwardTarget(env: Env, url: URL, code: string): string {
-  const origin = (env.SITES_PUBLIC_URL || url.origin).replace(/\/+$/, '');
-  return `${origin}${sitePublicPath(env, url, code)}`;
+  const path = sitePublicUrl(env, url, code);
+  return path.startsWith('/') ? `${url.origin}${path}` : path;
 }
 
 export function domainInstructions(domain: string, target: string): string {

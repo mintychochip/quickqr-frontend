@@ -41,6 +41,37 @@ test('a Pro owner can brand a menu, preview it, and clear the brand', async ({ p
     await guest.close();
   }
 
+  // Publish the branded menu: the same QR now answers 302 to a static site, and editing keeps that copy current.
+  await expect(editor.getByTestId('menu-publish-button')).toHaveText('Publish as static site');
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes(`/api/menus/${code}/publish`) && res.request().method() === 'POST' && res.ok()),
+    editor.getByTestId('menu-publish-button').click(),
+  ]);
+  const publishedHref = await editor.getByTestId('menu-published-url').getAttribute('href');
+  expect(publishedHref).toBeTruthy();
+  const sitePage = await page.request.get(publishedHref as string);
+  expect(await sitePage.text()).toContain('Branded Lunch');
+
+  const redirect = await page.request.get(`/r/${code}`, { maxRedirects: 0 });
+  expect(redirect.status()).toBe(302);
+  expect(redirect.headers()['location']).toContain('/s/');
+
+  await editor.getByTestId('menu-item-price').nth(0).fill('7.50');
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/menus/') && res.request().method() === 'PUT' && res.ok()),
+    editor.getByTestId('save-menu').click(),
+  ]);
+  const refreshed = await page.request.get(publishedHref as string);
+  expect(await refreshed.text()).toContain('7.50');
+
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes(`/api/menus/${code}/publish`) && res.request().method() === 'DELETE' && res.ok()),
+    editor.getByTestId('menu-unpublish-button').click(),
+  ]);
+  await expect(editor.getByTestId('menu-publish-button')).toHaveText('Publish as static site');
+  const dynamic = await page.request.get(`/r/${code}`, { maxRedirects: 0 });
+  expect(dynamic.status()).toBe(200);
+
   // A menu saved without touching Brand keeps the original quickqr page.
   await page.goto('/dashboard/menus/new');
   await editor.getByTestId('menu-title').fill('Plain Lunch');

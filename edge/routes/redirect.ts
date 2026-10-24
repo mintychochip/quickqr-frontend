@@ -6,6 +6,7 @@ import { renderMenu } from '../pages/menu';
 import { renderNotFound } from '../pages/notFound';
 import { notFound, type Ctx, type Router } from '../router';
 import { sitePublicUrl } from '../sites';
+import { publishedMenuSite } from './menuPublish';
 import { getLink } from '../store/links';
 import { readPause } from '../store/scans';
 import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE } from '../types';
@@ -44,6 +45,13 @@ export function registerRedirectRoutes(router: Router, deps: AppDeps): void {
     // this redirect does not log one twice. /s/ is where a site's bytes and its scan counting both live.
     if (link.kind === LINK_KIND_SITE) {
       return new Response(null, { status: 302, headers: { Location: locationHeader(sitePublicUrl(c.env, c.url, link.code)) } });
+    }
+
+    // A published menu is served from its static site; the site index records the scan under the menu's code. If the
+    // site row or its index file is gone, the menu still answers from D1 rather than sending the scan nowhere.
+    if (link.kind === LINK_KIND_MENU) {
+      const site = await publishedMenuSite(c, link, c.env.SITES);
+      if (site) return new Response(null, { status: 302, headers: { Location: locationHeader(sitePublicUrl(c.env, c.url, site)) } });
     }
 
     // Recording must never hold up or break a scan, so it runs after the response and its failure is only logged.

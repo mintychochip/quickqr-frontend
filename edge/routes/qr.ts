@@ -4,6 +4,7 @@ import { mergeQRStyle } from '../qrStyle';
 import type { Router } from '../router';
 import { isStoreError } from '../store/errors';
 import { updateLinkSettings, type LinkSettingsChange } from '../store/links';
+import { refreshPublishedMenu } from './menuPublish';
 import { LINK_KIND_MENU, LINK_KIND_SITE, type Link } from '../types';
 import { publicRead, readPolicy, SCOPES, writePolicy } from './policies';
 import { hasHttpScheme, ownedLink } from './shared';
@@ -83,7 +84,9 @@ export function registerQrRoutes(router: Router, deps: AppDeps): void {
     if ('style' in body) change.style = mergeQRStyle(link.style, body.style);
 
     try {
-      return json(200, settingsBody(await updateLinkSettings(c.env.DB, code, change, deps.now())));
+      const updated = await updateLinkSettings(c.env.DB, code, change, deps.now());
+      if (updated.kind === LINK_KIND_MENU) await refreshPublishedMenu(c.env.DB, c.env.SITES, updated, deps.now());
+      return json(200, settingsBody(updated));
     } catch (err) {
       if (isStoreError(err, 'not_found')) return errorJson(404, NOT_FOUND);
       throw err;

@@ -4,6 +4,7 @@ import { registerEmbedRoutes } from './routes/embed';
 import { registerGiftRoutes } from './routes/gifts';
 import { registerHostedRoutes } from './routes/hosted';
 import { registerLinkRoutes } from './routes/links';
+import { registerMenuPublishRoutes } from './routes/menuPublish';
 import { registerQrRoutes } from './routes/qr';
 import { registerRedirectRoutes } from './routes/redirect';
 import { registerSiteHostRoutes } from './routes/siteHost';
@@ -31,6 +32,7 @@ export function createApp(deps: AppDeps = platform): Router {
   registerGiftRoutes(router, deps);
   registerLinkRoutes(router, deps);
   registerHostedRoutes(router, deps);
+  registerMenuPublishRoutes(router, deps);
   registerSiteRoutes(router, deps);
   registerQrRoutes(router, deps);
   registerRedirectRoutes(router, deps);

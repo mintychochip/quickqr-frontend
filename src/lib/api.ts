@@ -137,6 +137,23 @@ export async function updateMenu(
   return parseJsonResponse<Link>(res, 'Failed to update menu');
 }
 
+/** Renders the saved menu into a hosted static site; the menu's QR keeps pointing at /r/<code>. */
+export async function publishMenu(code: string): Promise<{ site: string; url: string }> {
+  const res = await request(`/api/menus/${encodeURIComponent(code)}/publish`, { method: 'POST' });
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to publish menu');
+  }
+  return parseJsonResponse<{ site: string; url: string }>(res, 'Failed to publish menu');
+}
+
+/** Removes the published site; the menu itself keeps serving from quickqr. */
+export async function unpublishMenu(code: string): Promise<void> {
+  const res = await request(`/api/menus/${encodeURIComponent(code)}/publish`, { method: 'DELETE' });
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to unpublish menu');
+  }
+}
+
 export async function createPage(payload: { title: string; links: PageLink[] }): Promise<Link> {
   const res = await request('/api/pages', {
     method: 'POST',

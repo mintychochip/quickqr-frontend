@@ -43,6 +43,8 @@ export interface Link {
   style?: QRStyle;
   /** A menu's owner brand; absent means the unbranded quickqr page. */
   design?: MenuDesign;
+  /** The site code a menu was published to; absent when it serves its dynamic page. */
+  published_site_code?: string;
   /** A site's customer domain, set on the hosted backend only; the owner forwards it to `/s/{code}/`. */
   domain?: string;
   /** When a forwarding check last saw the domain redirect to the site, ISO 8601. Cleared when it breaks. */

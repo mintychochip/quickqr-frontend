@@ -10,7 +10,8 @@
   import Label from '@/lib/components/ui/label.svelte';
   import Alert from '@/lib/components/ui/alert.svelte';
   import AlertDescription from '@/lib/components/ui/alert-description.svelte';
-  import { createMenu, updateMenu, fetchLinks } from '../lib/api';
+  import { createMenu, updateMenu, fetchLinks, publishMenu, unpublishMenu } from '../lib/api';
+  import { siteUrl } from '../lib/siteUrl';
   import { decodeQrCanvas, menuLocationFromScan } from '../lib/scanQr';
   import { dynamicQrValue, dynamicShortLink } from '../lib/dynamicQr';
   import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '../lib/qrStylePresets';
@@ -39,6 +40,9 @@
   let design = $state<MenuDesign | null | undefined>(undefined);
   let logoError = $state('');
   let saved = $state<Link | null>(null);
+  let publishedUrl = $state('');
+  let publishing = $state(false);
+  let publishError = $state('');
 
   const brand = $derived(design ?? DEFAULT_MENU_DESIGN);
   const contrast = $derived(contrastRatio(brand.ink, brand.background));
@@ -91,6 +95,7 @@
         }));
         design = found.design;
         saved = found;
+        publishedUrl = found.published_site_code ? siteUrl(found.published_site_code) : '';
       })
       .catch((err: unknown) => {
         if (!cancelled) loadError = err instanceof Error ? err.message : 'Failed to load menu';
@@ -135,10 +140,41 @@
       };
       saved = saved ? await updateMenu(saved.code, payload) : await createMenu(payload);
       design = saved.design;
+      publishedUrl = saved.published_site_code ? siteUrl(saved.published_site_code) : '';
     } catch (err: unknown) {
       errorMsg = err instanceof Error ? err.message : 'Failed to save menu';
     } finally {
       submitting = false;
+    }
+  }
+
+  async function publish() {
+    if (!saved) return;
+    publishing = true;
+    publishError = '';
+    try {
+      const result = await publishMenu(saved.code);
+      saved = { ...saved, published_site_code: result.site };
+      publishedUrl = result.url;
+    } catch (err: unknown) {
+      publishError = err instanceof Error ? err.message : 'Failed to publish menu';
+    } finally {
+      publishing = false;
+    }
+  }
+
+  async function unpublish() {
+    if (!saved) return;
+    publishing = true;
+    publishError = '';
+    try {
+      await unpublishMenu(saved.code);
+      saved = { ...saved, published_site_code: undefined };
+      publishedUrl = '';
+    } catch (err: unknown) {
+      publishError = err instanceof Error ? err.message : 'Failed to unpublish menu';
+    } finally {
+      publishing = false;
     }
   }
 
@@ -420,6 +456,52 @@
               <ArrowRight class="menu-editor-icon" />
             </Button>
           {/if}
+
+          {#if saved}
+            <div class="menu-editor-publish" data-testid="menu-publish">
+              <div>
+                <p class="menu-editor-publish-head">Static site</p>
+                {#if saved.published_site_code && publishedUrl}
+                  <p class="menu-editor-publish-copy">
+                    Published at{' '}
+                    <a href={publishedUrl} target="_blank" rel="noreferrer" data-testid="menu-published-url">{publishedUrl}</a>.
+                    Saving rewrites it; the QR stays the same.
+                  </p>
+                {:else}
+                  <p class="menu-editor-publish-copy">
+                    Serve this menu as its own page on quickqr. The QR keeps working either way.
+                  </p>
+                {/if}
+              </div>
+              <div class="menu-editor-publish-actions">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={publishing}
+                  data-testid="menu-publish-button"
+                  onclick={publish}
+                >
+                  {saved.published_site_code ? 'Republish' : 'Publish as static site'}
+                </Button>
+                {#if saved.published_site_code}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={publishing}
+                    data-testid="menu-unpublish-button"
+                    onclick={unpublish}
+                  >
+                    Unpublish
+                  </Button>
+                {/if}
+              </div>
+              {#if publishError}
+                <p class="menu-editor-error" data-testid="menu-publish-error">{publishError}</p>
+              {/if}
+            </div>
+          {/if}
         </div>
       </div>
 
@@ -547,6 +629,41 @@
 
     .menu-editor-code {
       color: var(--foreground);
+    }
+
+    .menu-editor-publish {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .menu-editor-publish-head {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .menu-editor-publish-copy {
+      margin-top: 0.2rem;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      color: var(--muted-foreground);
+    }
+
+    .menu-editor-publish-copy a {
+      color: var(--foreground);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+      overflow-wrap: anywhere;
+    }
+
+    .menu-editor-publish-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
 
     :global(.menu-editor-primary-action) {

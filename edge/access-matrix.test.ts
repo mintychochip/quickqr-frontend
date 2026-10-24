@@ -70,6 +70,8 @@ const matrix: Row[] = [
   { pattern: 'GET /api/scan-host', sameForAll: true },
   { pattern: 'POST /api/menus', body: menuBody, want: [401, 401, 201, 201] },
   { pattern: 'PUT /api/menus/{code}', code: 'menu', body: menuBody, want: [401, 401, 404, 200], untouched: 'menu' },
+  { pattern: 'POST /api/menus/{code}/publish', code: 'menu', want: [401, 401, 404, 200] },
+  { pattern: 'DELETE /api/menus/{code}/publish', code: 'menu', want: [401, 401, 404, 204] },
   { pattern: 'POST /api/pages', body: pageBody, want: [401, 401, 201, 201] },
   { pattern: 'PUT /api/pages/{code}', code: 'page', body: pageBody, want: [401, 401, 404, 200], untouched: 'page' },
   { pattern: 'POST /api/sites', body: { title: 'Matrix Site' }, want: [401, 401, 201, 201] },

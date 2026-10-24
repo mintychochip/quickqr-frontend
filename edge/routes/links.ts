@@ -4,9 +4,10 @@ import { randomCode } from '../ids';
 import type { Router } from '../router';
 import { purgeSite } from '../sites';
 import { isStoreError } from '../store/errors';
-import { createLink, deleteLink, listLinksByOwner, toPublicLink, updateLink } from '../store/links';
+import { createLink, clearMenusPublishedSite, deleteLink, getLink, listLinksByOwner, toPublicLink, updateLink } from '../store/links';
+import { deleteMenuSite } from './menuPublish';
 import { getActiveSponsor, getAnalytics, getAnalyticsForOwner, getTrendsForOwner } from '../store/scans';
-import { LINK_KIND_SITE } from '../types';
+import { LINK_KIND_MENU, LINK_KIND_SITE } from '../types';
 import { publicNone, publicRead, readPolicy, SCOPES, writePolicy } from './policies';
 import { hasHttpScheme, ownedLink, userId } from './shared';
 
@@ -88,11 +89,29 @@ export function registerLinkRoutes(router: Router, deps: AppDeps): void {
         throw new HttpError(500, 'Could not delete the site files');
       }
     }
+    if (link.kind === LINK_KIND_MENU && link.published_site_code) {
+      const site = await getLink(c.env.DB, link.published_site_code);
+      if (site && site.owner_id === link.owner_id && site.kind === LINK_KIND_SITE) {
+        try {
+          await deleteMenuSite(c.env.DB, c.env.SITES, site.code);
+        } catch (err) {
+          console.error('menu site delete failed', err);
+          throw new HttpError(500, 'Could not delete the published site');
+        }
+      }
+    }
     try {
       await deleteLink(c.env.DB, code);
     } catch (err) {
       if (isStoreError(err, 'not_found')) return errorJson(404, 'Link not found');
       throw err;
+    }
+    if (link.kind === LINK_KIND_SITE) {
+      try {
+        await clearMenusPublishedSite(c.env.DB, code, deps.now());
+      } catch (err) {
+        console.error('menu pointer cleanup failed', err);
+      }
     }
     return json(200, { message: 'deleted' });
   });

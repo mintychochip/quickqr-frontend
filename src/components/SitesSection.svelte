@@ -7,6 +7,7 @@
   import Card from '@/lib/components/ui/card.svelte';
   import Input from '@/lib/components/ui/input.svelte';
   import { deleteLink, fetchLinks } from '../lib/api';
+  import { siteUrl } from '../lib/siteUrl';
   import type { Link } from '../types';
 
   type Props = { canDelete?: boolean };
@@ -42,19 +43,9 @@
     ),
   );
   const totalScans = $derived(sites.reduce((sum, site) => sum + (site.total_scans || 0), 0));
-  function publicUrl(code: string): string {
-    const host = window.location.hostname;
-    const origin =
-      host === 'quickqr.app'
-        ? 'https://sites.quickqr.app'
-        : host === 'staging.quickqr.app' || host.endsWith('.quickqr.pages.dev')
-          ? 'https://staging.sites.quickqr.app'
-          : '';
-    return origin ? `${origin}/${code}/` : `${window.location.origin}/s/${code}/`;
-  }
 
   async function copy(code: string) {
-    await navigator.clipboard.writeText(publicUrl(code));
+    await navigator.clipboard.writeText(siteUrl(code));
     copiedCode = code;
     setTimeout(() => (copiedCode = null), 2000);
   }
@@ -106,7 +97,7 @@
         {#each filtered as site (site.code)}
           <li class="sites-row">
             <div class="sites-row-main">
-              <a class="sites-row-title" href={publicUrl(site.code)} target="_blank" rel="noreferrer">{site.title || 'Untitled site'}</a>
+              <a class="sites-row-title" href={siteUrl(site.code)} target="_blank" rel="noreferrer">{site.title || 'Untitled site'}</a>
               <span class="sites-row-code">/{site.code}</span>
             </div>
             <div class="sites-row-scans"><span>{site.total_scans || 0}</span> scans</div>
@@ -114,7 +105,7 @@
               <Button
                 variant="outline"
                 size="sm"
-                href={publicUrl(site.code)}
+                href={siteUrl(site.code)}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`Open ${site.title || 'site'}`}

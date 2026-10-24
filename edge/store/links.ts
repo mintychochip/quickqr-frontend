@@ -17,6 +17,7 @@ interface LinkRow {
   links: string | null;
   style: string | null;
   menu_design: string | null;
+  published_site_code: string | null;
   domain: string | null;
   domain_verified_at: string | null;
   total_scans: number;
@@ -52,6 +53,7 @@ function toStored(row: LinkRow): StoredLink {
       // An old or malformed row is unbranded; a scan must still render.
     }
   }
+  if (row.published_site_code) link.published_site_code = row.published_site_code;
   if (row.domain) link.domain = row.domain;
   if (row.domain_verified_at) link.domain_verified_at = row.domain_verified_at;
   return link;
@@ -247,6 +249,33 @@ export async function createMenu(db: Db, ownerId: string, title: string, items: 
 export async function updateMenu(db: Db, code: string, title: string, items: MenuItem[], now = new Date(), design?: MenuDesign | null): Promise<Link> {
   const menu = normalizeMenu(title, items);
   return updateHosted(db, code, LINK_KIND_MENU, menu.title, 'items', menu.items, now, design);
+}
+
+/** Points a menu at its published static site, or clears the pointer. */
+export async function setMenuPublishedSite(db: Db, code: string, siteCode: string | null, now = new Date()): Promise<Link> {
+  const res = await db
+    .prepare('UPDATE links SET published_site_code = ?, updated_at = ? WHERE code = ? AND is_active = 1 AND kind = ?')
+    .bind(siteCode, now.toISOString(), code, LINK_KIND_MENU)
+    .run();
+  if (res.meta.changes === 0) throw new StoreError('not_found');
+  return loadPublic(db, code);
+}
+
+/** The active menu that published a site, if any; a site scan counts as that menu's scan. */
+export async function menuCodeForPublishedSite(db: Db, siteCode: string): Promise<string | null> {
+  const row = await db
+    .prepare('SELECT code FROM links WHERE published_site_code = ? AND kind = ? AND is_active = 1 LIMIT 1')
+    .bind(siteCode, LINK_KIND_MENU)
+    .first<{ code: string }>();
+  return row?.code ?? null;
+}
+
+/** Called when a site itself is deleted, so a menu that pointed at it falls back to its dynamic page. */
+export async function clearMenusPublishedSite(db: Db, siteCode: string, now = new Date()): Promise<void> {
+  await db
+    .prepare('UPDATE links SET published_site_code = NULL, updated_at = ? WHERE published_site_code = ?')
+    .bind(now.toISOString(), siteCode)
+    .run();
 }
 
 export async function createPage(db: Db, ownerId: string, title: string, links: PageLink[], now = new Date()): Promise<Link> {

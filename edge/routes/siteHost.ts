@@ -5,7 +5,7 @@ import { renderMenu } from '../pages/menu';
 import { renderNotFound } from '../pages/notFound';
 import { type Ctx, type Router } from '../router';
 import { canonicalSiteOrigin, getSiteFile, headSiteFile, siteContentType, sitePath, sitePathFromInternal, SITE_CSP, type SiteObjectBody } from '../sites';
-import { getLink } from '../store/links';
+import { getLink, menuCodeForPublishedSite } from '../store/links';
 import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE } from '../types';
 import { publicNone } from './policies';
 import { logScan } from './shared';
@@ -111,7 +111,10 @@ async function serve(c: Ctx, deps: AppDeps): Promise<Response> {
 
   const file = await getSiteFile(store, link.code, t.path);
   if (file) {
-    if (index) logScan(c, link.code, deps);
+    if (index) {
+      // A published menu's site counts the scan as the menu's, the code its QR carries; a plain site counts itself.
+      logScan(c, (await menuCodeForPublishedSite(c.env.DB, link.code)) ?? link.code, deps);
+    }
     return siteFile(file, t.path, 200);
   }
 

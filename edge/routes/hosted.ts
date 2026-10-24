@@ -4,7 +4,8 @@ import { bodyObject, errorJson, json, objectList, stringField } from '../http';
 import { normalizeMenuDesign, type MenuDesign } from '../menuDesign';
 import type { Ctx, Router } from '../router';
 import { StoreError } from '../store/errors';
-import { createMenu, createPage, updateMenu, updatePage } from '../store/links';
+import { createMenu, createPage, getLink, toPublicLink, updateMenu, updatePage } from '../store/links';
+import { refreshPublishedMenu } from './menuPublish';
 import type { Link, MenuItem, PageLink } from '../types';
 import { SCOPES, writePolicy } from './policies';
 import { ownedLink, requirePro, userId } from './shared';
@@ -64,7 +65,14 @@ function registerHosted<Entry>(router: Router, deps: AppDeps, spec: Hosted<Entry
     if (spec.requiresPro) await requirePro(c, deps, MENUS_PRO_ONLY);
     try {
       const { title, entries, design } = await read(c);
-      return json(200, await spec.update(c.env.DB, code, title, entries, deps.now(), design));
+      const updated = await spec.update(c.env.DB, code, title, entries, deps.now(), design);
+      if (spec.design) {
+        // A published menu is a static copy; an edit rewrites it now so the price a scan sees never lags the editor.
+        await refreshPublishedMenu(c.env.DB, c.env.SITES, updated, deps.now());
+        const current = await getLink(c.env.DB, code);
+        return json(200, current ? toPublicLink(current) : updated);
+      }
+      return json(200, updated);
     } catch (err) {
       return fail(err);
     }
