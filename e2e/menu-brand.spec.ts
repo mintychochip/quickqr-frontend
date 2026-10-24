@@ -10,6 +10,8 @@ test('a Pro owner can brand a menu, preview it, and clear the brand', async ({ p
   await editor.getByTestId('menu-title').fill('Branded Lunch');
   await editor.getByTestId('menu-item-name').nth(0).fill('Soup');
   await editor.getByTestId('menu-item-price').nth(0).fill('6.00');
+  await editor.getByTestId('menu-item-name').nth(1).fill('Tea');
+  await editor.getByTestId('menu-item-price').nth(1).fill('3.00');
   await editor.getByTestId('menu-preset-reading').click();
   await editor.getByTestId('menu-brand-accent').fill('#ff0000');
   await editor.getByTestId('menu-brand-logo').fill('https://sites.quickqr.app/x/logo.png');
@@ -44,6 +46,8 @@ test('a Pro owner can brand a menu, preview it, and clear the brand', async ({ p
   await editor.getByTestId('menu-title').fill('Plain Lunch');
   await editor.getByTestId('menu-item-name').nth(0).fill('Soup');
   await editor.getByTestId('menu-item-price').nth(0).fill('6.00');
+  await editor.getByTestId('menu-item-name').nth(1).fill('Tea');
+  await editor.getByTestId('menu-item-price').nth(1).fill('3.00');
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/menus') && res.request().method() === 'POST' && res.ok()),
     editor.getByTestId('create-menu').click(),
