@@ -137,6 +137,8 @@ describe('hosted pages', () => {
     expect(page).toContain('Iowan Old Style');
     expect(page).toContain('<img class="logo" src="https://sites.quickqr.app/x/logo.png"');
     expect(page).toContain('referrerpolicy="no-referrer"');
+    expect(page).toContain('border-bottom: 2px solid var(--menu-accent);');
+    expect(page).toContain('.price { font-family: ui-monospace, monospace; font-size: 15px; color: var(--menu-ink); }');
     expect(page).not.toContain('quickqr menu');
     expect(page).not.toContain('Hosted on quickqr');
   });
@@ -145,6 +147,81 @@ describe('hosted pages', () => {
     const page = renderMenu(link({ kind: 'menu', title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }));
     expect(page).toContain('quickqr menu');
     expect(page).toContain('Hosted on quickqr');
+  });
+
+  test('an unbranded menu renders exactly the original page', () => {
+    const page = renderMenu(
+      link({
+        kind: 'menu',
+        title: 'Lunch <b>',
+        items: [
+          { name: 'Soup & bread', price: '6.00' },
+          { name: 'Tea', price: '<2>' },
+        ],
+      }),
+    );
+    expect(page).toBe(`<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Lunch &lt;b&gt; | quickqr menu</title>
+	<style>
+		:root { color-scheme: light; }
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			min-height: 100vh;
+			background: #f3f3f5;
+			color: #111113;
+			font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+		}
+		.wrap { max-width: 640px; margin: 0 auto; padding: 32px 20px 64px; }
+		.kicker {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			margin: 0 0 16px;
+			padding: 4px 10px;
+			border-radius: 999px;
+			background: #111113;
+			color: #d7ff3c;
+			font-size: 12px;
+			font-weight: 600;
+			letter-spacing: -0.01em;
+		}
+		h1 {
+			margin: 0 0 8px;
+			font-size: clamp(36px, 6vw, 52px);
+			line-height: 0.98;
+			letter-spacing: -0.05em;
+			font-weight: 600;
+		}
+		.note { margin: 0 0 24px; color: #6c6c73; font-size: 14px; }
+		ul { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid #e6e6ea; border-radius: 16px; }
+		.item {
+			display: flex;
+			justify-content: space-between;
+			gap: 16px;
+			padding: 16px 18px;
+			border-top: 1px solid #e6e6ea;
+		}
+		.item:first-child { border-top: 0; }
+		.name { font-size: 16px; }
+		.price { font-family: ui-monospace, monospace; font-size: 15px; }
+		footer { margin-top: 18px; color: #6c6c73; font-size: 12px; }
+	</style>
+</head>
+<body>
+	<main class="wrap" data-testid="public-menu">
+		<p class="kicker">quickqr menu</p>
+		<h1 data-testid="public-menu-title">Lunch &lt;b&gt;</h1>
+		<p class="note">Scan the same code after the kitchen changes a price. This page updates. The QR does not.</p>
+		<ul><li class="item" data-testid="public-menu-item"><span class="name" data-testid="public-menu-item-name">Soup &amp; bread</span><span class="price" data-testid="public-menu-item-price">6.00</span></li><li class="item" data-testid="public-menu-item"><span class="name" data-testid="public-menu-item-name">Tea</span><span class="price" data-testid="public-menu-item-price">&lt;2&gt;</span></li></ul>
+		<footer>Hosted on quickqr. No account needed to read this menu.</footer>
+	</main>
+</body>
+</html>`);
   });
 
   test('a hostile logo, title, or item cannot inject markup', () => {
