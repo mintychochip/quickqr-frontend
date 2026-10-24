@@ -1319,8 +1319,12 @@
       cursor: pointer;
       place-items: center;
       border-radius: var(--radius);
-      background-color: var(--foreground);
-      color: #ffffff;
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .dp-save-btn:hover {
+      background-color: color-mix(in oklab, var(--primary) 88%, transparent);
     }
 
     :global(.dp-icon-check) {

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { contrastOf } from './helpers';
 
 test('the dashboard demo plays by itself when it is scrolled to, and repeats', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -80,4 +81,21 @@ test('the demo fits a phone width without a sideways scroll', async ({ page }) =
   expect(row).not.toBeNull();
   expect(row!.x + row!.width).toBeLessThanOrEqual(card!.x + card!.width);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('the demo save check stays readable in dark mode', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/');
+  const section = page.getByTestId('dashboard-preview');
+  await section.scrollIntoViewIfNeeded();
+
+  await page.getByLabel('Destination URL in the demo').fill('cafe.example.com/dark-check');
+  await section.getByRole('button', { name: 'Create', exact: true }).click();
+  await expect(page.getByTestId('demo-row')).toHaveCount(1);
+  await page.getByLabel('Edit destination URL').click();
+
+  const save = page.getByLabel('Save destination');
+  await expect(save).toBeVisible();
+  expect(await contrastOf(save)).toBeGreaterThanOrEqual(4.5);
 });

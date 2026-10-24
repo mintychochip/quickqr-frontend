@@ -921,12 +921,12 @@
   .dash-save-btn {
     cursor: pointer;
     border-radius: var(--radius);
-    background-color: var(--foreground);
+    background-color: var(--primary);
     padding: 0.375rem;
-    color: white;
+    color: var(--primary-foreground);
   }
   .dash-save-btn:hover {
-    background-color: color-mix(in oklab, var(--foreground) 90%, transparent);
+    background-color: color-mix(in oklab, var(--primary) 88%, transparent);
   }
 
   :global(.dash-icon-check) {
