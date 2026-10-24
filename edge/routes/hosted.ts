@@ -1,6 +1,7 @@
 import type { AppDeps } from '../app';
 import type { Db } from '../db';
 import { bodyObject, errorJson, json, objectList, stringField } from '../http';
+import { normalizeMenuDesign, type MenuDesign } from '../menuDesign';
 import type { Ctx, Router } from '../router';
 import { StoreError } from '../store/errors';
 import { createMenu, createPage, updateMenu, updatePage } from '../store/links';
@@ -19,15 +20,21 @@ interface Hosted<Entry> {
   noCode: string;
   /** Menus are a Pro feature; link pages stay in every plan. */
   requiresPro?: boolean;
+  /** Only menus carry the optional brand. */
+  design?: boolean;
   entry(fields: Record<string, unknown>): Entry;
-  create(db: Db, ownerId: string, title: string, entries: Entry[], now: Date): Promise<Link>;
-  update(db: Db, code: string, title: string, entries: Entry[], now: Date): Promise<Link>;
+  create(db: Db, ownerId: string, title: string, entries: Entry[], now: Date, design?: MenuDesign | null): Promise<Link>;
+  update(db: Db, code: string, title: string, entries: Entry[], now: Date, design?: MenuDesign | null): Promise<Link>;
 }
 
 function registerHosted<Entry>(router: Router, deps: AppDeps, spec: Hosted<Entry>): void {
   const read = async (c: Ctx) => {
     const body = bodyObject(await c.json());
-    return { title: stringField(body, 'title'), entries: objectList(body, spec.field).map((fields) => spec.entry(fields)) };
+    let design: MenuDesign | null | undefined;
+    if (spec.design && body.design !== undefined) {
+      design = body.design === null ? null : normalizeMenuDesign(body.design);
+    }
+    return { title: stringField(body, 'title'), entries: objectList(body, spec.field).map((fields) => spec.entry(fields)), design };
   };
 
   const fail = (err: unknown): Response => {
@@ -42,9 +49,9 @@ function registerHosted<Entry>(router: Router, deps: AppDeps, spec: Hosted<Entry
   router.handle(`POST ${spec.path}`, writePolicy(SCOPES.linksWrite), async (c) => {
     const owner = userId(c);
     if (spec.requiresPro) await requirePro(c, deps, MENUS_PRO_ONLY);
-    const { title, entries } = await read(c);
     try {
-      return json(201, await spec.create(c.env.DB, owner, title, entries, deps.now()));
+      const { title, entries, design } = await read(c);
+      return json(201, await spec.create(c.env.DB, owner, title, entries, deps.now(), design));
     } catch (err) {
       return fail(err);
     }
@@ -55,9 +62,9 @@ function registerHosted<Entry>(router: Router, deps: AppDeps, spec: Hosted<Entry
     // Ownership first: a stranger's code answers 404 whatever their plan and whatever they send.
     await ownedLink(c, code, spec.notFound);
     if (spec.requiresPro) await requirePro(c, deps, MENUS_PRO_ONLY);
-    const { title, entries } = await read(c);
     try {
-      return json(200, await spec.update(c.env.DB, code, title, entries, deps.now()));
+      const { title, entries, design } = await read(c);
+      return json(200, await spec.update(c.env.DB, code, title, entries, deps.now(), design));
     } catch (err) {
       return fail(err);
     }
@@ -71,6 +78,7 @@ export function registerHostedRoutes(router: Router, deps: AppDeps): void {
     notFound: 'Menu not found',
     noCode: 'Could not allocate a menu code',
     requiresPro: true,
+    design: true,
     entry: (fields) => ({ name: stringField(fields, 'name'), price: stringField(fields, 'price') }),
     create: createMenu,
     update: updateMenu,

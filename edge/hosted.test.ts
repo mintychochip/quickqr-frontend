@@ -173,6 +173,32 @@ describe('menus', () => {
     expect((await go(r, `/api/links/${menu.code}`, { method: 'DELETE', ...bearer(ada.token) })).status).toBe(200);
     expect(await (await go(r, '/api/links', bearer(ada.token))).json()).toEqual({ links: [], count: 0 });
   });
+
+  test('a design is optional, validated, preserved when omitted, and cleared by null', async () => {
+    const { r, ada } = await proPair();
+    const design = { logoUrl: '', background: '#0e1a14', ink: '#eee7d7', accent: '#c8a56b', font: 'serif' as const };
+    const plain = (await (await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup] })).json()) as Link;
+    expect(plain.design).toBeUndefined();
+
+    const created = await post(r, '/api/menus', ada.token, { title: 'Lunch', items: [soup], design });
+    expect(created.status).toBe(201);
+    expect(((await created.json()) as Link).design).toEqual(design);
+
+    const branded = await go(r, `/api/menus/${plain.code}`, withJson('PUT', ada.token, { title: 'Lunch', items: [soup], design }));
+    expect(branded.status).toBe(200);
+    expect(((await branded.json()) as Link).design).toEqual(design);
+
+    const preserved = await go(r, `/api/menus/${plain.code}`, withJson('PUT', ada.token, { title: 'Dinner', items: [soup] }));
+    expect(preserved.status).toBe(200);
+    expect(((await preserved.json()) as Link).design).toEqual(design);
+
+    const cleared = await go(r, `/api/menus/${plain.code}`, withJson('PUT', ada.token, { title: 'Lunch', items: [soup], design: null }));
+    expect(cleared.status).toBe(200);
+    expect(((await cleared.json()) as Link).design).toBeUndefined();
+
+    const invalid = await go(r, `/api/menus/${plain.code}`, withJson('PUT', ada.token, { title: 'Lunch', items: [soup], design: { ...design, font: 'comic' } }));
+    expect([invalid.status, await invalid.json()]).toEqual([400, { error: MENU_INVALID }]);
+  });
 });
 
 describe('link pages', () => {

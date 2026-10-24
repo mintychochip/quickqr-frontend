@@ -1,5 +1,6 @@
 import type { Db } from '../db';
 import { randomCode } from '../ids';
+import { normalizeMenuDesign, type MenuDesign } from '../menuDesign';
 import { LINK_KIND_LINK_PAGE, LINK_KIND_MENU, LINK_KIND_SITE, type Link, type MenuItem, type PageLink, type QRStyle, type StoredLink } from '../types';
 import { StoreError } from './errors';
 
@@ -15,6 +16,7 @@ interface LinkRow {
   items: string | null;
   links: string | null;
   style: string | null;
+  menu_design: string | null;
   domain: string | null;
   domain_verified_at: string | null;
   total_scans: number;
@@ -40,6 +42,16 @@ function toStored(row: LinkRow): StoredLink {
   if (row.items) link.items = JSON.parse(row.items) as MenuItem[];
   if (row.links) link.links = JSON.parse(row.links) as PageLink[];
   if (row.style) link.style = JSON.parse(row.style) as QRStyle;
+  if (row.menu_design) {
+    try {
+      const parsed = JSON.parse(row.menu_design) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).length > 0) {
+        link.design = normalizeMenuDesign(parsed);
+      }
+    } catch {
+      // An old or malformed row is unbranded; a scan must still render.
+    }
+  }
   if (row.domain) link.domain = row.domain;
   if (row.domain_verified_at) link.domain_verified_at = row.domain_verified_at;
   return link;
@@ -181,13 +193,13 @@ interface HostedKind {
 }
 
 /** Hosted pages (menus, link pages) get their own six-character code, retried a few times if one is taken. */
-async function createHosted(db: Db, ownerId: string, title: string, hosted: HostedKind, now: Date): Promise<Link> {
+async function createHosted(db: Db, ownerId: string, title: string, hosted: HostedKind, now: Date, design?: MenuDesign): Promise<Link> {
   const ts = now.toISOString();
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = randomCode(6);
     const res = await db
       .prepare(
-        'INSERT OR IGNORE INTO links (id, code, owner_id, title, destination_url, ad_style, is_active, kind, items, links, total_scans, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 0, ?, ?)',
+        'INSERT OR IGNORE INTO links (id, code, owner_id, title, destination_url, ad_style, is_active, kind, items, links, menu_design, total_scans, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, 0, ?, ?)',
       )
       .bind(
         `${hosted.prefix}-${randomCode(8)}`,
@@ -199,6 +211,7 @@ async function createHosted(db: Db, ownerId: string, title: string, hosted: Host
         hosted.kind,
         hosted.items ? JSON.stringify(hosted.items) : null,
         hosted.links ? JSON.stringify(hosted.links) : null,
+        design ? JSON.stringify(design) : '{}',
         ts,
         ts,
       )
@@ -208,24 +221,32 @@ async function createHosted(db: Db, ownerId: string, title: string, hosted: Host
   throw new StoreError('conflict');
 }
 
-async function updateHosted(db: Db, code: string, kind: string, title: string, column: 'items' | 'links', value: unknown, now: Date): Promise<Link> {
+async function updateHosted(db: Db, code: string, kind: string, title: string, column: 'items' | 'links', value: unknown, now: Date, design?: MenuDesign | null): Promise<Link> {
+  const sets = ['title = ?', `${column} = ?`];
+  const values: unknown[] = [title, JSON.stringify(value)];
+  if (design !== undefined) {
+    sets.push('menu_design = ?');
+    values.push(design === null ? '{}' : JSON.stringify(design));
+  }
+  sets.push('updated_at = ?');
+  values.push(now.toISOString());
   const res = await db
-    .prepare(`UPDATE links SET title = ?, ${column} = ?, updated_at = ? WHERE code = ? AND is_active = 1 AND kind = ?`)
-    .bind(title, JSON.stringify(value), now.toISOString(), code, kind)
+    .prepare(`UPDATE links SET ${sets.join(', ')} WHERE code = ? AND is_active = 1 AND kind = ?`)
+    .bind(...values, code, kind)
     .run();
   if (res.meta.changes === 0) throw new StoreError('not_found');
   return loadPublic(db, code);
 }
 
-export async function createMenu(db: Db, ownerId: string, title: string, items: MenuItem[], now = new Date()): Promise<Link> {
+export async function createMenu(db: Db, ownerId: string, title: string, items: MenuItem[], now = new Date(), design?: MenuDesign): Promise<Link> {
   if (!ownerId) throw new StoreError('owner_required');
   const menu = normalizeMenu(title, items);
-  return createHosted(db, ownerId, menu.title, { prefix: 'menu', kind: LINK_KIND_MENU, items: menu.items }, now);
+  return createHosted(db, ownerId, menu.title, { prefix: 'menu', kind: LINK_KIND_MENU, items: menu.items }, now, design);
 }
 
-export async function updateMenu(db: Db, code: string, title: string, items: MenuItem[], now = new Date()): Promise<Link> {
+export async function updateMenu(db: Db, code: string, title: string, items: MenuItem[], now = new Date(), design?: MenuDesign | null): Promise<Link> {
   const menu = normalizeMenu(title, items);
-  return updateHosted(db, code, LINK_KIND_MENU, menu.title, 'items', menu.items, now);
+  return updateHosted(db, code, LINK_KIND_MENU, menu.title, 'items', menu.items, now, design);
 }
 
 export async function createPage(db: Db, ownerId: string, title: string, links: PageLink[], now = new Date()): Promise<Link> {

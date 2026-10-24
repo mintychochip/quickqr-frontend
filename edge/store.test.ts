@@ -296,6 +296,29 @@ describe('menus and link pages', () => {
     const m = await createMenu(db, 'u', 'M', [{ name: 'a', price: '1' }], NOW);
     expect(await rejects(updatePage(db, m.code, 'T', [{ name: 'y', url: 'https://example.org' }]))).toBe('not_found');
   });
+
+  test('a menu design is optional and tri-state across create and update', async () => {
+    const design = { logoUrl: '', background: '#0e1a14', ink: '#eee7d7', accent: '#c8a56b', font: 'serif' as const };
+    const m = await createMenu(db, 'u', 'M', [{ name: 'a', price: '1' }], NOW, design);
+    expect(m.design).toEqual(design);
+
+    const preserved = await updateMenu(db, m.code, 'M2', [{ name: 'b', price: '2' }], minutes(1));
+    expect(preserved.design).toEqual(design);
+
+    const cleared = await updateMenu(db, m.code, 'M3', [{ name: 'c', price: '3' }], minutes(2), null);
+    expect(cleared.design).toBeUndefined();
+
+    const plain = await createMenu(db, 'u', 'Plain', [{ name: 'd', price: '4' }], NOW);
+    expect(plain.design).toBeUndefined();
+  });
+
+  test('an empty or malformed stored design is unbranded', async () => {
+    const m = await createMenu(db, 'u', 'M', [{ name: 'a', price: '1' }], NOW);
+    for (const stored of ["'{}'", "'{'"]) {
+      db.sqlite.query(`UPDATE links SET menu_design = ${stored} WHERE code = ?`).run(m.code);
+      expect((await getLink(db, m.code))?.design).toBeUndefined();
+    }
+  });
 });
 
 describe('scan identity', () => {
