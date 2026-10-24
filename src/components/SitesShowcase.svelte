@@ -38,6 +38,7 @@
   let userPaused = $state(false);
   let hovered = $state(false);
   let motionOk = $state(false);
+  let lastPointerType = $state('mouse');
 
   const paused = $derived(userPaused || hovered);
   const current = $derived(sites[active] ?? sites[0]);
@@ -49,8 +50,11 @@
 
   $effect(() => {
     if (!motionOk || paused) return;
+    // Read the current index here so the effect reruns after each advance and the cycle continues; reading it only
+    // inside the timer callback scheduled one advance and then stopped.
+    const next = (active + 1) % sites.length;
     const timer = window.setTimeout(() => {
-      active = (active + 1) % sites.length;
+      active = next;
     }, 6000);
     return () => window.clearTimeout(timer);
   });
@@ -59,18 +63,26 @@
     return ((index - active + 1 + sites.length) % sites.length) - 1;
   }
 
+  /** A touch tap must not leave the carousel paused by focus; only a mouse hovering (or keyboard focus) pauses it. */
   function step(delta: number) {
+    if (lastPointerType !== 'mouse') hovered = false;
     active = (active + delta + sites.length) % sites.length;
   }
 
   function select(index: number) {
     const site = sites[index];
     if (!site) return;
+    if (lastPointerType !== 'mouse') hovered = false;
     if (index === active) {
       window.open(liveUrl(site.code), '_blank', 'noopener,noreferrer');
     } else {
       active = index;
     }
+  }
+
+  function onFocusIn(event: FocusEvent) {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.matches(':focus-visible')) hovered = true;
   }
 
   function onFocusOut(event: FocusEvent) {
@@ -84,9 +96,14 @@
   class="sites-showcase"
   aria-labelledby="sites-showcase-title"
   data-testid="sites-showcase"
-  onmouseenter={() => (hovered = true)}
-  onmouseleave={() => (hovered = false)}
-  onfocusin={() => (hovered = true)}
+  onpointerdown={(event) => (lastPointerType = event.pointerType)}
+  onpointerenter={(event) => {
+    if (event.pointerType === 'mouse') hovered = true;
+  }}
+  onpointerleave={(event) => {
+    if (event.pointerType === 'mouse') hovered = false;
+  }}
+  onfocusin={onFocusIn}
   onfocusout={onFocusOut}
 >
   <div class="shell">
