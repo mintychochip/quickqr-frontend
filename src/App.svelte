@@ -8,6 +8,7 @@
   import GiftPage from './components/GiftPage.svelte';
   import LegalPage from './components/LegalPage.svelte';
   import HomeCards from './components/HomeCards.svelte';
+  import SitesShowcase from './components/SitesShowcase.svelte';
   import Logo from './components/Logo.svelte';
   import NotFound from './components/NotFound.svelte';
   import QrEmbedPage from './components/QrEmbedPage.svelte';
@@ -163,6 +164,8 @@
     <Generator isAuthenticated={user !== null} />
 
     <HomeCards />
+
+    <SitesShowcase />
 
     <DashboardPreview />
 
