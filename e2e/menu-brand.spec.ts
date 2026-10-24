@@ -56,6 +56,17 @@ test('a Pro owner can brand a menu, preview it, and clear the brand', async ({ p
   expect(redirect.status()).toBe(302);
   expect(redirect.headers()['location']).toContain('/s/');
 
+  // The site appears in Sites as a published menu, its scans counted on the menu, not on a second row.
+  await page.waitForTimeout(300);
+  const siteCode = new URL(publishedHref as string).pathname.replace(/\/+$/, '').split('/').pop() ?? '';
+  await page.goto('/dashboard/sites');
+  const publishedRow = page.locator(`[data-testid="site-row"][data-site-code="${siteCode}"]`);
+  await expect(publishedRow).toBeVisible();
+  await expect(publishedRow.getByTestId('site-published-menu')).toBeVisible();
+  await expect(publishedRow.getByTestId('site-scans')).toHaveText('2');
+  await page.goto(`/dashboard/menus/${code}`);
+  await expect(editor.getByTestId('save-menu')).toBeVisible();
+
   await editor.getByTestId('menu-item-price').nth(0).fill('7.50');
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/menus/') && res.request().method() === 'PUT' && res.ok()),

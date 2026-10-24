@@ -14,6 +14,7 @@
   let { canDelete = false }: Props = $props();
 
   let sites = $state<Link[]>([]);
+  let allLinks = $state<Link[]>([]);
   let loading = $state(true);
   let search = $state('');
   let copiedCode = $state<string | null>(null);
@@ -22,7 +23,9 @@
     let cancelled = false;
     fetchLinks()
       .then((all) => {
-        if (!cancelled) sites = all.filter((link) => link.kind === 'site');
+        if (cancelled) return;
+        allLinks = all;
+        sites = all.filter((link) => link.kind === 'site');
       })
       .catch(() => {
         if (!cancelled) sites = [];
@@ -35,6 +38,19 @@
     };
   });
 
+  /** A menu's published site is not an independent site: its scans are the menu's, and deleting it only unpublishes. */
+  const menusBySite = $derived(
+    Object.fromEntries(
+      allLinks
+        .filter((link) => link.kind === 'menu' && link.published_site_code)
+        .map((menu) => [menu.published_site_code as string, menu]),
+    ) as Record<string, Link>,
+  );
+
+  function scansFor(site: Link): number {
+    return menusBySite[site.code]?.total_scans ?? site.total_scans ?? 0;
+  }
+
   const filtered = $derived(
     sites.filter(
       (site) =>
@@ -42,7 +58,7 @@
         site.code.toLowerCase().includes(search.toLowerCase()),
     ),
   );
-  const totalScans = $derived(sites.reduce((sum, site) => sum + (site.total_scans || 0), 0));
+  const totalScans = $derived(sites.reduce((sum, site) => sum + scansFor(site), 0));
 
   async function copy(code: string) {
     await navigator.clipboard.writeText(siteUrl(code));
@@ -51,10 +67,18 @@
   }
 
   async function remove(site: Link) {
-    if (!window.confirm(`Delete ${site.title || 'this site'}? Its files stop serving and its printed QR code stops working.`)) return;
+    const menu = menusBySite[site.code];
+    const label = site.title || 'this site';
+    const message = menu
+      ? `Delete ${label}? This removes the published page; the menu and its QR keep working and return to the dynamic menu.`
+      : `Delete ${label}? Its files stop serving and its printed QR code stops working.`;
+    if (!window.confirm(message)) return;
     try {
       await deleteLink(site.code);
       sites = sites.filter((row) => row.code !== site.code);
+      allLinks = allLinks.map((row) =>
+        row.kind === 'menu' && row.published_site_code === site.code ? { ...row, published_site_code: undefined } : row,
+      );
     } catch {
       /* keep the row; the API surfaces the reason */
     }
@@ -65,7 +89,7 @@
   <div class="sites-header">
     <div>
       <h1 class="sites-title">Sites</h1>
-      <p class="sites-subtitle">Static sites hosted on quickqr, behind their own QR code.</p>
+      <p class="sites-subtitle">Static sites hosted on quickqr, behind their own QR code. A published menu's site appears here too.</p>
     </div>
   </div>
 
@@ -75,7 +99,7 @@
       <div class="sites-stat-value sites-stat-value-punch">{sites.length}</div>
     </Card>
     <Card class="sites-stat">
-      <div class="sites-stat-label">Site scans</div>
+      <div class="sites-stat-label">Scans</div>
       <div class="sites-stat-value">{totalScans.toLocaleString()}</div>
     </Card>
   </div>
@@ -90,17 +114,22 @@
       <div class="sites-empty">Loading sites...</div>
     {:else if filtered.length === 0}
       <div class="sites-empty" data-testid="sites-empty">
-        {sites.length === 0 ? 'No sites yet. Sites created through the API appear here.' : 'No sites match that search.'}
+        {sites.length === 0 ? 'No sites yet. Publish a menu, or create a site through the API.' : 'No sites match that search.'}
       </div>
     {:else}
       <ul class="sites-list">
         {#each filtered as site (site.code)}
-          <li class="sites-row">
+          <li class="sites-row" data-testid="site-row" data-site-code={site.code}>
             <div class="sites-row-main">
               <a class="sites-row-title" href={siteUrl(site.code)} target="_blank" rel="noreferrer">{site.title || 'Untitled site'}</a>
-              <span class="sites-row-code">/{site.code}</span>
+              <div class="sites-row-meta">
+                <span class="sites-row-code">/{site.code}</span>
+                {#if menusBySite[site.code]}
+                  <span class="sites-row-badge" data-testid="site-published-menu">Published menu</span>
+                {/if}
+              </div>
             </div>
-            <div class="sites-row-scans"><span>{site.total_scans || 0}</span> scans</div>
+            <div class="sites-row-scans"><span data-testid="site-scans">{scansFor(site)}</span> scans</div>
             <div class="sites-row-actions">
               <Button
                 variant="outline"
@@ -278,15 +307,34 @@
     text-decoration: underline;
   }
 
+  .sites-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    min-width: 0;
+  }
+
   .sites-row-code {
     display: block;
-    margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--font-mono, monospace);
     font-size: 0.75rem;
     color: var(--muted-foreground);
+  }
+
+  .sites-row-badge {
+    flex: none;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.65rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    color: var(--muted-foreground);
+    white-space: nowrap;
   }
 
   .sites-row-scans {
