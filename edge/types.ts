@@ -1,5 +1,7 @@
 // The JSON shapes the API sends. They mirror backend/internal/models (Go) and docs/openapi.yaml field for field.
 
+import type { MenuDesign } from './menuDesign';
+
 export const LINK_KIND_MENU = 'menu';
 export const LINK_KIND_LINK_PAGE = 'linkpage';
 export const LINK_KIND_SITE = 'site';
@@ -39,6 +41,8 @@ export interface Link {
   items?: MenuItem[];
   links?: PageLink[];
   style?: QRStyle;
+  /** A menu's owner brand; absent means the unbranded quickqr page. */
+  design?: MenuDesign;
   /** A site's customer domain, set on the hosted backend only; the owner forwards it to `/s/{code}/`. */
   domain?: string;
   /** When a forwarding check last saw the domain redirect to the site, ISO 8601. Cleared when it breaks. */
