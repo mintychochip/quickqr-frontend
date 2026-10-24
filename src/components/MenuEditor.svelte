@@ -14,7 +14,8 @@
   import { decodeQrCanvas, menuLocationFromScan } from '../lib/scanQr';
   import { dynamicQrValue, dynamicShortLink } from '../lib/dynamicQr';
   import { DEFAULT_QR_PRESET_ID, presetStyleById, withQrStyleDefaults } from '../lib/qrStylePresets';
-  import type { Link, MenuItem } from '../types';
+  import type { Link, MenuDesign, MenuFont, MenuItem } from '../types';
+  import { DEFAULT_MENU_DESIGN } from '../types';
 
   type Props = {
     /** Present on /dashboard/menus/:code to edit an existing menu. */
@@ -35,7 +36,57 @@
 
   let title = $state('');
   let items = $state<MenuDraft[]>([newMenuDraft(), newMenuDraft()]);
+  let design = $state<MenuDesign | null | undefined>(undefined);
+  let logoError = $state('');
   let saved = $state<Link | null>(null);
+
+  const MENU_PRESETS: { id: string; name: string; design: MenuDesign }[] = [
+    { id: 'bistro', name: 'Bistro', design: { logoUrl: '', background: '#f2ede4', ink: '#17130f', accent: '#b4532e', font: 'serif' } },
+    { id: 'reading', name: 'Reading Room', design: { logoUrl: '', background: '#0e1a14', ink: '#eee7d7', accent: '#c8a56b', font: 'serif' } },
+    { id: 'gallery', name: 'Gallery', design: { logoUrl: '', background: '#f5f3ee', ink: '#121212', accent: '#6f6a62', font: 'sans' } },
+  ];
+
+  const brand = $derived(design ?? DEFAULT_MENU_DESIGN);
+  const contrast = $derived(contrastRatio(brand.ink, brand.background));
+  const previewHref = $derived(saved ? `/r/${saved.code}` : '');
+
+  function updateBrand(patch: Partial<MenuDesign>) {
+    design = { ...brand, ...patch };
+  }
+
+  function setLogo(value: string) {
+    updateBrand({ logoUrl: value.trim() });
+    logoError = validateLogo(value.trim());
+  }
+
+  function validateLogo(value: string): string {
+    if (!value) return '';
+    if (value.length > 500) return 'The logo URL is too long.';
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      return 'Use a full https:// URL.';
+    }
+    if (parsed.protocol !== 'https:' || !parsed.host || parsed.username || parsed.password) {
+      return 'Use a full https:// URL without a username or password.';
+    }
+    return '';
+  }
+
+  function contrastRatio(a: string, b: string): number {
+    const luminance = (hex: string) => {
+      const value = parseInt(hex.slice(1), 16);
+      const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map((channel) => {
+        const c = channel / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    };
+    const first = luminance(a);
+    const second = luminance(b);
+    return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+  }
   let loading = $state(false);
   let submitting = $state(false);
   let loadError = $state('');
@@ -72,6 +123,7 @@
           name: item.name,
           price: item.price,
         }));
+        design = found.design;
         saved = found;
       })
       .catch((err: unknown) => {
@@ -103,9 +155,16 @@
     submitting = true;
     errorMsg = '';
     try {
-      saved = saved
-        ? await updateMenu(saved.code, { title: title.trim(), items: draftItems() })
-        : await createMenu({ title: title.trim(), items: draftItems() });
+      if (logoError) {
+        errorMsg = logoError;
+        return;
+      }
+      const payload = {
+        title: title.trim(),
+        items: draftItems(),
+        ...(design !== undefined ? { design } : {}),
+      };
+      saved = saved ? await updateMenu(saved.code, payload) : await createMenu(payload);
     } catch (err: unknown) {
       errorMsg = err instanceof Error ? err.message : 'Failed to save menu';
     } finally {
@@ -214,8 +273,148 @@
             Add item
           </Button>
 
+          <div class="menu-editor-brand" data-testid="menu-brand">
+            <div class="menu-editor-brand-head">
+              <h2>Brand</h2>
+              <p>Match the menu to your site. Leave it off for the original quickqr page.</p>
+            </div>
+
+            <div class="menu-editor-presets" aria-label="Brand presets">
+              {#each MENU_PRESETS as preset (preset.id)}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid={`menu-preset-${preset.id}`}
+                  onclick={() => (design = { ...preset.design, logoUrl: brand.logoUrl })}
+                >
+                  {preset.name}
+                </Button>
+              {/each}
+            </div>
+
+            <div class="menu-editor-brand-grid">
+              <div class="menu-editor-field">
+                <Label for="menu-brand-background">Background</Label>
+                <div class="menu-editor-color">
+                  <input
+                    type="color"
+                    value={brand.background}
+                    aria-label="Pick background colour"
+                    oninput={(e) => updateBrand({ background: e.currentTarget.value })}
+                  />
+                  <Input
+                    id="menu-brand-background"
+                    data-testid="menu-brand-background"
+                    value={brand.background}
+                    oninput={(e) => updateBrand({ background: e.currentTarget.value })}
+                  />
+                </div>
+              </div>
+
+              <div class="menu-editor-field">
+                <Label for="menu-brand-ink">Ink</Label>
+                <div class="menu-editor-color">
+                  <input
+                    type="color"
+                    value={brand.ink}
+                    aria-label="Pick ink colour"
+                    oninput={(e) => updateBrand({ ink: e.currentTarget.value })}
+                  />
+                  <Input
+                    id="menu-brand-ink"
+                    data-testid="menu-brand-ink"
+                    value={brand.ink}
+                    oninput={(e) => updateBrand({ ink: e.currentTarget.value })}
+                  />
+                </div>
+              </div>
+
+              <div class="menu-editor-field">
+                <Label for="menu-brand-accent">Accent</Label>
+                <div class="menu-editor-color">
+                  <input
+                    type="color"
+                    value={brand.accent}
+                    aria-label="Pick accent colour"
+                    oninput={(e) => updateBrand({ accent: e.currentTarget.value })}
+                  />
+                  <Input
+                    id="menu-brand-accent"
+                    data-testid="menu-brand-accent"
+                    value={brand.accent}
+                    oninput={(e) => updateBrand({ accent: e.currentTarget.value })}
+                  />
+                </div>
+              </div>
+
+              <div class="menu-editor-field">
+                <Label for="menu-brand-font">Type</Label>
+                <select
+                  id="menu-brand-font"
+                  data-testid="menu-brand-font"
+                  value={brand.font}
+                  onchange={(e) => updateBrand({ font: e.currentTarget.value as MenuFont })}
+                >
+                  <option value="serif">Serif</option>
+                  <option value="sans">Sans</option>
+                  <option value="mono">Mono</option>
+                </select>
+              </div>
+
+              <div class="menu-editor-field menu-editor-brand-logo">
+                <Label for="menu-brand-logo">Logo URL</Label>
+                <Input
+                  id="menu-brand-logo"
+                  data-testid="menu-brand-logo"
+                  value={brand.logoUrl}
+                  placeholder="https://sites.quickqr.app/…"
+                  aria-invalid={logoError ? 'true' : undefined}
+                  oninput={(e) => setLogo(e.currentTarget.value)}
+                />
+                <p class="menu-editor-hint">An https URL, or an asset uploaded to one of your sites.</p>
+              </div>
+            </div>
+
+            {#if design !== undefined}
+              <div class="menu-editor-brand-actions">
+                <a
+                  href={previewHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="menu-editor-preview"
+                  class:is-disabled={!previewHref}
+                  data-testid="menu-brand-preview"
+                >
+                  Preview branded menu
+                </a>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="menu-brand-clear"
+                  onclick={() => {
+                    design = null;
+                    logoError = '';
+                  }}
+                >
+                  Use the default page
+                </Button>
+              </div>
+            {/if}
+
+            {#if contrast < 4.5}
+              <p class="menu-editor-warning" data-testid="menu-brand-contrast">
+                Low contrast ({contrast.toFixed(1)}:1) between ink and background. Check it before printing.
+              </p>
+            {/if}
+            {#if logoError}
+              <p class="menu-editor-error" data-testid="menu-brand-logo-error">{logoError}</p>
+            {/if}
+          </div>
+
           {#if errorMsg}
-            <Alert variant="destructive">
+            <Alert variant="destructive" data-testid="menu-error">
               <AlertDescription>{errorMsg}</AlertDescription>
             </Alert>
           {/if}
@@ -410,6 +609,121 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    .menu-editor-brand {
+      display: flex;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .menu-editor-brand-head h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--foreground);
+    }
+
+    .menu-editor-brand-head p {
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--muted-foreground);
+    }
+
+    .menu-editor-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .menu-editor-brand-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .menu-editor-brand-logo {
+      grid-column: 1 / -1;
+    }
+
+    .menu-editor-color {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .menu-editor-color input[type='color'] {
+      width: 2.4rem;
+      height: 2.4rem;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 0.8);
+      background: transparent;
+    }
+
+    .menu-editor-color :global(input:not([type='color'])) {
+      flex: 1;
+    }
+
+    .menu-editor-brand-grid select {
+      height: 2.5rem;
+      width: 100%;
+      padding: 0 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 0.8);
+      background: var(--background);
+      color: var(--foreground);
+      font: inherit;
+      font-size: 0.875rem;
+    }
+
+    .menu-editor-hint {
+      font-size: 0.7rem;
+      line-height: 1.4;
+      color: var(--muted-foreground);
+    }
+
+    .menu-editor-brand-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .menu-editor-preview {
+      font-size: 0.75rem;
+      color: var(--foreground);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    .menu-editor-preview.is-disabled {
+      pointer-events: none;
+      color: var(--muted-foreground);
+      text-decoration: none;
+    }
+
+    .menu-editor-warning,
+    .menu-editor-error {
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .menu-editor-warning {
+      color: #b45309;
+    }
+
+    .menu-editor-error {
+      color: var(--destructive);
+    }
+
+    @media (max-width: 29.99rem) {
+      .menu-editor-brand-grid {
+        grid-template-columns: 1fr;
+      }
     }
   }
 

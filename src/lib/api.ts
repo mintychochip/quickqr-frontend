@@ -1,4 +1,4 @@
-import type { Link, AnalyticsSummary, MenuItem, PageLink, QRStyle, TrendsSummary } from '../types';
+import type { Link, AnalyticsSummary, MenuDesign, MenuItem, PageLink, QRStyle, TrendsSummary } from '../types';
 import type { Gift, GiftClaimed, GiftCreated, NewGift } from '../types/gift';
 import { getAuthToken, setAuthToken } from './auth';
 
@@ -112,7 +112,7 @@ export async function updateLink(
   return parseJsonResponse<Link>(res, 'Failed to update link');
 }
 
-export async function createMenu(payload: { title: string; items: MenuItem[] }): Promise<Link> {
+export async function createMenu(payload: { title: string; items: MenuItem[]; design?: MenuDesign | null }): Promise<Link> {
   const res = await request('/api/menus', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -125,7 +125,7 @@ export async function createMenu(payload: { title: string; items: MenuItem[] }):
 
 export async function updateMenu(
   code: string,
-  payload: { title: string; items: MenuItem[] },
+  payload: { title: string; items: MenuItem[]; design?: MenuDesign | null },
 ): Promise<Link> {
   const res = await request(`/api/menus/${encodeURIComponent(code)}`, {
     method: 'PUT',

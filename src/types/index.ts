@@ -3,6 +3,25 @@ export interface MenuItem {
   price: string;
 }
 
+export type MenuFont = 'serif' | 'sans' | 'mono';
+
+/** A hosted menu's optional owner brand; absent means the original quickqr page. */
+export interface MenuDesign {
+  logoUrl: string;
+  background: string;
+  ink: string;
+  accent: string;
+  font: MenuFont;
+}
+
+export const DEFAULT_MENU_DESIGN: MenuDesign = {
+  logoUrl: '',
+  background: '#f3f3f5',
+  ink: '#111113',
+  accent: '#d7ff3c',
+  font: 'sans',
+};
+
 export interface PageLink {
   name: string;
   url: string;
@@ -33,6 +52,8 @@ export interface Link {
   items?: MenuItem[];
   links?: PageLink[];
   style?: QRStyle | null;
+  /** Absent for an unbranded menu. */
+  design?: MenuDesign;
   domain?: string;
   domain_verified_at?: string;
 }
