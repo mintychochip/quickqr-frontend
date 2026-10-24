@@ -19,5 +19,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["edge/**/*.ts", "functions/**/*.ts"]
+  "include": ["edge/**/*.ts", "functions/**/*.ts", "sites-worker/**/*.ts"]
 }

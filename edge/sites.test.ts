@@ -3,6 +3,7 @@ import { DOMAIN_INVALID, DOMAIN_MISSING, DOMAIN_OWN, DOMAIN_TAKEN, enforceSiteCa
 import { StoreError } from './store/errors';
 import { clearSiteDomain, createMenu, createSite, createLink, getLink, markSiteDomainVerified, setSiteDomain, updateSite } from './store/links';
 import { testBucket, type TestBucket } from './test/bucket';
+import { proxy as proxySites, targetFor } from '../sites-worker/src/index';
 import { bearer, go, grantPlan, ORIGIN, rig, signUp, withJson, type Rig } from './test/rig';
 import type { Link } from './types';
 
@@ -54,6 +55,28 @@ async function codeOf(promise: Promise<unknown>): Promise<string> {
     return err instanceof StoreError ? err.code : String(err);
   }
 }
+
+describe('the sites host Worker', () => {
+  test('proxies only /s/ to the matching Pages host and passes the client address', async () => {
+    const seen: Request[] = [];
+    const response = await proxySites(
+      new Request('https://sites.quickqr.app/s/abc123/?x=1', { headers: { 'CF-Connecting-IP': '8.8.8.8', 'X-Quickqr-Proxy-Key': 'spoof' } }),
+      'secret',
+      async (request) => {
+        seen.push(request);
+        return new Response('ok');
+      },
+    );
+    expect(await response.text()).toBe('ok');
+    const forwarded = seen[0] as Request;
+    expect(forwarded.url).toBe('https://quickqr-ewm.pages.dev/s/abc123/?x=1');
+    expect(forwarded.headers.get('X-Quickqr-Proxy-Key')).toBe('secret');
+    expect(forwarded.headers.get('X-Quickqr-Client-IP')).toBe('8.8.8.8');
+    expect(targetFor('staging.sites.quickqr.app')).toBe('quickqr-staging.pages.dev');
+    expect((await proxySites(new Request('https://sites.quickqr.app/'), 'secret', async () => new Response('x'))).status).toBe(404);
+    expect((await proxySites(new Request('https://other.example/s/x/'), 'secret', async () => new Response('x'))).status).toBe(404);
+  });
+});
 
 describe('site paths and types', () => {
   test('the empty path is the index, a trailing slash is a directory index, and backslashes are separators', () => {
@@ -463,6 +486,26 @@ describe('the public site host', () => {
     expect([hosted.status, await hosted.text()]).toEqual([200, '<h1>Cafe</h1>']);
 
     expect((await at('http://localhost:8080', `/s/${site.code}/`)).status).toBe(200);
+  });
+
+  test('the sites host Worker key serves the Pages origin and keeps the real client address', async () => {
+    const { r, ada } = await proPair();
+    const site = (await (await create(r, ada.token)).json()) as Link;
+    await upload(r, ada.token, site.code, 'index.html', 'ok');
+    r.env.SITES_PUBLIC_URL = 'https://sites.quickqr.app';
+    r.env.SITES_PROXY_KEY = 'proxy-secret';
+
+    const proxied = await go(r, `/s/${site.code}/`, {
+      headers: { 'X-Quickqr-Proxy-Key': 'proxy-secret', 'X-Quickqr-Client-IP': '8.8.8.8', 'CF-Connecting-IP': '1.1.1.1' },
+    });
+    expect(proxied.status).toBe(200);
+    await r.settle();
+    expect(r.db.sqlite.query('SELECT ip_prefix FROM scans ORDER BY id DESC LIMIT 1').get()).toEqual({ ip_prefix: '8.8.8.0/24' });
+
+    const wrongKey = await go(r, `/s/${site.code}/`, {
+      headers: { 'X-Quickqr-Proxy-Key': 'wrong', 'X-Quickqr-Client-IP': '8.8.4.4', 'CF-Connecting-IP': '1.1.1.1' },
+    });
+    expect(wrongKey.status).toBe(301);
   });
 
   test('rounds a site scan through /r/ once, and never counts its files', async () => {

@@ -186,7 +186,18 @@ export function isLocalHost(hostname: string): boolean {
  * request is already there, or it is local. The sites host is canonical: the app's own origin answers `/s/` with a
  * 301 to it, so hosted content always keeps one origin.
  */
-export function canonicalSiteOrigin(env: Env, url: URL): string {
+export function isProxyRequest(env: Env, headers: Headers): boolean {
+  const key = env.SITES_PROXY_KEY;
+  return Boolean(key) && headers.get('X-Quickqr-Proxy-Key') === key;
+}
+
+/**
+ * The public sites origin to send a request to, without a trailing slash, or '' when this server has none, the
+ * request is already there, it is local, or it came through the sites host Worker. The Worker's key lets the Pages
+ * origin serve instead of redirecting to itself.
+ */
+export function canonicalSiteOrigin(env: Env, url: URL, headers?: Headers): string {
+  if (headers && isProxyRequest(env, headers)) return '';
   const origin = (env.SITES_PUBLIC_URL ?? '').replace(/\/+$/, '');
   if (!origin || isLocalHost(url.hostname)) return '';
   try {
@@ -198,8 +209,8 @@ export function canonicalSiteOrigin(env: Env, url: URL): string {
 }
 
 /** The public address of a site, absolute when this server has a different public sites origin. */
-export function sitePublicUrl(env: Env, url: URL, code: string): string {
-  const origin = canonicalSiteOrigin(env, url);
+export function sitePublicUrl(env: Env, url: URL, code: string, headers?: Headers): string {
+  const origin = canonicalSiteOrigin(env, url, headers);
   return origin ? `${origin}/s/${code}/` : `/s/${code}/`;
 }
 

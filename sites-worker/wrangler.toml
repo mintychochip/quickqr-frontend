@@ -1,0 +1,9 @@
+name = "quickqr-sites-host"
+main = "src/index.ts"
+compatibility_date = "2026-10-13"
+workers_dev = false
+
+# Staging first. The custom domain is what creates the DNS record and certificate.
+routes = [
+  { pattern = "staging.sites.quickqr.app", custom_domain = true },
+]

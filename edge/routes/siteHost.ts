@@ -76,7 +76,7 @@ function siteFile(object: SiteObjectBody, path: string, status: number): Respons
 async function serve(c: Ctx, deps: AppDeps): Promise<Response> {
   // One origin for hosted content: on the app's own origin, send the request to the sites host before anything else,
   // including a missing code, so a shared /s/ link settles on the same address. Local hosts are never redirected.
-  const canonical = canonicalSiteOrigin(c.env, c.url);
+  const canonical = canonicalSiteOrigin(c.env, c.url, c.req.headers);
   if (canonical) return redirect(`${canonical}${c.url.pathname}${c.url.search}`);
 
   const t = target(c);

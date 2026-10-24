@@ -3,6 +3,7 @@ import { HttpError } from '../http';
 import { SIGN_IN_REQUIRED, type Ctx } from '../router';
 import { effectivePlan } from '../store/entitlements';
 import { getLink } from '../store/links';
+import { isProxyRequest } from '../sites';
 import { recordScan } from '../store/scans';
 import type { StoredLink } from '../types';
 import { detectBrowser, detectDevice } from '../useragent';
@@ -44,6 +45,15 @@ export async function requirePro(c: Ctx, deps: AppDeps, message: string): Promis
  * Records a scan after the response, so it never holds up or breaks the visit. `/r/` and `/s/` both use this: a site
  * logs its index there, and `/r/` does not log a site again before redirecting to it.
  */
+function scanAddress(c: Ctx): string {
+  // Only the sites host Worker may name the client: it holds the shared key and copies the address Cloudflare gave it.
+  if (isProxyRequest(c.env, c.req.headers)) {
+    const forwarded = c.req.headers.get('X-Quickqr-Client-IP') ?? '';
+    if (forwarded) return forwarded;
+  }
+  return c.req.headers.get('CF-Connecting-IP') ?? '';
+}
+
 export function logScan(c: Ctx, code: string, deps: AppDeps): void {
   const userAgent = c.req.headers.get('User-Agent') ?? '';
   c.exec.waitUntil(
@@ -52,8 +62,7 @@ export function logScan(c: Ctx, code: string, deps: AppDeps): void {
       {
         linkCode: code,
         timestamp: deps.now(),
-        // Cloudflare sets this itself and replaces any value the visitor sends. No other header is believed.
-        ip: c.req.headers.get('CF-Connecting-IP') ?? '',
+        ip: scanAddress(c),
         userAgent,
         deviceType: detectDevice(userAgent),
         browser: detectBrowser(userAgent),

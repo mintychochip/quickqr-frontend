@@ -11,6 +11,8 @@ export interface Env {
   SITES?: SiteBucket;
   /** The public sites origin, such as https://sites.quickqr.app. The app's own origin 301s `/s/` here. */
   SITES_PUBLIC_URL?: string;
+  /** Shared with the sites host Worker: only a request carrying this key may supply the client address and skip the canonical redirect. */
+  SITES_PROXY_KEY?: string;
   /** Pages static assets, used to fall through to the app for paths the API does not own. */
   ASSETS?: { fetch(request: Request): Promise<Response> };
 
