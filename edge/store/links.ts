@@ -194,7 +194,7 @@ async function createHosted(db: Db, ownerId: string, title: string, hosted: Host
         code,
         ownerId,
         title,
-        `${hosted.destination === 's' ? `/s/${code}/` : `/r/${code}`}`,
+        `${hosted.destination === 's' ? `/${code}/` : `/r/${code}`}`,
         hosted.kind,
         hosted.kind,
         hosted.items ? JSON.stringify(hosted.items) : null,

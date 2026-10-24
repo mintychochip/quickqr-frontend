@@ -60,21 +60,35 @@ describe('the sites host Worker', () => {
   test('proxies only /s/ to the matching Pages host and passes the client address', async () => {
     const seen: Request[] = [];
     const response = await proxySites(
-      new Request('https://sites.quickqr.app/s/abc123/?x=1', { headers: { 'CF-Connecting-IP': '8.8.8.8', 'X-Quickqr-Proxy-Key': 'spoof' } }),
+      new Request('https://sites.quickqr.app/abcxyz/?x=1', { headers: { 'CF-Connecting-IP': '8.8.8.8', 'X-Quickqr-Proxy-Key': 'spoof' } }),
       'secret',
       async (request) => {
         seen.push(request);
-        return new Response('ok');
+        return new Request(request.url).method === 'GET' ? new Response('ok') : new Response('x');
       },
     );
     expect(await response.text()).toBe('ok');
     const forwarded = seen[0] as Request;
-    expect(forwarded.url).toBe('https://quickqr-ewm.pages.dev/s/abc123/?x=1');
+    expect(forwarded.url).toBe('https://quickqr-ewm.pages.dev/s/abcxyz/?x=1');
     expect(forwarded.headers.get('X-Quickqr-Proxy-Key')).toBe('secret');
     expect(forwarded.headers.get('X-Quickqr-Client-IP')).toBe('8.8.8.8');
     expect(targetFor('staging.sites.quickqr.app')).toBe('quickqr-staging.pages.dev');
-    expect((await proxySites(new Request('https://sites.quickqr.app/'), 'secret', async () => new Response('x'))).status).toBe(404);
-    expect((await proxySites(new Request('https://other.example/s/x/'), 'secret', async () => new Response('x'))).status).toBe(404);
+
+    const legacy = await proxySites(new Request('https://sites.quickqr.app/s/abcxyz/docs?x=1'), 'secret', async () => new Response('x'));
+    expect([legacy.status, legacy.headers.get('Location')]).toEqual([301, '/abcxyz/docs?x=1']);
+    const bare = await proxySites(new Request('https://sites.quickqr.app/abcxyz'), 'secret', async () => new Response('x'));
+    expect([bare.status, bare.headers.get('Location')]).toEqual([301, '/abcxyz/']);
+    for (const path of ['/', '/favicon.ico', '/not-a-code']) {
+      expect((await proxySites(new Request(`https://sites.quickqr.app${path}`), 'secret', async () => new Response('x'))).status).toBe(404);
+    }
+    expect((await proxySites(new Request('https://other.example/abcxyz/'), 'secret', async () => new Response('x'))).status).toBe(404);
+
+    const rewritten = await proxySites(
+      new Request('https://sites.quickqr.app/abcxyz/docs'),
+      'secret',
+      async () => new Response(null, { status: 301, headers: { Location: '/s/abcxyz/docs/' } }),
+    );
+    expect([rewritten.status, rewritten.headers.get('Location')]).toEqual([301, '/abcxyz/docs/']);
   });
 });
 
@@ -128,7 +142,7 @@ describe('site cap checks', () => {
 });
 
 describe('site rows', () => {
-  test('a site is a link of kind site at /s/<code>/ with a title', async () => {
+  test('a site is a link of kind site at /<code>/ with a title', async () => {
     const r = rig();
     const site = await createSite(r.db, 'usr-a', '  My site ', r.now());
     const { id, code } = site;
@@ -136,7 +150,7 @@ describe('site rows', () => {
     expect(code).toMatch(/^[2-9a-hjkmnp-z]{6}$/);
     expect(site).toMatchObject({
       title: 'My site',
-      destination_url: `/s/${code}/`,
+      destination_url: `/${code}/`,
       ad_style: 'site',
       kind: 'site',
       total_scans: 0,
@@ -186,7 +200,7 @@ describe('sites API', () => {
     const made = await create(r, ada.token);
     expect(made.status).toBe(201);
     const site = (await made.json()) as Link;
-    expect(site).toMatchObject({ kind: 'site', ad_style: 'site', title: 'Cafe site', destination_url: `/s/${site.code}/` });
+    expect(site).toMatchObject({ kind: 'site', ad_style: 'site', title: 'Cafe site', destination_url: `/${site.code}/` });
     const renamed = await go(r, `/api/sites/${site.code}`, withJson('PUT', ada.token, { title: '  New name ' }));
     const renamedBody = (await renamed.json()) as Link;
     expect([renamed.status, renamedBody.title]).toEqual([200, 'New name']);
@@ -293,7 +307,7 @@ describe('customer domains', () => {
     const url = new URL(`${ORIGIN}/api/sites/abc123`);
     expect(siteForwardTarget(env, url, 'abc123')).toBe(`${ORIGIN}/s/abc123/`);
     env.SITES_PUBLIC_URL = 'https://sites.quickqr.app/';
-    expect(siteForwardTarget(env, url, 'abc123')).toBe('https://sites.quickqr.app/s/abc123/');
+    expect(siteForwardTarget(env, url, 'abc123')).toBe('https://sites.quickqr.app/abc123/');
   });
 
   test('one domain belongs to one site, and changing it clears the check', async () => {
@@ -477,10 +491,10 @@ describe('the public site host', () => {
       r.app.dispatch(new Request(`${origin}${path}`), r.env, { waitUntil: () => {} });
 
     const apex = await go(r, `/s/${site.code}/?from=apex`);
-    expect([apex.status, apex.headers.get('Location')]).toEqual([301, `https://sites.quickqr.app/s/${site.code}/?from=apex`]);
+    expect([apex.status, apex.headers.get('Location')]).toEqual([301, `https://sites.quickqr.app/${site.code}/?from=apex`]);
 
     const moved = await go(r, `/r/${site.code}`);
-    expect([moved.status, moved.headers.get('Location')]).toEqual([302, `https://sites.quickqr.app/s/${site.code}/`]);
+    expect([moved.status, moved.headers.get('Location')]).toEqual([302, `https://sites.quickqr.app/${site.code}/`]);
 
     const hosted = await at('https://sites.quickqr.app', `/s/${site.code}/`);
     expect([hosted.status, await hosted.text()]).toEqual([200, '<h1>Cafe</h1>']);

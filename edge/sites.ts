@@ -79,10 +79,23 @@ export function normalizeDomain(raw: string): DomainCheck {
   return { domain: host };
 }
 
+/**
+ * The public path of a site: `/<code>/` on the sites host, or the internal `/s/<code>/` when this server has no
+ * sites origin (and for local development, where the app origin serves it in place).
+ */
+export function sitePublicPath(env: Env, url: URL, code: string): string {
+  return env.SITES_PUBLIC_URL && !isLocalHost(url.hostname) ? `/${code}/` : `/s/${code}/`;
+}
+
+/** The app origin's `/s/<code>/...` path as the public host sees it: `/<code>/...`. */
+export function sitePathFromInternal(pathname: string): string {
+  return pathname.replace(/^\/s(?=\/|$)/, '') || '/';
+}
+
 /** Where a domain must forward: the site's public address, absolute even when this request is on another host. */
 export function siteForwardTarget(env: Env, url: URL, code: string): string {
   const origin = (env.SITES_PUBLIC_URL || url.origin).replace(/\/+$/, '');
-  return `${origin}/s/${code}/`;
+  return `${origin}${sitePublicPath(env, url, code)}`;
 }
 
 export function domainInstructions(domain: string, target: string): string {
@@ -211,7 +224,7 @@ export function canonicalSiteOrigin(env: Env, url: URL, headers?: Headers): stri
 /** The public address of a site, absolute when this server has a different public sites origin. */
 export function sitePublicUrl(env: Env, url: URL, code: string, headers?: Headers): string {
   const origin = canonicalSiteOrigin(env, url, headers);
-  return origin ? `${origin}/s/${code}/` : `/s/${code}/`;
+  return origin ? `${origin}${sitePublicPath(env, url, code)}` : sitePublicPath(env, url, code);
 }
 
 export const sitePrefix = (code: string): string => `sites/${code}/`;

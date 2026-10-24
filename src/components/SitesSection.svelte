@@ -42,7 +42,16 @@
     ),
   );
   const totalScans = $derived(sites.reduce((sum, site) => sum + (site.total_scans || 0), 0));
-  const publicUrl = (code: string): string => `${window.location.origin}/s/${code}/`;
+  function publicUrl(code: string): string {
+    const host = window.location.hostname;
+    const origin =
+      host === 'quickqr.app'
+        ? 'https://sites.quickqr.app'
+        : host === 'staging.quickqr.app' || host.endsWith('.quickqr.pages.dev')
+          ? 'https://staging.sites.quickqr.app'
+          : '';
+    return origin ? `${origin}/${code}/` : `${window.location.origin}/s/${code}/`;
+  }
 
   async function copy(code: string) {
     await navigator.clipboard.writeText(publicUrl(code));
@@ -98,7 +107,7 @@
           <li class="sites-row">
             <div class="sites-row-main">
               <a class="sites-row-title" href={publicUrl(site.code)} target="_blank" rel="noreferrer">{site.title || 'Untitled site'}</a>
-              <span class="sites-row-code">/s/{site.code}</span>
+              <span class="sites-row-code">/{site.code}</span>
             </div>
             <div class="sites-row-scans"><span>{site.total_scans || 0}</span> scans</div>
             <div class="sites-row-actions">

@@ -79,7 +79,7 @@ describe('reading settings', () => {
     grantPlan(r, ada.id, 'pro');
     const site = (await (await go(r, '/api/sites', withJson('POST', ada.token, { title: 'Cafe site' }))).json()) as Link;
     const body = await settingsOf(await go(r, `/api/qr/${site.code}/settings`, bearer(ada.token)));
-    expect(body).toMatchObject({ kind: 'site', settings: { ad_style: 'site', destination_url: `/s/${site.code}/` } });
+    expect(body).toMatchObject({ kind: 'site', settings: { ad_style: 'site', destination_url: `/${site.code}/` } });
     expect(body.fields.map((f) => [f.name, f.editable])).toEqual([
       ['title', true],
       ['destination_url', false],
