@@ -116,6 +116,58 @@ describe('hosted pages', () => {
     expect(renderMenu(link({ kind: 'menu' }))).toContain('<ul></ul>');
   });
 
+  test('a menu design renders the brand and drops the quickqr chrome', () => {
+    const page = renderMenu(
+      link({
+        kind: 'menu',
+        title: 'Lunch',
+        items: [{ name: 'Soup', price: '6.00' }],
+        design: {
+          logoUrl: 'https://sites.quickqr.app/x/logo.png',
+          background: '#0e1a14',
+          ink: '#eee7d7',
+          accent: '#c8a56b',
+          font: 'serif',
+        },
+      }),
+    );
+    expect(page).toContain('--menu-bg: #0e1a14');
+    expect(page).toContain('--menu-ink: #eee7d7');
+    expect(page).toContain('--menu-accent: #c8a56b');
+    expect(page).toContain('Iowan Old Style');
+    expect(page).toContain('<img class="logo" src="https://sites.quickqr.app/x/logo.png"');
+    expect(page).toContain('referrerpolicy="no-referrer"');
+    expect(page).not.toContain('quickqr menu');
+    expect(page).not.toContain('Hosted on quickqr');
+  });
+
+  test('an unbranded menu keeps the quickqr page', () => {
+    const page = renderMenu(link({ kind: 'menu', title: 'Lunch', items: [{ name: 'Soup', price: '6' }] }));
+    expect(page).toContain('quickqr menu');
+    expect(page).toContain('Hosted on quickqr');
+  });
+
+  test('a hostile logo, title, or item cannot inject markup', () => {
+    const page = renderMenu(
+      link({
+        kind: 'menu',
+        title: '<b>',
+        items: [{ name: '<i>', price: '"&' }],
+        design: {
+          logoUrl: 'https://e.example/"><script>alert(1)</script>',
+          background: '#ffffff',
+          ink: '#111111',
+          accent: '#000000',
+          font: 'sans',
+        },
+      }),
+    );
+    expect(page).not.toContain('<script>alert');
+    expect(page).toContain('&lt;b&gt;');
+    expect(page).toContain('&lt;i&gt;');
+    expect(page).toContain('&#34;&amp;');
+  });
+
   test('a link page lists its links, escaped, opening in a new tab without the opener', () => {
     const page = renderLinkPage(link({ kind: 'linkpage', title: 'Find <me>', links: [{ name: 'Site "one"', url: 'https://a.example/?x=1&y=2' }] }));
     expect(page).toContain('<title>Find &lt;me&gt; | quickqr page</title>');
