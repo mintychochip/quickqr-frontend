@@ -16,21 +16,21 @@
       kind: 'Portfolio',
       code: 'fawcsx',
       image: portfolioPreview,
-      alt: 'The Nora Vale portfolio: a warm editorial page with a large serif headline and an arch illustration',
+      alt: 'The Nora Vale portfolio: a white gallery page with a modern house at dusk and a large name',
     },
     {
       name: 'Morrow',
       kind: 'Bakery',
       code: 'qcd7n3',
       image: morrowPreview,
-      alt: 'The Morrow bakery site: a terracotta hero with a loaf, a sun, and a sourdough price card',
+      alt: 'The Morrow bakery site: a dark page with rustic sourdough loaves and wheat',
     },
     {
       name: 'Field Notes',
       kind: 'Launch page',
       code: 'd2hq9g',
       image: fieldNotesPreview,
-      alt: 'The Field Notes launch page: a forest-green reading card and a large serif headline',
+      alt: 'The Field Notes launch page: a dark green reading page with an open book in autumn grass and a paper sample card',
     },
   ] as const;
 
@@ -92,7 +92,6 @@
   <div class="shell">
     <div class="intro">
       <div class="intro-copy">
-        <p class="eyebrow"><span aria-hidden="true"></span>Hosted sites</p>
         <h2 id="sites-showcase-title" class="qq-section-title">A whole site,<br>behind one code.</h2>
         <p class="lede">Real sites, hosted on quickqr. The pages do the talking.</p>
       </div>
@@ -188,26 +187,6 @@
   .intro-copy {
     min-width: 0;
     max-width: 34rem;
-  }
-
-  .eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 0 0.9rem;
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted-foreground);
-  }
-
-  .eyebrow span {
-    width: 7px;
-    height: 7px;
-    border-radius: 2px;
-    background: var(--punch);
   }
 
   h2 {
