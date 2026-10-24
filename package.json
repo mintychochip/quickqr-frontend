@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5186 --host 0.0.0.0 --strictPort",
-    "build": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.edge.json && vite build",
+    "build": "svelte-check --tsgo --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.edge.json && vite build && cp dist/index.html dist/privacy.html && cp dist/index.html dist/terms.html",
     "check:ts": "tsc --noEmit -p tsconfig.app.json",
     "check:edge": "tsc --noEmit -p tsconfig.edge.json",
     "test:edge": "bun test edge",
-    "deploy:staging": "bun run build && rm -rf staging/out && cp -r dist staging/out && bunx wrangler pages functions build functions --outdir staging/out/_worker.js && cd staging && bunx wrangler pages deploy out --project-name quickqr-staging --branch main",
+    "deploy:staging": "bun run build && rm -rf staging/out && cp -r dist staging/out && bunx wrangler pages functions build functions --outdir staging/out/_worker.js && printf '/privacy /privacy.html 200\\n/terms /terms.html 200\\n' >> staging/out/_redirects && cd staging && bunx wrangler pages deploy out --project-name quickqr-staging --branch main",
     "lint": "oxlint",
     "preview": "vite preview --port 5185 --host 0.0.0.0 --strictPort",
     "start": "vite preview --port 5185 --host 0.0.0.0 --strictPort",
