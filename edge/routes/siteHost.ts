@@ -113,7 +113,14 @@ async function serve(c: Ctx, deps: AppDeps): Promise<Response> {
   if (file) {
     if (index) {
       // A published menu's site counts the scan as the menu's, the code its QR carries; a plain site counts itself.
-      logScan(c, (await menuCodeForPublishedSite(c.env.DB, link.code)) ?? link.code, deps);
+      // The lookup must never reject a scan, so a database failure (or a database without 0005) falls back to the site.
+      let scanCode = link.code;
+      try {
+        scanCode = (await menuCodeForPublishedSite(c.env.DB, link.code)) ?? link.code;
+      } catch (err) {
+        console.error('menu site lookup failed', err);
+      }
+      logScan(c, scanCode, deps);
     }
     return siteFile(file, t.path, 200);
   }

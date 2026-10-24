@@ -67,6 +67,7 @@ export async function refreshPublishedMenu(db: Db, bucket: SiteBucket | undefine
     return;
   }
   if (!bucket) {
+    await deleteMenuSite(db, undefined, site.code).catch((err) => console.error('menu site cleanup failed', err));
     await setMenuPublishedSite(db, menu.code, null, now);
     return;
   }
@@ -75,6 +76,7 @@ export async function refreshPublishedMenu(db: Db, bucket: SiteBucket | undefine
     if (site.title !== menu.title) await updateSite(db, site.code, menu.title, now);
   } catch (err) {
     console.error('menu republish failed', err);
+    await deleteMenuSite(db, bucket, site.code).catch((cleanup) => console.error('menu site cleanup failed', cleanup));
     await setMenuPublishedSite(db, menu.code, null, now);
   }
 }

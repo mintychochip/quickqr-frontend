@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import { bearer, go, grantPlan, rig, signUp, withJson, type Rig } from './test/rig';
 import type { TestBucket } from './test/bucket';
 
@@ -45,6 +45,9 @@ describe('publishing a menu as a static site', () => {
     await r.settle();
     const recorded = r.db.sqlite.query('SELECT link_code FROM scans').all() as Array<{ link_code: string }>;
     expect(recorded.map((row) => row.link_code)).toEqual([code]);
+    const totals = r.db.sqlite.query('SELECT code, total_scans FROM links WHERE code IN (?, ?)').all(code, site) as Array<{ code: string; total_scans: number }>;
+    expect(totals.find((row) => row.code === code)?.total_scans).toBe(1);
+    expect(totals.find((row) => row.code === site)?.total_scans).toBe(0);
   });
 
   test('an edit rewrites the published page and the scan still lands on the menu', async () => {
@@ -96,14 +99,59 @@ describe('publishing a menu as a static site', () => {
     expect([free.status, await free.json()]).toEqual([403, { error: 'Menus are a Pro feature.' }]);
   });
 
+  test('a failed menu lookup still serves the site and counts the scan against the site', async () => {
+    const { r, site } = await setup();
+    const log = spyOn(console, 'error').mockImplementation(() => {});
+    const db = r.env.DB;
+    r.env.DB = { ...db, prepare: ((sql: string) => {
+      if (sql.includes('published_site_code')) throw new Error('db down');
+      return db.prepare(sql);
+    }) as typeof db.prepare };
+    try {
+      const page = await go(r, `/s/${site}/`);
+      expect(page.status).toBe(200);
+      await r.settle();
+      const recorded = r.db.sqlite.query('SELECT link_code FROM scans').all() as Array<{ link_code: string }>;
+      expect(recorded.map((row) => row.link_code)).toEqual([site]);
+      expect(log).toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  test('a failed rewrite removes the site and clears the menu pointer', async () => {
+    const { r, ada, code, site } = await setup();
+    const log = spyOn(console, 'error').mockImplementation(() => {});
+    const bucket = r.env.SITES as TestBucket;
+    r.env.SITES = { ...bucket, put: async () => { throw new Error('r2 down'); } };
+    try {
+      const edited = await go(r, `/api/menus/${code}`, withJson('PUT', ada.token, menuBody('Cafe menu', '12.50')));
+      expect(edited.status).toBe(200);
+      expect(((await edited.json()) as { published_site_code?: string }).published_site_code).toBeUndefined();
+      expect(siteIndex(r, site)).toBeNull();
+      expect((r.db.sqlite.query('SELECT count(*) AS n FROM links WHERE code = ?').get(site) as { n: number }).n).toBe(0);
+      const scan = await go(r, `/r/${code}`);
+      expect(scan.status).toBe(200);
+      expect(await scan.text()).toContain('Cafe menu');
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   test('a failed R2 write leaves no orphan site row', async () => {
     const { r, ada, code } = await setup();
     await go(r, `/api/menus/${code}/publish`, { ...bearer(ada.token), method: 'DELETE' });
+    const log = spyOn(console, 'error').mockImplementation(() => {});
     const bucket = r.env.SITES as TestBucket;
     r.env.SITES = { ...bucket, put: async () => { throw new Error('r2 down'); } };
-    const failed = await go(r, `/api/menus/${code}/publish`, { ...bearer(ada.token), method: 'POST' });
-    expect([failed.status, await failed.json()]).toEqual([500, { error: 'Could not publish this menu.' }]);
-    const sites = r.db.sqlite.query("SELECT count(*) AS n FROM links WHERE kind = 'site'").get() as { n: number };
-    expect(sites.n).toBe(0);
+    try {
+      const failed = await go(r, `/api/menus/${code}/publish`, { ...bearer(ada.token), method: 'POST' });
+      expect([failed.status, await failed.json()]).toEqual([500, { error: 'Could not publish this menu.' }]);
+      const sites = r.db.sqlite.query("SELECT count(*) AS n FROM links WHERE kind = 'site'").get() as { n: number };
+      expect(sites.n).toBe(0);
+      expect(bucket.keys().filter((key) => key.startsWith('sites/'))).toEqual([]);
+    } finally {
+      log.mockRestore();
+    }
   });
 });
