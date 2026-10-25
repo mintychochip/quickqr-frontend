@@ -286,3 +286,36 @@ test('site authoring fits a phone width with the panel and the dialog open', asy
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await scrollWidth()).toBeLessThanOrEqual(390);
 });
+
+test('a template creates a site and uploads its index', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('quickqr2_auth_token', 'test-token');
+  });
+  let creates = 0;
+  let body = '';
+  await page.route((url) => url.pathname === '/api/auth/me', (route) =>
+    route.fulfill({ json: { user: USER } }),
+  );
+  await page.route((url) => url.pathname === '/api/links', (route) =>
+    route.fulfill({ json: { links: [] } }),
+  );
+  await page.route((url) => url.pathname === '/api/sites', (route) => {
+    creates += 1;
+    return route.fulfill({ status: 201, json: { code: 'siteabc', title: 'Morning menu', kind: 'site' } });
+  });
+  await page.route((url) => url.pathname === '/api/sites/siteabc/files', (route) => {
+    body = route.request().postData() ?? '';
+    return route.fulfill({ json: { path: 'index.html', size: body.length, content_type: 'text/html' } });
+  });
+
+  await page.goto('/dashboard/sites');
+  await page.getByTestId('site-create').click();
+  await page.getByTestId('site-template-cafe').click();
+  await page.getByLabel('Site name').fill('Morning menu');
+  await page.getByTestId('site-create-submit').click();
+
+  await expect(page.getByTestId('site-row')).toContainText('Morning menu');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(creates).toBe(1);
+  expect(body.includes('Morning')).toBe(true);
+});

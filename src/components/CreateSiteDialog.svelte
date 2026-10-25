@@ -8,6 +8,7 @@
   import { createSite, uploadSiteFile } from '../lib/api';
   import { trapFocus } from '../lib/focusTrap';
   import { formatBytes, hasRootIndex, inspectSiteSelection } from '../lib/siteFiles';
+  import { SITE_TEMPLATES, templateById } from '../lib/siteTemplates';
   import type { Link } from '../types';
 
   type Props = {
@@ -18,6 +19,7 @@
   let { open = $bindable(false), onCreated }: Props = $props();
 
   let title = $state('');
+  let selectedId = $state('blank');
   let chosen = $state<File[]>([]);
   let created = $state<Link | null>(null);
   let busy = $state(false);
@@ -26,10 +28,22 @@
   let fileInput: HTMLInputElement | undefined = $state();
   let folderInput: HTMLInputElement | undefined = $state();
 
+  const selected = $derived(templateById(selectedId) ?? SITE_TEMPLATES[0]);
+  const isBlank = $derived(selectedId === 'blank');
   const inspected = $derived(inspectSiteSelection(chosen));
   const problems = $derived(inspected.problems);
   const hasIndex = $derived(hasRootIndex(inspected.files));
   const fileCount = $derived(inspected.files.length);
+
+  type UploadEntry = { path: string; file: Blob };
+  const uploadEntries = $derived<UploadEntry[]>(
+    isBlank
+      ? inspected.files.map((entry) => ({ path: entry.path, file: entry.file }))
+      : (selected?.files ?? []).map((file) => ({
+          path: file.path,
+          file: new Blob([file.body], { type: file.type }),
+        })),
+  );
 
   $effect(() => {
     if (!open && !busy) reset();
@@ -37,6 +51,7 @@
 
   function reset(): void {
     title = '';
+    selectedId = 'blank';
     chosen = [];
     created = null;
     busy = false;
@@ -55,7 +70,15 @@
     error = '';
   }
 
+  function chooseTemplate(id: string): void {
+    if (busy || created) return;
+    selectedId = id;
+    chosen = [];
+    error = '';
+  }
+
   function problemText(): string {
+    if (!isBlank) return '';
     if (problems.length) return problems.join(' ');
     if (chosen.length === 0) return 'Choose the files for this site first.';
     if (!hasIndex) return 'Add an index.html at the site root.';
@@ -64,7 +87,7 @@
 
   async function uploadAll(): Promise<void> {
     if (!created) return;
-    const files = inspected.files;
+    const files = uploadEntries;
     busy = true;
     error = '';
     try {
@@ -122,95 +145,139 @@
     <div use:trapFocus tabindex="-1" class="site-create-trap">
       <header class="site-create-head">
         <h2 id="site-create-title">New site</h2>
-        <p>
-          Choose the folder that holds your site. The dashboard uploads its files and gives you a URL behind a
-          QR code.
-        </p>
+        <p>Start with a template, or bring the files you already made.</p>
       </header>
 
-      <div class="site-create-field">
-        <Label for="site-create-name">Site name</Label>
-        <Input
-          id="site-create-name"
-          bind:value={title}
-          placeholder="Spring menu"
-          disabled={busy || created !== null}
-          maxlength={120}
-        />
-      </div>
+      <div class="site-create-body">
+        <div class="site-create-gallery">
+          <p class="site-create-eyebrow">Start from</p>
+          <div class="site-template-grid" role="group" aria-label="Site starting point">
+            {#each SITE_TEMPLATES as template (template.id)}
+              <div class="site-template-card" class:selected={selectedId === template.id}>
+                <span class="site-template-preview" aria-hidden="true">
+                  {#if template.files[0]}
+                    <iframe
+                      title=""
+                      sandbox=""
+                      tabindex="-1"
+                      loading="lazy"
+                      srcdoc={template.files[0].body}
+                    ></iframe>
+                  {:else}
+                    <span class="site-template-blank">+</span>
+                  {/if}
+                </span>
+                <span class="site-template-name">{template.name}</span>
+                <span class="site-template-tagline">{template.tagline}</span>
+                <button
+                  type="button"
+                  class="site-template-hit"
+                  aria-label={`Use the ${template.name} template`}
+                  aria-pressed={selectedId === template.id}
+                  data-testid={`site-template-${template.id}`}
+                  onclick={() => chooseTemplate(template.id)}
+                  disabled={busy || created !== null}
+                ></button>
+              </div>
+            {/each}
+          </div>
+        </div>
 
-      <div class="site-create-picker">
-        <input
-          bind:this={fileInput}
-          class="site-file-input"
-          type="file"
-          multiple
-          data-testid="site-create-files"
-          onchange={onFiles}
-          disabled={busy}
-        />
-        <input
-          bind:this={folderInput}
-          class="site-file-input"
-          type="file"
-          multiple
-          webkitdirectory
-          data-testid="site-create-folder"
-          onchange={onFiles}
-          disabled={busy}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onclick={() => pick(fileInput)}
-          disabled={busy}
-        >
-          <Upload class="site-create-icon" />
-          Choose files
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onclick={() => pick(folderInput)}
-          disabled={busy}
-        >
-          <FolderOpen class="site-create-icon" />
-          Choose folder
-        </Button>
-      </div>
+        <div class="site-create-detail">
+          <div class="site-create-field">
+            <Label for="site-create-name">Site name</Label>
+            <Input
+              id="site-create-name"
+              bind:value={title}
+              placeholder={isBlank ? 'Spring menu' : selected?.name ?? 'My site'}
+              disabled={busy || created !== null}
+              maxlength={120}
+            />
+          </div>
 
-      {#if chosen.length > 0}
-        <div class="site-create-selection" data-testid="site-create-selection">
-          <p>
-            <strong>{fileCount}</strong> {fileCount === 1 ? 'file' : 'files'}, {formatBytes(inspected.totalBytes)}
-            {#if hasIndex}
-              <span class="site-create-index">index.html included</span>
-            {:else}
-              <span class="site-create-index-missing">index.html missing</span>
+          <p class="site-create-description">{selected?.description}</p>
+
+          {#if isBlank}
+            <div class="site-create-picker">
+              <input
+                bind:this={fileInput}
+                class="site-file-input"
+                type="file"
+                multiple
+                data-testid="site-create-files"
+                onchange={onFiles}
+                disabled={busy}
+              />
+              <input
+                bind:this={folderInput}
+                class="site-file-input"
+                type="file"
+                multiple
+                webkitdirectory
+                data-testid="site-create-folder"
+                onchange={onFiles}
+                disabled={busy}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onclick={() => pick(fileInput)}
+                disabled={busy}
+              >
+                <Upload class="site-create-icon" />
+                Choose files
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onclick={() => pick(folderInput)}
+                disabled={busy}
+              >
+                <FolderOpen class="site-create-icon" />
+                Choose folder
+              </Button>
+            </div>
+
+            {#if chosen.length > 0}
+              <div class="site-create-selection" data-testid="site-create-selection">
+                <p>
+                  <strong>{fileCount}</strong> {fileCount === 1 ? 'file' : 'files'}, {formatBytes(inspected.totalBytes)}
+                  {#if hasIndex}
+                    <span class="site-create-index">index.html included</span>
+                  {:else}
+                    <span class="site-create-index-missing">index.html missing</span>
+                  {/if}
+                </p>
+                {#if inspected.files.length > 0}
+                  <ul>
+                    {#each inspected.files.slice(0, 6) as entry (entry.path)}
+                      <li>{entry.path}</li>
+                    {/each}
+                  </ul>
+                  {#if inspected.files.length > 6}
+                    <p class="site-create-more">and {inspected.files.length - 6} more</p>
+                  {/if}
+                {/if}
+              </div>
             {/if}
-          </p>
-          {#if inspected.files.length > 0}
-            <ul>
-              {#each inspected.files.slice(0, 6) as entry (entry.path)}
-                <li>{entry.path}</li>
-              {/each}
-            </ul>
-            {#if inspected.files.length > 6}
-              <p class="site-create-more">and {inspected.files.length - 6} more</p>
-            {/if}
+          {:else}
+            <p class="site-create-template-note">
+              Includes a ready <span class="site-create-code">index.html</span>. You can add or replace files after it
+              is created.
+            </p>
+          {/if}
+
+          {#if error}
+            <p class="site-create-error" role="alert" data-testid="site-create-error">{error}</p>
+          {/if}
+
+          {#if progress}
+            <p class="site-create-progress" aria-live="polite">{progress}</p>
           {/if}
         </div>
-      {/if}
-
-      {#if error}
-        <p class="site-create-error" role="alert" data-testid="site-create-error">{error}</p>
-      {/if}
-
-      {#if progress}
-        <p class="site-create-progress" aria-live="polite">{progress}</p>
-      {/if}
+      </div>
 
       <footer class="site-create-actions">
         <Button type="button" variant="ghost" size="sm" onclick={close} disabled={busy}>Cancel</Button>
@@ -232,11 +299,13 @@
   .site-create-trap {
     display: grid;
     gap: 1rem;
+    max-height: min(760px, 90vh);
+    overflow-y: auto;
     outline-style: none;
   }
 
   :global(.site-create-dialog) {
-    max-width: min(520px, calc(100% - 2rem));
+    max-width: min(860px, calc(100% - 2rem));
   }
 
   .site-create-head h2 {
@@ -252,9 +321,134 @@
     line-height: 1.5;
   }
 
+  .site-create-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(220px, 0.82fr);
+    gap: 1.4rem;
+    align-items: start;
+  }
+
+  .site-create-eyebrow {
+    margin: 0 0 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  .site-template-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .site-template-card {
+    position: relative;
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 1.15);
+    background: var(--card);
+    color: var(--foreground);
+    text-align: left;
+    transition: background-color 140ms ease;
+  }
+
+  .site-template-card:hover {
+    border-color: color-mix(in oklab, var(--foreground) 28%, var(--border));
+    background: var(--muted);
+  }
+
+  .site-template-card.selected {
+    border-color: var(--punch);
+    box-shadow: 0 0 0 1px var(--punch);
+    background: color-mix(in oklab, var(--punch) 8%, var(--card));
+  }
+
+  .site-template-card:has(.site-template-hit:disabled) {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  .site-template-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    padding: 0;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .site-template-hit:disabled {
+    cursor: default;
+  }
+
+  .site-template-hit:focus-visible {
+    outline: 2px solid var(--punch);
+    outline-offset: 2px;
+  }
+
+  .site-template-preview {
+    position: relative;
+    display: block;
+    height: 104px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 0.8);
+    background: #f7f7f5;
+  }
+
+  .site-template-preview iframe {
+    width: 720px;
+    height: 480px;
+    border: 0;
+    transform: scale(0.215);
+    transform-origin: top left;
+    pointer-events: none;
+  }
+
+  .site-template-blank {
+    display: grid;
+    height: 100%;
+    place-items: center;
+    color: var(--muted-foreground);
+    font-size: 2rem;
+    font-weight: 300;
+  }
+
+  .site-template-name {
+    padding-inline: 0.15rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .site-template-tagline {
+    padding-inline: 0.15rem;
+    font-size: 0.68rem;
+    color: var(--muted-foreground);
+  }
+
+  .site-create-detail {
+    display: grid;
+    gap: 0.8rem;
+    align-content: start;
+  }
+
   .site-create-field {
     display: grid;
     gap: 0.4rem;
+  }
+
+  .site-create-description {
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
 
   .site-create-picker {
@@ -311,6 +505,22 @@
     color: var(--muted-foreground);
   }
 
+  .site-create-template-note {
+    margin: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--muted);
+    color: var(--muted-foreground);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .site-create-code {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+  }
+
   .site-create-error {
     margin: 0;
     color: var(--destructive);
@@ -328,10 +538,37 @@
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+    padding-top: 0.2rem;
+    border-top: 1px solid var(--border);
   }
 
   :global(.site-create-icon) {
     width: 14px;
     height: 14px;
+  }
+
+  @media (max-width: 720px) {
+    .site-create-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .site-create-detail {
+      border-top: 1px solid var(--border);
+      padding-top: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .site-template-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .site-template-preview {
+      height: 120px;
+    }
+
+    .site-template-preview iframe {
+      transform: scale(0.245);
+    }
   }
 </style>
