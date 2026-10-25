@@ -47,8 +47,9 @@
     if (!live || !motionOk) return;
     scans = 0;
     const start = performance.now();
-    const delay = 420;
-    const duration = 900;
+    // The count lands on 128 as the newest dot arrives, so the last scan is what the number is counting.
+    const delay = 470;
+    const duration = 720;
     let frame = requestAnimationFrame(function tick(now) {
       const t = Math.min(Math.max((now - start - delay) / duration, 0), 1);
       scans = Math.round(SCAN_TOTAL * (1 - (1 - t) ** 3));
@@ -151,11 +152,16 @@
         <rect class="qq-plate" style="--d: 300ms" x="18" y="18" width="284" height="132" rx="28" fill="#111113" />
         <text class="qq-line" style="--d: 430ms" x="36" y="46" fill="#ffffff" fill-opacity="0.55" font-family="Geist Variable, ui-sans-serif, sans-serif" font-size="11" letter-spacing="1.4">SCANS</text>
         <text class="qq-line" style="--d: 470ms" data-testid="home-scans" x="36" y="74" fill="#d7ff3c" font-family="Geist Variable, ui-sans-serif, sans-serif" font-size="28" font-weight="600" letter-spacing="-1">{scans}</text>
-        <path class="qq-area" style="--d: 940ms" d="M150 112c18-8 28-28 46-30 16-2 22 16 40 12 14-3 22-22 40-28V124H150Z" fill="#d7ff3c" fill-opacity="0.18" />
-        <path class="qq-draw" style="--d: 620ms" d="M150 112c18-8 28-28 46-30 16-2 22 16 40 12 14-3 22-22 40-28" pathLength="100" stroke="#d7ff3c" stroke-width="4" stroke-linecap="round" fill="none" />
-        <circle class="qq-halo" cx="196" cy="82" r="5" fill="none" stroke="#d7ff3c" stroke-width="2" />
-        <circle class="qq-dot" style="--d: 990ms" cx="196" cy="82" r="5" fill="#d7ff3c" />
-        <circle class="qq-dot" style="--d: 1480ms" cx="276" cy="66" r="5" fill="#ffffff" />
+        <defs>
+          <clipPath id="qq-home-chart-clip">
+            <rect class="qq-area-reveal" style="--d: 620ms" x="150" y="46" width="130" height="78" />
+          </clipPath>
+        </defs>
+        <path class="qq-area" clip-path="url(#qq-home-chart-clip)" d="M150 112c18-8 28-28 46-30 16-2 22 16 40 12 14-3 22-22 40-28V124H150Z" fill="#d7ff3c" fill-opacity="0.18" />
+        <path class="qq-draw qq-chart-line" style="--d: 620ms" d="M150 112c18-8 28-28 46-30 16-2 22 16 40 12 14-3 22-22 40-28" pathLength="100" stroke="#d7ff3c" stroke-width="4" stroke-linecap="round" fill="none" />
+        <circle class="qq-halo" cx="276" cy="66" r="5" fill="none" stroke="#d7ff3c" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+        <circle class="qq-dot" style="--d: 880ms" cx="196" cy="82" r="5" fill="#d7ff3c" />
+        <circle class="qq-dot" style="--d: 1180ms" cx="276" cy="66" r="5" fill="#ffffff" />
       </svg>
       <div class="hc-caption">
         <h2 class="qq-copy hc-h2" style="--d: 1250ms">See who scanned</h2>
@@ -172,9 +178,15 @@
   .qq-plate,
   .qq-mod,
   .qq-dot,
+  .qq-halo,
   .qq-pill {
     transform-box: fill-box;
     transform-origin: center;
+  }
+
+  .qq-area-reveal {
+    transform-box: fill-box;
+    transform-origin: left center;
   }
 
   .qq-print,
@@ -210,13 +222,13 @@
     .qq-pill,
     .qq-plate,
     .qq-print,
-    .qq-chip,
-    .qq-area {
+    .qq-chip {
       opacity: 0;
     }
 
     .qq-bar,
-    .qq-type {
+    .qq-type,
+    .qq-area-reveal {
       transform: scaleX(0);
     }
 
@@ -269,13 +281,18 @@
       animation-delay: var(--d, 0ms);
     }
 
-    .qq-live .qq-line {
-      animation: qq-rise 500ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    .qq-live .qq-chart-line {
+      animation: qq-draw 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
       animation-delay: var(--d, 0ms);
     }
 
-    .qq-live .qq-area {
-      animation: qq-fade 700ms ease-out both;
+    .qq-live .qq-area-reveal {
+      animation: qq-grow 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
+      animation-delay: var(--d, 0ms);
+    }
+
+    .qq-live .qq-line {
+      animation: qq-rise 500ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
       animation-delay: var(--d, 0ms);
     }
 
@@ -286,7 +303,7 @@
 
     .qq-live .qq-halo {
       animation: qq-ping 2600ms ease-out infinite;
-      animation-delay: 1100ms;
+      animation-delay: 1200ms;
     }
 
     .qq-live .qq-pill {
@@ -347,15 +364,6 @@
       }
       to {
         stroke-dashoffset: 0;
-      }
-    }
-
-    @keyframes qq-fade {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
       }
     }
 
