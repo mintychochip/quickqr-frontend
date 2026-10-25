@@ -395,18 +395,21 @@
   .site-template-preview {
     position: relative;
     display: block;
-    height: 104px;
     overflow: hidden;
+    aspect-ratio: 3 / 2;
     border: 1px solid var(--border);
     border-radius: calc(var(--radius) * 0.8);
     background: #f7f7f5;
   }
 
   .site-template-preview iframe {
-    width: 720px;
-    height: 480px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400%;
+    height: 400%;
     border: 0;
-    transform: scale(0.215);
+    transform: scale(0.25);
     transform-origin: top left;
     pointer-events: none;
   }
@@ -563,12 +566,8 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .site-template-preview {
-      height: 120px;
-    }
-
-    .site-template-preview iframe {
-      transform: scale(0.245);
+    .site-template-grid {
+      gap: 0.75rem;
     }
   }
 </style>
