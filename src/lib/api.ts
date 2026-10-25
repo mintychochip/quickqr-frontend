@@ -1,4 +1,4 @@
-import type { Link, AnalyticsSummary, MenuDesign, MenuItem, PageLink, QRStyle, TrendsSummary } from '../types';
+import type { Link, AnalyticsSummary, MenuDesign, MenuItem, PageLink, QRStyle, SiteFile, TrendsSummary } from '../types';
 import type { Gift, GiftClaimed, GiftCreated, NewGift } from '../types/gift';
 import { getAuthToken, setAuthToken } from './auth';
 
@@ -318,4 +318,54 @@ export async function revokeGift(id: string): Promise<Gift> {
     throw apiErrorFromBody(res, await readResponseText(res), 'Failed to revoke the gift');
   }
   return parseJsonResponse<Gift>(res, 'Failed to revoke the gift');
+}
+
+export async function createSite(title: string): Promise<Link> {
+  const res = await request('/api/sites', {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to create the site');
+  }
+  return parseJsonResponse<Link>(res, 'Failed to create the site');
+}
+
+export async function fetchSite(code: string): Promise<{ site: Link; files: SiteFile[] }> {
+  const res = await request(`/api/sites/${encodeURIComponent(code)}`);
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), 'Failed to load the site');
+  }
+  const data = await parseJsonResponse<{ site: Link; files?: SiteFile[] }>(res, 'Failed to load the site');
+  return { site: data.site, files: data.files ?? [] };
+}
+
+/** The host decides a file's type from its extension; the upload's Content-Type is metadata for the request only. */
+export async function uploadSiteFile(
+  code: string,
+  path: string,
+  file: Blob,
+): Promise<{ path: string; size: number; content_type: string }> {
+  const res = await request(
+    `/api/sites/${encodeURIComponent(code)}/files?path=${encodeURIComponent(path)}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    },
+  );
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), `Failed to upload ${path}`);
+  }
+  return parseJsonResponse(res, `Failed to upload ${path}`);
+}
+
+export async function deleteSiteFile(code: string, path: string): Promise<void> {
+  const res = await request(
+    `/api/sites/${encodeURIComponent(code)}/files?path=${encodeURIComponent(path)}`,
+    { method: 'DELETE' },
+  );
+  if (!res.ok) {
+    throw apiErrorFromBody(res, await readResponseText(res), `Failed to delete ${path}`);
+  }
 }

@@ -1,16 +1,20 @@
 import {
   createGift,
+  createSite,
   deleteLink,
+  deleteSiteFile,
   fetchGifts,
   fetchGlobalAnalytics,
   fetchLinkAnalytics,
   fetchLinks,
   fetchQrSettings,
+  fetchSite,
   fetchTrends,
   patchQrSettings,
   redeemGift,
   revokeGift,
   updateLink,
+  uploadSiteFile,
 } from './api';
 import { getAuthToken, setAuthToken } from './auth';
 
@@ -250,5 +254,69 @@ describe('gift calls', () => {
 
     expect(captured[0]?.url).toBe('/api/admin/gifts/gft-abc12345/revoke');
     expect(captured[0]?.init?.method).toBe('POST');
+  });
+});
+
+describe('site calls', () => {
+  test('creating a site posts its title and returns the new site', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(201, { code: 'siteabc', title: 'My site' });
+
+    const created = await createSite('My site');
+    expect(created.code).toBe('siteabc');
+    expect(created.title).toBe('My site');
+
+    expect(captured[0]?.url).toBe('/api/sites');
+    expect(captured[0]?.init?.method).toBe('POST');
+    expect(JSON.parse(String(captured[0]?.init?.body))).toEqual({ title: 'My site' });
+  });
+
+  test('reading a site returns its files', async () => {
+    setAuthToken(TOKEN);
+    const answer = { site: { code: 'siteabc' }, files: [{ path: 'index.html', size: 10 }] };
+    responder = () => json(200, answer);
+
+    const detail = await fetchSite('siteabc');
+    expect(detail.site.code).toBe('siteabc');
+    expect(detail.files).toEqual(answer.files);
+    expect(captured[0]?.url).toBe('/api/sites/siteabc');
+  });
+
+  test('uploading sends the file bytes to its encoded path', async () => {
+    setAuthToken(TOKEN);
+    const file = new File(['body'], 'site.css', { type: 'text/css' });
+    responder = () => json(200, { path: 'css/site.css', size: 4, content_type: 'text/css' });
+
+    expect(await uploadSiteFile('siteabc', 'css/site.css', file)).toEqual({
+      path: 'css/site.css',
+      size: 4,
+      content_type: 'text/css',
+    });
+
+    expect(captured[0]?.url).toBe('/api/sites/siteabc/files?path=css%2Fsite.css');
+    expect(captured[0]?.init?.method).toBe('PUT');
+    expect(captured[0]?.init?.body).toBe(file);
+    expect(new Headers(captured[0]?.init?.headers).get('Content-Type')?.startsWith('text/css')).toBe(true);
+  });
+
+  test('deleting a file answers 204 with no body', async () => {
+    setAuthToken(TOKEN);
+    responder = () => new Response(null, { status: 204 });
+
+    await deleteSiteFile('siteabc', 'old.html');
+
+    expect(captured[0]?.url).toBe('/api/sites/siteabc/files?path=old.html');
+    expect(captured[0]?.init?.method).toBe('DELETE');
+  });
+
+  test('a plan refusal keeps the server message', async () => {
+    setAuthToken(TOKEN);
+    responder = () => json(403, { error: 'Sites are a Pro feature.' });
+
+    const thrown = await createSite('My site').then(
+      () => null,
+      (err: unknown) => err,
+    );
+    expect(thrown instanceof Error ? thrown.message : thrown).toBe('Sites are a Pro feature.');
   });
 });

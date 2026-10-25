@@ -52,12 +52,13 @@ export const PLANS: readonly Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Ad-free menus and pages.',
+    tagline: 'Ad-free menus, pages, and sites.',
     price: { monthly: 15, yearly: 150 },
     live: false,
     features: [
       'Everything in Plus',
       'Hosted menus you can edit any time',
+      'Hosted static sites you create from a folder',
       'No sponsor line on your menus and link pages',
       'No quickqr branding on them',
       `Up to ${AD_FREE_SCANS.pro.toLocaleString('en-US')} scans a month`,

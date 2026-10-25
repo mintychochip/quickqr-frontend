@@ -528,7 +528,7 @@
       <main class="dsh-main">
         <div class="dsh-main-inner">
         {#if path.startsWith('/dashboard/sites')}
-          <SitesSection canDelete={canManageSites} />
+          <SitesSection canManage={canManageSites} />
         {:else if path.startsWith('/dashboard/menus')}
           {#if menusLocked}
             <MenusGate />

@@ -52,6 +52,14 @@ export interface Link {
   domain_verified_at?: string;
 }
 
+/** One file in a hosted site; the host serves it at `path` under the site's root. */
+export interface SiteFile {
+  path: string;
+  size: number;
+  content_type: string;
+  uploaded_at: string;
+}
+
 export interface ScanEvent {
   id: string;
   link_code: string;

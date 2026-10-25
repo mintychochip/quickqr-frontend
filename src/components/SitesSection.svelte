@@ -1,6 +1,8 @@
 <script lang="ts">
   import Check from '@lucide/svelte/icons/check';
   import ExternalLink from '@lucide/svelte/icons/external-link';
+  import FolderOpen from '@lucide/svelte/icons/folder-open';
+  import Plus from '@lucide/svelte/icons/plus';
   import Search from '@lucide/svelte/icons/search';
   import Trash2 from '@lucide/svelte/icons/trash-2';
   import Button from '@/lib/components/ui/button.svelte';
@@ -9,15 +11,19 @@
   import { deleteLink, fetchLinks } from '../lib/api';
   import { siteUrl } from '../lib/siteUrl';
   import type { Link } from '../types';
+  import CreateSiteDialog from './CreateSiteDialog.svelte';
+  import SiteFilesPanel from './SiteFilesPanel.svelte';
 
-  type Props = { canDelete?: boolean };
-  let { canDelete = false }: Props = $props();
+  type Props = { canManage?: boolean };
+  let { canManage = false }: Props = $props();
 
   let sites = $state<Link[]>([]);
   let allLinks = $state<Link[]>([]);
   let loading = $state(true);
   let search = $state('');
   let copiedCode = $state<string | null>(null);
+  let createOpen = $state(false);
+  let filesCode = $state<string | null>(null);
 
   $effect(() => {
     let cancelled = false;
@@ -66,6 +72,15 @@
     setTimeout(() => (copiedCode = null), 2000);
   }
 
+  function siteCreated(site: Link): void {
+    sites = [site, ...sites.filter((row) => row.code !== site.code)];
+    allLinks = [site, ...allLinks.filter((row) => row.code !== site.code)];
+  }
+
+  function toggleFiles(code: string): void {
+    filesCode = filesCode === code ? null : code;
+  }
+
   async function remove(site: Link) {
     const menu = menusBySite[site.code];
     const label = site.title || 'this site';
@@ -76,6 +91,7 @@
     try {
       await deleteLink(site.code);
       sites = sites.filter((row) => row.code !== site.code);
+      if (filesCode === site.code) filesCode = null;
       allLinks = allLinks.map((row) =>
         row.kind === 'menu' && row.published_site_code === site.code ? { ...row, published_site_code: undefined } : row,
       );
@@ -89,8 +105,17 @@
   <div class="sites-header">
     <div>
       <h1 class="sites-title">Sites</h1>
-      <p class="sites-subtitle">Static sites hosted on quickqr, behind their own QR code. A published menu's site appears here too.</p>
+      <p class="sites-subtitle">
+        Static sites hosted on quickqr, behind their own QR code. A published menu's site appears here too.
+        {#if !canManage}Creating and changing sites is a Pro feature.{/if}
+      </p>
     </div>
+    {#if canManage}
+      <Button variant="punch" size="sm" onclick={() => (createOpen = true)} data-testid="site-create">
+        <Plus class="sites-icon" />
+        New site
+      </Button>
+    {/if}
   </div>
 
   <div class="sites-stats">
@@ -114,64 +139,90 @@
       <div class="sites-empty">Loading sites...</div>
     {:else if filtered.length === 0}
       <div class="sites-empty" data-testid="sites-empty">
-        {sites.length === 0 ? 'No sites yet. Publish a menu, or create a site through the API.' : 'No sites match that search.'}
+        {sites.length === 0
+          ? canManage
+            ? 'No sites yet. Create one from a folder of files.'
+            : 'No sites yet.'
+          : 'No sites match that search.'}
       </div>
     {:else}
       <ul class="sites-list">
         {#each filtered as site (site.code)}
-          <li class="sites-row" data-testid="site-row" data-site-code={site.code}>
-            <div class="sites-row-main">
-              <a class="sites-row-title" href={siteUrl(site.code)} target="_blank" rel="noreferrer">{site.title || 'Untitled site'}</a>
-              <div class="sites-row-meta">
-                <span class="sites-row-code">/{site.code}</span>
-                {#if menusBySite[site.code]}
-                  <span class="sites-row-badge" data-testid="site-published-menu">Published menu</span>
-                {/if}
+          <li class="sites-list-item" data-testid="site-row" data-site-code={site.code}>
+            <div class="sites-row">
+              <div class="sites-row-main">
+                <a class="sites-row-title" href={siteUrl(site.code)} target="_blank" rel="noreferrer">{site.title || 'Untitled site'}</a>
+                <div class="sites-row-meta">
+                  <span class="sites-row-code">/{site.code}</span>
+                  {#if menusBySite[site.code]}
+                    <span class="sites-row-badge" data-testid="site-published-menu">Published menu</span>
+                  {/if}
+                </div>
               </div>
-            </div>
-            <div class="sites-row-scans"><span data-testid="site-scans">{scansFor(site)}</span> scans</div>
-            <div class="sites-row-actions">
-              <Button
-                variant="outline"
-                size="sm"
-                href={siteUrl(site.code)}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open ${site.title || 'site'}`}
-                data-testid="site-open"
-              >
-                <ExternalLink class="sites-icon" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onclick={() => copy(site.code)}
-                aria-label={`Copy ${site.title || 'site'} address`}
-                data-testid="site-copy"
-              >
-                {#if copiedCode === site.code}
-                  <Check class="sites-icon" />
-                {:else}
-                  Copy
-                {/if}
-              </Button>
-              {#if canDelete}
+              <div class="sites-row-scans"><span data-testid="site-scans">{scansFor(site)}</span> scans</div>
+              <div class="sites-row-actions">
                 <Button
                   variant="outline"
                   size="sm"
-                  onclick={() => remove(site)}
-                  aria-label={`Delete ${site.title || 'site'}`}
-                  data-testid="site-delete"
+                  href={siteUrl(site.code)}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${site.title || 'site'}`}
+                  data-testid="site-open"
                 >
-                  <Trash2 class="sites-icon" />
+                  <ExternalLink class="sites-icon" />
                 </Button>
-              {/if}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onclick={() => copy(site.code)}
+                  aria-label={`Copy ${site.title || 'site'} address`}
+                  data-testid="site-copy"
+                >
+                  {#if copiedCode === site.code}
+                    <Check class="sites-icon" />
+                  {:else}
+                    Copy
+                  {/if}
+                </Button>
+                {#if !menusBySite[site.code]}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-expanded={filesCode === site.code}
+                    aria-controls={`site-files-${site.code}`}
+                    onclick={() => toggleFiles(site.code)}
+                    data-testid="site-files-toggle"
+                  >
+                    <FolderOpen class="sites-icon" />
+                    Files
+                  </Button>
+                {/if}
+                {#if canManage}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onclick={() => remove(site)}
+                    aria-label={`Delete ${site.title || 'site'}`}
+                    data-testid="site-delete"
+                  >
+                    <Trash2 class="sites-icon" />
+                  </Button>
+                {/if}
+              </div>
             </div>
+            {#if filesCode === site.code && !menusBySite[site.code]}
+              <div id={`site-files-${site.code}`}>
+                <SiteFilesPanel {site} {canManage} />
+              </div>
+            {/if}
           </li>
         {/each}
       </ul>
     {/if}
   </Card>
+
+  <CreateSiteDialog bind:open={createOpen} onCreated={siteCreated} />
 </section>
 
 <style>
@@ -285,7 +336,7 @@
     padding: 14px 18px;
   }
 
-  .sites-row + .sites-row {
+  .sites-list-item + .sites-list-item {
     border-top: 1px solid var(--border);
   }
 
@@ -371,6 +422,11 @@
 
     .sites-row-scans {
       display: none;
+    }
+
+    .sites-row-actions {
+      grid-column: 1 / -1;
+      flex-wrap: wrap;
     }
   }
 </style>
